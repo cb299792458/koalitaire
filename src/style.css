@@ -80,7 +80,7 @@
 
 .card-pile {
     width: 100px;
-    aspect-ratio: 2 / 3;
+    aspect-ratio: 5 / 7;
     background-color: white;
     margin: 10px;
 
@@ -90,4 +90,26 @@
 
     border: 1px solid black;
     border-radius: 12px;
+}
+
+.card-view {
+    width: 100px;
+    aspect-ratio: 5 / 7;
+    background-color: white;
+    margin: 10px;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 10px;
+    border: 1px solid black;
+}
+
+.card-back {
+    height: 100%;
+    width: auto;
+    display: block;
+    border-radius: 8px;
+    border: 5px solid white;
 }

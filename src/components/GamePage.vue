@@ -1,3 +1,23 @@
+<script setup lang="ts">
+import type Card from '../Card';
+import CardView from './CardView.vue';
+
+const suits: string[] = ["♥️", "♦️", "♣️", "♠️"];
+
+const deck: Card[] = [];
+const recycle: Card[] = [];
+const trash: Card[] = [];
+const manaPool: Card[][] = Array.from({ length: 4 }, () => []);
+const tableau: Card[][] = Array.from({ length: 7 }, () => []);
+
+for (const suit of suits) {
+    for (let value = 1; value <= 13; value++) {
+        deck.push({ suit, value, revealed: true });
+    }
+}
+
+</script>
+
 <template>
     <div class="game-page">
         <div class="game-header">
@@ -30,11 +50,11 @@
 
                 <div class="cards-bottom">
                     <div
-                        class="card-pile tableau"
-                        v-for="n in 7"
-                        :key="n"
+                        class="tableau"
+                        v-for="(card, index) in deck.slice(0, 7)"
+                        :key="index"
                     >
-                        Tableau {{ n }}
+                        <CardView :card="card" />
                     </div>  
                 </div>
             </div>
