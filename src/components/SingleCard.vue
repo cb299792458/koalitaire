@@ -3,11 +3,15 @@ import Card from '../Card';
 
 defineProps<{card: Card}>()
 
+const symbols = [
+    null, 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K'
+]
+
 </script>
 
 <template>
     <div class="card-view">
         <img v-if="!card.revealed" class="card-back" src="/koala.jpg" alt="Card Back" />
-        <h2 v-else>{{ card.value }}{{ card.suit }}</h2>
+        <p v-else>{{ symbols[card.value] || card.value }}{{ card.suit }}</p>
     </div>
 </template>

@@ -9,14 +9,14 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 10%;
+    height: 5%;
     width: 100%;
     background-color: #808080;
 }
 
 .game-main {
     display: flex;
-    height: 60%
+    height: 70%
 }
 
 .game-right, .game-left {
@@ -37,7 +37,7 @@
 
 .game-bottom {
     background-color: pink;
-    height: 30%;
+    height: 25%;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -78,32 +78,37 @@
     align-items: center;
 }
 
-.card-pile {
-    width: 100px;
-    aspect-ratio: 5 / 7;
-    background-color: white;
-    margin: 10px;
-
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    border: 1px solid black;
-    border-radius: 12px;
+.card-stack {
+    position: relative;
 }
 
-.card-view {
+.card-view, .card-stack-empty {
     width: 100px;
     aspect-ratio: 5 / 7;
     background-color: white;
     margin: 10px;
 
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: flex-start;
 
     border-radius: 10px;
     border: 1px solid black;
+}
+
+.card-view {
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.card-stack-empty {
+    justify-content: center;
+    align-items: center;
+}
+
+.card-view p {
+    margin: 3px;
+    font-size: 12px;
 }
 
 .card-back {

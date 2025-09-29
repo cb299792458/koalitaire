@@ -1,19 +1,27 @@
 <script setup lang="ts">
+import { reactive, ref, type Reactive, type Ref } from 'vue';
 import type Card from '../Card';
-import CardView from './CardView.vue';
+import CardStack from './CardStack.vue';
 
 const suits: string[] = ["♥️", "♦️", "♣️", "♠️"];
 
-const deck: Card[] = [];
-const recycle: Card[] = [];
-const trash: Card[] = [];
-const manaPool: Card[][] = Array.from({ length: 4 }, () => []);
-const tableau: Card[][] = Array.from({ length: 7 }, () => []);
+const deck: Ref<Card[]> = ref([]);
+const recycle: Ref<Card[]> = ref([]);
+const trash: Ref<Card[]> = ref([]);
+const manaPool: Reactive<Card[][]> = reactive(Array.from({ length: 5 }, () => []));
+const tableau: Reactive<Card[][]> = reactive(Array.from({ length: 7 }, () => []));
 
 for (const suit of suits) {
     for (let value = 1; value <= 13; value++) {
-        deck.push({ suit, value, revealed: true });
+        deck.value.push({ suit, value, revealed: false });
     }
+}
+
+function moveTo(target: Card[]) {
+    if (deck.value.length === 0) return; // nothing to move
+    const card = deck.value.pop()!;
+    card.revealed = true; // optionally reveal the card
+    target.push(card);
 }
 
 </script>
@@ -32,30 +40,46 @@ for (const suit of suits) {
             <div class="game-middle">
                 <div class="cards-top">
                     <div class="cards-stock">
-                        <div class="card-pile deck">deck</div>
-                        <div class="card-pile recycle">recycle</div>
-                        <div class="card-pile trash">trash</div>
+                        <CardStack
+                            :cards="deck"
+                            name="deck"
+                        />
+                        <CardStack
+                            :cards="recycle"
+                            name="recycle"
+                            @mousedown.prevent
+                            @click="moveTo(recycle)"
+                        />
+                        <CardStack
+                            :cards="trash"
+                            name="trash"
+                            @mousedown.prevent
+                            @click="moveTo(trash)"
+                        />
                     </div>
 
                     <div class="mana-pool">
-                        <div
-                            class="card-pile mana-pile"
-                            v-for="n in 4"
-                            :key="n"
-                        >
-                            Mana {{ n }}
-                        </div>
+                        <CardStack
+                            v-for="(pool, index) in manaPool"
+                            :key="index"
+                            :cards="pool"
+                            :name="'Mana Pool ' + (index + 1)"
+                            @mousedown.prevent
+                            @click="moveTo(pool)"
+                        />
                     </div>
                 </div>
 
                 <div class="cards-bottom">
-                    <div
-                        class="tableau"
-                        v-for="(card, index) in deck.slice(0, 7)"
+                    <CardStack
+                        v-for="(cards, index) in tableau"
                         :key="index"
-                    >
-                        <CardView :card="card" />
-                    </div>  
+                        :cards="cards"
+                        :name="'Tableau ' + (index + 1)"
+                        layout="vertical"
+                        @mousedown.prevent
+                        @click="moveTo(cards)"
+                    />
                 </div>
             </div>
 
@@ -67,7 +91,7 @@ for (const suit of suits) {
         <div class="game-bottom">
             <h1>Hand and Stuff</h1>
             <div class="cards-hand">
-                <div class="card-pile hand" v-for="n in 7" :key="n">
+                <div class="card-stack-empty" v-for="n in 7" :key="n">
                     Hand {{ n }}
                 </div>
             </div>
