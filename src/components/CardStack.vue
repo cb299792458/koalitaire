@@ -2,7 +2,13 @@
     import CardView from './SingleCard.vue';
     import Card from '../Card';
 
-    const props = defineProps<{ cards: Card[], name: string, layout?: string }>();
+    const props = defineProps<{ 
+        cards: Card[], 
+        name: string, 
+        layout?: string,
+        selectedCard?: Card | null
+        selectCard?: (card: Card | null) => void
+    }>();
 
     function cardPosition(index: number) {
         return {
@@ -25,6 +31,8 @@
             :key="index" 
             :card="card"
             :style="cardPosition(index)"
+            :selectedCard="selectedCard"
+            :selectCard="selectCard"
         />
     </div>
 </template>
