@@ -1,7 +1,7 @@
 <script setup lang="ts">
     import CardView from './SingleCard.vue';
-    import Card from '../Card';
-
+    import type Card from '../game/Card';
+    
     const props = defineProps<{ 
         cards: Card[], 
         name: string, 

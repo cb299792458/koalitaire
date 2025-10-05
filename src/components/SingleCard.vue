@@ -1,5 +1,6 @@
 <script setup lang="ts">
-    import Card from '../Card';
+import type Card from '../game/Card';
+
 
     const { card, selectedCard, selectCard } = defineProps<{
         card: Card,
@@ -32,6 +33,6 @@
 <template>
     <div class="card-view" @click="handleClick" :class="{ selected: selectedCard === card }">
         <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
-        <p v-else>{{ symbols[card.number] || card.number }}{{ card.suit }}</p>
+        <p v-else>{{ symbols[card.rank] || card.rank }}{{ card.suit }}</p>
     </div>
 </template>

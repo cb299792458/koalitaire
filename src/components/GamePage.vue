@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { reactive, ref, type Reactive, type Ref } from 'vue';
-    import type Card from '../Card';
+    import type Card from '../game/Card';
     import CardStack from './CardStack.vue';
     import SingleCard from './SingleCard.vue';
 
@@ -29,8 +29,8 @@
 
     function startGame() {
         for (const suit of suits) {
-            for (let number = 1; number <= 13; number++) {
-                deck.value.push({ suit, number, revealed: false });
+            for (let rank = 1; rank <= 13; rank++) {
+                deck.value.push({ suit, rank, revealed: false });
             }
         }
 
@@ -77,12 +77,12 @@
         if (!selectedCard.value) return; // no card selected
         if (selectedCard.value.suit !== suit) return selectedCard.value = null; // card must match the mana pool suit
 
-        if (selectedCard.value.number !== 1) {
+        if (selectedCard.value.rank !== 1) {
             if (manaPool.length === 0) {
                 selectedCard.value = null;
                 return selectedCard.value = null; // card must be 1 if mana pool is empty
             }
-            if (manaPool[manaPool.length - 1]!.number !== selectedCard.value.number - 1) {
+            if (manaPool[manaPool.length - 1]!.rank !== selectedCard.value.rank - 1) {
                 selectedCard.value = null;
                 return selectedCard.value = null; // card must be one less than the last card in the mana pool
             }
@@ -127,7 +127,7 @@
     }
 
     // Number must be one less than last card (tableau descending)
-    if (lastCard.number !== card.number + 1) {
+    if (lastCard.rank !== card.rank + 1) {
       selectedCard.value = null
       return
     }

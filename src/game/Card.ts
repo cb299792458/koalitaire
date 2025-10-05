@@ -1,10 +1,10 @@
 class Card {
-    number: number;
+    rank: number;
     suit: string;
     revealed: boolean = false;
 
-    constructor(number: number, suit: string) {
-        this.number = number;
+    constructor(rank: number, suit: string) {
+        this.rank = rank;
         this.suit = suit;
     }
 }
