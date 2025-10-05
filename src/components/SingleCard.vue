@@ -31,7 +31,7 @@
 
 <template>
     <div class="card-view" @click="handleClick" :class="{ selected: selectedCard === card }">
-        <img v-if="!card.revealed" class="card-back" src="/koala.jpg" alt="Card Back" />
+        <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
         <p v-else>{{ symbols[card.number] || card.number }}{{ card.suit }}</p>
     </div>
 </template>
