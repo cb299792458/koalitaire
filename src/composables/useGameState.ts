@@ -90,7 +90,7 @@ function useGameState() {
         }
     }
 
-    function updateGameState(card: Card | null, area: Area, arrayIndex?: number, cardIndex?: number): void {
+    function updateGameState(_card: Card | null, _area: Area, _arrayIndex?: number, _cardIndex?: number): void {
     }
 
     gameStateInstance = {
