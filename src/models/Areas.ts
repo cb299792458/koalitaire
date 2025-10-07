@@ -5,6 +5,7 @@ export const AREAS = {
   Hand: 'hand',
   Tableau: 'tableau',
   ManaPools: 'manaPools',
+  Board: 'board',
 } as const
 
 export type Area = (typeof AREAS)[keyof typeof AREAS]

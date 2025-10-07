@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import CardView from './SingleCard.vue';
-    import type Card from '../models/Card';
+    import Card from '../models/Card';
     import { type Area } from '../models/Areas';
     import { toRaw } from 'vue';
     
@@ -63,9 +63,21 @@
         const card = props.cards[cardIndex]!;
         emit('click', {
             card: toRaw(card),
-            area: props.name.toLowerCase() as Area,
+            area: props.name as Area,
             arrayIndex: props.arrayIndex,
             cardIndex,
+        });
+    }
+    function handleEmptyClick() {
+        const dummyCard = new Card(
+            0,
+            'None',
+        );
+        emit('click', {
+            card: dummyCard,
+            area: props.name as Area,
+            arrayIndex: props.arrayIndex,
+            cardIndex: -1,
         });
     }
 </script>
@@ -75,7 +87,7 @@
         <div
             class="card-stack-empty"
             v-if="!cards.length"
-            @click="handleClick(-1)"
+            @click.stop="handleEmptyClick"
         >
             {{ name }}
         </div>
@@ -85,7 +97,7 @@
                 :card="card"
                 :style="cardPosition(index)"
                 :selectedCard="selectedCard"
-                @click="handleClick(index)"
+                @click.stop="handleClick(index)"
             />
         </template>
     </div>

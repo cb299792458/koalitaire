@@ -1,6 +1,6 @@
-import { ref, type Ref } from 'vue';
+import { ref, toRaw, type Ref } from 'vue';
 import Card from '../models/Card';
-import type { Area } from '../models/Areas';
+import { AREAS, type Area } from '../models/Areas';
 
 let gameStateInstance: GameState | null = null; // singleton
 
@@ -16,7 +16,6 @@ interface GameState {
     hand: Ref<Card[]>;
     tableau: Ref<Card[][]>;
     manaPools: Ref<Record<string, Card[]>>;
-    drawCards: (count?: number) => void;
     updateGameState: (card: Card | null, area: Area, arrayIndex?: number, cardIndex?: number) => void;
 }
 
@@ -24,9 +23,7 @@ function useGameState() {
     if (gameStateInstance) return gameStateInstance;
     
     const selectedCard: Ref<Card | null> = ref<Card | null>(null);
-    function setSelectedCard (card: Card | null): void {
-        gameStateInstance!.selectedCard.value = card;
-    };
+    function setSelectedCard (card: Card | null): void { gameStateInstance!.selectedCard.value = card };
 
     const deck = ref<Card[]>([]);
     for (let rank = 1; rank <= 13; rank++) {
@@ -68,7 +65,7 @@ function useGameState() {
     function drawCards(count: number = 3) {
         // move all cards from hand to trash
         while (hand.value.length) {
-            compost.value.push(hand.value.pop()!); 
+            compost.value.unshift(hand.value.pop()!); 
         }
 
         // If deck is empty, move recycling into the deck
@@ -90,7 +87,82 @@ function useGameState() {
         }
     }
 
-    function updateGameState(_card: Card | null, _area: Area, _arrayIndex?: number, _cardIndex?: number): void {
+    function updateGameState(clickedCard: Card | null, area: Area, arrayIndex?: number, cardIndex?: number): void {
+        switch (area) {
+            case AREAS.Deck:
+                drawCards();
+                break;
+
+            case AREAS.Hand:
+                isCardSelection(clickedCard);
+                break;
+
+            case AREAS.Tableau:
+                if (isCardSelection(clickedCard)) break;
+                placeSelectedCardInTableau(clickedCard, arrayIndex, cardIndex);
+                break;
+
+            case AREAS.Board:
+                isCardSelection(clickedCard);
+                break;
+
+            case AREAS.ManaPools:
+            case AREAS.Compost:
+            case AREAS.Trash:
+            default:
+                break;
+        }
+    }
+                
+    function isCardSelection(clickedCard: Card | null): boolean {
+        // Select Card
+        if (!selectedCard.value && clickedCard?.rank && clickedCard.revealed) {
+            setSelectedCard(clickedCard);
+            return true;
+        }
+
+        // Deselect Card
+        if (!clickedCard || (clickedCard === toRaw(selectedCard.value))) {
+            setSelectedCard(null);
+            return true;
+        }
+
+        return false;
+    }
+
+    function placeSelectedCardInTableau(clickedCard: Card | null, arrayIndex?: number, _cardIndex?: number): void {
+        if (!selectedCard.value) return;
+
+        if (clickedCard?.rank) {
+            if (selectedCard.value?.suit === clickedCard.suit) {
+                return;
+            }
+            if (selectedCard.value?.rank !== clickedCard.rank - 1) {
+                return;
+            }
+        }
+
+        // remove selectedCard from hand
+        const handIndex = hand.value.indexOf(selectedCard.value);
+        if (handIndex !== -1) {
+            hand.value.splice(handIndex, 1);
+            tableau.value[arrayIndex!]!.push(selectedCard.value);
+        } else {
+            const tableauIndex = tableau.value.findIndex(col => col.includes(selectedCard.value!));
+            if (tableauIndex !== -1) {
+                let movedCardIndex = tableau.value[tableauIndex]!.indexOf(selectedCard.value);
+                while (movedCardIndex < tableau.value[tableauIndex]!.length) {
+                    tableau.value[arrayIndex!]!.push(tableau.value[tableauIndex]![movedCardIndex]!);
+                    tableau.value[tableauIndex]!.splice(movedCardIndex, 1);
+                }
+
+                if (tableau.value[tableauIndex]!.length) tableau.value[tableauIndex]![tableau.value[tableauIndex]!.length - 1]!.revealed = true;
+            } else {
+                throw new Error(`Card not found in hand or tableau: ${selectedCard.value.toString()}`);
+            }
+        }
+
+        setSelectedCard(null);
     }
 
     gameStateInstance = {
@@ -102,7 +174,6 @@ function useGameState() {
         hand,
         tableau,
         manaPools,
-        drawCards,
         updateGameState,
     };
 

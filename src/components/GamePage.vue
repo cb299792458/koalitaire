@@ -2,7 +2,7 @@
     import Card from '../models/Card';
     import CardStack from './CardStack.vue';
     import useGameState from '../composables/useGameState';
-    import { AREAS } from '../models/Areas';
+    import { AREAS, type Area } from '../models/Areas';
 
     const {
         selectedCard,
@@ -12,17 +12,15 @@
         hand,
         tableau,
         manaPools,
-        drawCards,
         updateGameState,
     } = useGameState();
 
     function onClick(payload: {
         card: Card | null;
-        area: 'deck' | 'compost' | 'trash' | 'hand' | 'tableau' | 'manaPools';
+        area: Area;
         arrayIndex?: number;
         cardIndex: number;
     }) {
-        console.log('Card clicked:', payload);
         const { card, area, arrayIndex, cardIndex } = payload;
         updateGameState(
             card,
@@ -123,7 +121,7 @@
 </script>
 
 <template>
-    <div class="game-page">
+    <div class="game-page" @click="onClick({ card: null, area: AREAS.Board, cardIndex: -1 })">
         <div class="game-header">
             <h1>Koalitaire Game</h1>
         </div>
@@ -139,7 +137,7 @@
                         <CardStack
                             :cards="deck"
                             :name="AREAS.Deck"
-                            @click="drawCards()"
+                            @click="onClick"
                         />
                         <CardStack
                             :cards="compost"
