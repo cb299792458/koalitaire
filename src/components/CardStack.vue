@@ -1,8 +1,9 @@
 <script setup lang="ts">
     import CardView from './SingleCard.vue';
     import Card from '../models/Card';
-    import { type Area } from '../models/Areas';
+    import { AREAS, type Area } from '../models/Areas';
     import { toRaw } from 'vue';
+    import { suits } from '../composables/useGameState';
     
     const props = defineProps<{ 
         cards: Card[], 
@@ -45,7 +46,7 @@
                     position: 'absolute',
                     top: `-${index * 0.25}px`,
                     left: `-${index * 0.25}px`,
-                    zIndex: props.cards.length - index,
+                    zIndex: props.cards.length + index,
                 };
         }
     }
@@ -89,7 +90,7 @@
             v-if="!cards.length"
             @click.stop="handleEmptyClick"
         >
-            {{ name }}
+            {{ name === AREAS.ManaPools ? suits[arrayIndex || 0] : name }}
         </div>
         <template v-else>
             <CardView v-for="(card, index) in cards"

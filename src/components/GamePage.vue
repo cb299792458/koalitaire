@@ -153,10 +153,11 @@
 
                     <div class="mana-pools">
                         <CardStack
-                            v-for="[suit, cards] in Object.entries(manaPools)"
-                            :key="suit"
+                            v-for="([_suit, cards], index) in Object.entries(manaPools)"
+                            :key="index"
                             :cards="cards"
-                            :name="suit"
+                            :name="AREAS.ManaPools"
+                            :arrayIndex="index"
                             @mousedown.prevent
                             @click="onClick"
                         />
@@ -170,9 +171,9 @@
                         :cards="cards"
                         :name="AREAS.Tableau"
                         layout="vertical"
-                        @mousedown.prevent
                         :selectedCard="selectedCard"
                         :arrayIndex="index"
+                        @mousedown.prevent
                         @click="onClick"
                     />
                 </div>

@@ -4,7 +4,7 @@ import { AREAS, type Area } from '../models/Areas';
 
 let gameStateInstance: GameState | null = null; // singleton
 
-const suits: string[] = ["♦️", "♣️", "♥️", "♠️"];
+export const suits: string[] = ["♦️", "♣️", "♥️", "♠️"];
 const TABLEAU_SIZE: number = 7;
 
 interface GameState {
@@ -45,10 +45,10 @@ function useGameState() {
         for (let j = 0; j <= i; j++) {
             if (deck.value.length > 0) {
                 const card = deck.value.pop()!;
-                card.revealed = j === i; // only reveal the last card in the stack
                 tableau.value[i]!.push(card);
             }
         }
+        if (tableau.value[i]!.length > 0) tableau.value[i]![tableau.value[i]!.length - 1]!.revealed = true; // reveal the last card in each tableau column
     }
     
 
@@ -65,7 +65,7 @@ function useGameState() {
     function drawCards(count: number = 3) {
         // move all cards from hand to trash
         while (hand.value.length) {
-            compost.value.unshift(hand.value.pop()!); 
+            compost.value.push(hand.value.pop()!); 
         }
 
         // If deck is empty, move recycling into the deck
@@ -102,11 +102,15 @@ function useGameState() {
                 placeSelectedCardInTableau(clickedCard, arrayIndex, cardIndex);
                 break;
 
+            case AREAS.ManaPools:
+                if (isCardSelection(clickedCard)) break;
+                placeSelectedCardInManaPools(clickedCard, arrayIndex);
+                break;
+                
             case AREAS.Board:
                 isCardSelection(clickedCard);
                 break;
 
-            case AREAS.ManaPools:
             case AREAS.Compost:
             case AREAS.Trash:
             default:
@@ -131,35 +135,69 @@ function useGameState() {
     }
 
     function placeSelectedCardInTableau(clickedCard: Card | null, arrayIndex?: number, _cardIndex?: number): void {
-        if (!selectedCard.value) return;
+        if (!selectedCard.value || arrayIndex === undefined || !tableau.value[arrayIndex]) return;
 
         if (clickedCard?.rank) {
-            if (selectedCard.value?.suit === clickedCard.suit) {
-                return;
-            }
-            if (selectedCard.value?.rank !== clickedCard.rank - 1) {
-                return;
-            }
+            if (selectedCard.value.suit === clickedCard.suit) return;
+            if (selectedCard.value.rank !== clickedCard.rank - 1) return;
         }
 
-        // remove selectedCard from hand
+        // move selectedCard from hand
         const handIndex = hand.value.indexOf(selectedCard.value);
         if (handIndex !== -1) {
             hand.value.splice(handIndex, 1);
-            tableau.value[arrayIndex!]!.push(selectedCard.value);
+            tableau.value[arrayIndex].push(selectedCard.value);
         } else {
+            // move selectedCard from tableau
             const tableauIndex = tableau.value.findIndex(col => col.includes(selectedCard.value!));
+            if (!tableau.value[tableauIndex]) return;
             if (tableauIndex !== -1) {
                 let movedCardIndex = tableau.value[tableauIndex]!.indexOf(selectedCard.value);
+                console.log('moving cards')
                 while (movedCardIndex < tableau.value[tableauIndex]!.length) {
-                    tableau.value[arrayIndex!]!.push(tableau.value[tableauIndex]![movedCardIndex]!);
-                    tableau.value[tableauIndex]!.splice(movedCardIndex, 1);
+                    tableau.value[arrayIndex].push(tableau.value[tableauIndex][movedCardIndex]!);
+                    tableau.value[tableauIndex].splice(movedCardIndex, 1);
                 }
 
-                if (tableau.value[tableauIndex]!.length) tableau.value[tableauIndex]![tableau.value[tableauIndex]!.length - 1]!.revealed = true;
+                if (tableau.value[tableauIndex].length) tableau.value[tableauIndex][tableau.value[tableauIndex].length - 1]!.revealed = true;
             } else {
                 throw new Error(`Card not found in hand or tableau: ${selectedCard.value.toString()}`);
             }
+        }
+
+        setSelectedCard(null);
+    }
+
+    function placeSelectedCardInManaPools(clickedCard: Card | null, arrayIndex?: number): void {
+        if (!selectedCard.value || arrayIndex === undefined) return;
+        const suit = suits[arrayIndex];
+        
+        if (!suit || !manaPools.value[suit] || suit !== selectedCard.value.suit) return;
+        if (clickedCard?.rank) {
+            if (selectedCard.value?.rank !== clickedCard.rank + 1) return;
+        } else {
+            if (selectedCard.value.rank !== 1) return;
+        }
+
+        // move selectedCard from hand
+        const handIndex = hand.value.indexOf(selectedCard.value);
+        if (handIndex !== -1) {
+            hand.value.splice(handIndex, 1);
+            manaPools.value[suit].push(selectedCard.value);
+        } else {
+            // move selectedCard from tableau
+            const tableauIndex = tableau.value.findIndex(col => col.includes(selectedCard.value!));
+            if (!tableau.value[tableauIndex]) return;
+            if (tableauIndex !== -1) {
+                const selectedCardIndex = tableau.value[tableauIndex]!.indexOf(selectedCard.value);
+                if (selectedCardIndex !== -1) {
+                    manaPools.value[suit].push(selectedCard.value);
+                    tableau.value[tableauIndex].splice(selectedCardIndex, 1);
+                    if (tableau.value[tableauIndex].length) tableau.value[tableauIndex][tableau.value[tableauIndex].length - 1]!.revealed = true;
+                } else {
+                    throw new Error(`Card not found in tableau: ${selectedCard.value.toString()}`);
+                }
+            } 
         }
 
         setSelectedCard(null);
