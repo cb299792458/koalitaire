@@ -4,9 +4,6 @@
 
     defineProps<{ compost: Card[] }>()
 
-    const emit = defineEmits<{
-        (e: 'close'): void
-    }>()
 </script>
 
 <template>
@@ -17,7 +14,6 @@
                 v-for="(card, index) in compost"
                 :key="index"
                 :card="card"
-                @click="$emit('close')"
             />
         </div>
     </div>

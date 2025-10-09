@@ -3,7 +3,6 @@
     import CardStack from './CardStack.vue';
     import useGameState from '../composables/useGameState';
     import { AREAS, type Area } from '../models/Areas';
-    import { openModal } from '../stores/modalStore';
     import ModalManager from './ModalManager.vue';
 
     const {
