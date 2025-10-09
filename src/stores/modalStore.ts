@@ -1,7 +1,8 @@
 import { reactive } from 'vue'
 import TestModal from '../components/TestModal.vue'
+import CompostModal from '../components/CompostModal.vue'
 
-export type ModalName = 'test'
+export type ModalName = 'test' | 'compost'
 
 interface ModalState {
     currentModal: {
@@ -13,6 +14,7 @@ interface ModalState {
 // Map of modal names to components
 const modals: Record<ModalName, any> = {
     test: TestModal,
+    compost: CompostModal
 }
 
 // Reactive state for the current modal

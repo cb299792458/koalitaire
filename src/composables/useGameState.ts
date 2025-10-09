@@ -1,6 +1,7 @@
 import { ref, toRaw, type Ref } from 'vue';
 import Card from '../models/Card';
 import { AREAS, type Area } from '../models/Areas';
+import { openModal } from '../stores/modalStore';
 
 let gameStateInstance: GameState | null = null; // singleton
 
@@ -112,6 +113,8 @@ function useGameState() {
                 break;
 
             case AREAS.Compost:
+                openModal('compost', { compost: compost.value });
+                break;
             case AREAS.Trash:
             default:
                 break;

@@ -56,7 +56,7 @@
                         <CardStack
                             :cards="compost"
                             :name="AREAS.Compost"
-                            @mousedown.prevent
+                            @click="onClick"
                         />
                         <CardStack
                             :cards="trash"
