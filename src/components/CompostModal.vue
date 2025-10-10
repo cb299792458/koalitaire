@@ -3,7 +3,6 @@
     import SingleCard from './SingleCard.vue';
 
     defineProps<{ compost: Card[] }>()
-
 </script>
 
 <template>

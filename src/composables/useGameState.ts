@@ -1,12 +1,11 @@
 import { ref, toRaw, type Ref } from 'vue';
-import Card from '../models/Card';
+import Card, { suits } from '../models/Card';
 import { AREAS, type Area } from '../models/Areas';
 import { openModal } from '../stores/modalStore';
 
 let gameStateInstance: GameState | null = null; // singleton
 
-export const suits: string[] = ["♦️", "♣️", "♥️", "♠️"];
-const TABLEAU_SIZE: number = 7;
+const TABLEAU_SIZE: number = 8;
 
 interface GameState {
     selectedCard: Ref<Card | null>;
@@ -156,7 +155,6 @@ function useGameState() {
             if (!tableau.value[tableauIndex]) return;
             if (tableauIndex !== -1) {
                 let movedCardIndex = tableau.value[tableauIndex]!.indexOf(selectedCard.value);
-                console.log('moving cards')
                 while (movedCardIndex < tableau.value[tableauIndex]!.length) {
                     tableau.value[arrayIndex].push(tableau.value[tableauIndex][movedCardIndex]!);
                     tableau.value[tableauIndex].splice(movedCardIndex, 1);

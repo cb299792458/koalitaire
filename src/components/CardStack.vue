@@ -3,7 +3,7 @@
     import Card from '../models/Card';
     import { AREAS, type Area } from '../models/Areas';
     import { toRaw } from 'vue';
-    import { suits } from '../composables/useGameState';
+    import { suits } from '../models/Card';
     
     const props = defineProps<{ 
         cards: Card[], 
