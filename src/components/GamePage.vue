@@ -9,11 +9,12 @@
         selectedCard,
         deck,
         compost,
-        trash,
+        // trash,
         hand,
         tableau,
         manaPools,
         updateGameState,
+        mana,
     } = useGameState();
 
     function onClick(payload: {
@@ -57,10 +58,20 @@
                             :name="AREAS.Compost"
                             @click="onClick"
                         />
-                        <CardStack
+                        <!-- <CardStack
                             :cards="trash"
                             :name="AREAS.Trash"
                             @mousedown.prevent
+                        /> -->
+                        <CardStack
+                            :cards="[]"
+                            :name="'Cast Card'"
+                            @mousedown.prevent
+                        />
+                        <CardStack
+                            :cards="[]"
+                            :name="'Burn Card'"
+                            @click="onClick"
                         />
                     </div>
 
@@ -78,17 +89,25 @@
                 </div>
 
                 <div class="cards-bottom">
-                    <CardStack
-                        v-for="(cards, index) in tableau"
-                        :key="index"
-                        :cards="cards"
-                        :name="AREAS.Tableau"
-                        layout="vertical"
-                        :selectedCard="selectedCard"
-                        :arrayIndex="index"
-                        @mousedown.prevent
-                        @click="onClick"
-                    />
+                    <div class="tableau">
+                        <CardStack
+                            v-for="(cards, index) in tableau"
+                            :key="index"
+                            :cards="cards"
+                            :name="AREAS.Tableau"
+                            layout="vertical"
+                            :selectedCard="selectedCard"
+                            :arrayIndex="index"
+                            @mousedown.prevent
+                            @click="onClick"
+                        />
+                    </div>
+                    <div class="mana-row">
+                        <p>Mana: </p>
+                        <div v-for="(amount, suit) in mana" :key="suit" class="mana-suit">
+                            <span>{{ suit }}: {{ amount }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 

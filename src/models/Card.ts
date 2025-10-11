@@ -1,4 +1,4 @@
-export const suits: string[] = ["♥️", "⚪", "⚜️", "🟩", "🔷", ];
+export const suits: string[] = ["♥️",  "⚜️", "🟩", "🔷", "⚪",];
 
 class Card {
     rank: number;
