@@ -115,7 +115,7 @@ function useGameState() {
                 break;
 
             case AREAS.ManaPools:
-                // if (isCardSelection(clickedCard)) break;
+                if (isCardSelection(clickedCard)) break;
                 // placeSelectedCardInManaPools(clickedCard, clickIndex);
                 break;
                 
