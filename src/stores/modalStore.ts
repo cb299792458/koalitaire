@@ -1,20 +1,23 @@
 import { reactive } from 'vue'
 import TestModal from '../components/TestModal.vue'
 import CompostModal from '../components/CompostModal.vue'
+import StartModal from '../components/StartModal.vue'
 
-export type ModalName = 'test' | 'compost'
+export type ModalName = 'test' | 'compost' | 'start'
 
 interface ModalState {
     currentModal: {
         component: any
         props?: Record<string, any>
+        keepOpen?: boolean
     } | null
 }
 
 // Map of modal names to components
 const modals: Record<ModalName, any> = {
     test: TestModal,
-    compost: CompostModal
+    compost: CompostModal,
+    start: StartModal,
 }
 
 // Reactive state for the current modal
@@ -23,10 +26,10 @@ const state = reactive<ModalState>({
 })
 
 // Open a modal by name, optionally passing props
-export function openModal(name: ModalName, props: Record<string, any> = {}) {
+export function openModal(name: ModalName, props: Record<string, any> = {}, keepOpen?: boolean) {
     const component = modals[name]
     if (component) {
-        state.currentModal = { component, props }
+        state.currentModal = { component, props, keepOpen }
     } else {
         console.warn(`Modal "${name}" does not exist.`)
     }

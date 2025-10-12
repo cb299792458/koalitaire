@@ -1,9 +1,10 @@
 import Card from "./Card";
 
-import koaPortrait from "../assets/portraits/koa.png";
+import koaPortrait from "/player_portraits/koa.png";
+import platypusPortrait from "/enemy_portraits/platypus.png";
 import { suits } from "./Card";
 
-interface PlayerParams {
+export interface PlayerParams {
     name: string;
     portrait: string;
 
@@ -13,7 +14,6 @@ interface PlayerParams {
     strength: number;
 
     health: number;
-    armor: number;
     gold: number;
 
     makeDeck: () => Card[];
@@ -28,28 +28,27 @@ class Player {
     intelligence: number;
     strength: number;
 
-    maxHealth: number;
     health: number;
-    armor: number;
+    maxHealth: number;
     gold: number;
 
     deck: Card[];
 
     constructor(params: PlayerParams) {
-        this.name = params.name;
-        this.portrait = params.portrait;
+        const { name, portrait, strength, dexterity, intelligence, charisma, health, gold, makeDeck } = params;
+        this.name = name;
+        this.portrait = portrait;
 
-        this.strength = params.strength;
-        this.dexterity = params.dexterity;
-        this.intelligence = params.intelligence;
-        this.charisma = params.charisma;
+        this.strength = strength;
+        this.dexterity = dexterity;
+        this.intelligence = intelligence;
+        this.charisma = charisma;
 
-        this.maxHealth = params.health;
-        this.health = params.health;
-        this.armor = params.armor;
-        this.gold = params.gold;
+        this.maxHealth = health;
+        this.health = health;
+        this.gold = gold;
 
-        this.deck = params.makeDeck();
+        this.deck = makeDeck();
     }
 }
 
@@ -63,7 +62,6 @@ export const koaParams: PlayerParams = {
     strength: 3,
 
     health: 100,
-    armor: 5,
     gold: 150,
 
     makeDeck: () => {
@@ -75,6 +73,21 @@ export const koaParams: PlayerParams = {
         }
         return deck;
     }
+};
+
+export const nextCharacterParams: PlayerParams = {
+    name: "Next Character",
+    portrait: platypusPortrait,
+
+    charisma: 0,
+    dexterity: 0,
+    intelligence: 0,
+    strength: 0,
+
+    health: 0,
+    gold: 0,
+
+    makeDeck: () => [] // Placeholder for next character's deck
 };
 
 export default Player;

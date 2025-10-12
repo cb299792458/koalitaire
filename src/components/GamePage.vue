@@ -4,7 +4,16 @@
     import useGameState from '../composables/useGameState';
     import { AREAS, type Area } from '../models/Areas';
     import ModalManager from './ModalManager.vue';
+    import { onMounted, ref, type Ref } from 'vue';
+    import type Player from '../models/Player';
+    import { openModal } from '../stores/modalStore';
+    import PlayerInfo from './PlayerInfo.vue';
 
+    const player: Ref<Player | null> = ref(null);
+    const setPlayer = (newPlayer: Player) => {
+        player.value = newPlayer;
+    };
+        
     const {
         selectedCard,
         deck,
@@ -31,11 +40,20 @@
             cardIndex,
         );
     }
+
+    onMounted(() => {
+        console.log(player)
+        openModal(
+            'start',
+            { setPlayer },
+            true, // keepOpen
+        );
+    })
 </script>
 
 <template>
     <div class="game-page" @click="onClick({ card: null, area: AREAS.Board, cardIndex: -1 })">
-        <ModalManager />
+        <ModalManager/>
         <div class="game-header">
             <h1>Koalitaire Game</h1>
         </div>
@@ -43,6 +61,7 @@
         <div class="game-main">
             <div class="game-left">
                 <h1>Player</h1>
+                <PlayerInfo :player="player" />
             </div>
 
             <div class="game-middle">

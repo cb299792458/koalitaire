@@ -5,7 +5,7 @@
 </script>
 
 <template>
-    <div v-if="state.currentModal" class="modal-overlay" @click.self="closeModal">
+    <div v-if="state.currentModal" class="modal-overlay" @click.self="state.currentModal.keepOpen ? null : closeModal()">
         <component
             :is="state.currentModal.component"
             v-bind="state.currentModal.props"
