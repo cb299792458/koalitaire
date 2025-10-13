@@ -30,34 +30,34 @@ const doNothing: EnemyActionParams = {
 
 const weakAttack: EnemyActionParams = {
     name: "Weak Attack",
-    description: "The enemy attacks you for 1 damage, plus its attack bonus.",
+    description: "The enemy attacks you for 1 damage, plus its attack.",
     effect: (enemy, player) => {
-        player.health -= 1 + enemy.attackBonus;
+        player.health -= 1 + enemy.attack;
     }
 }
 
 const strongAttack: EnemyActionParams = {
     name: "Strong Attack",
-    description: "The enemy attacks you for 3 damage, plus its attack bonus.",
+    description: "The enemy attacks you for 3 damage, plus its attack.",
     effect: (enemy, player) => {
-        player.health -= 3 + enemy.attackBonus;
+        player.health -= 3 + enemy.attack;
     }
 }
 
 const block: EnemyActionParams = {
     name: "Block",
-    description: "The enemy blocks for 2, plus its defense bonus.",
+    description: "The enemy blocks for 2, plus its armor.",
     effect: (enemy) => {
-        enemy.block += 2 + enemy.defenseBonus;
+        enemy.block += 2 + enemy.armor;
     }
 }
 
 const buff: EnemyActionParams = {
     name: "Buff",
-    description: "The enemy buffs itself, increasing its attack and defense bonuses by 1.",
+    description: "The enemy buffs itself, increasing its attack and armor by 1.",
     effect: (enemy) => {
-        enemy.attackBonus += 1;
-        enemy.defenseBonus += 1;
+        enemy.attack += 1;
+        enemy.armor += 1;
     }
 }
 

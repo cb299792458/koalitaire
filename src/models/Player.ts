@@ -8,10 +8,11 @@ export interface PlayerParams {
     name: string;
     portrait: string;
 
-    charisma: number;
-    dexterity: number;
-    intelligence: number;
-    strength: number;
+    appeal: number;
+    attack: number;
+    armor: number;
+    agility: number;
+    arcane: number;
 
     health: number;
     gold: number;
@@ -23,10 +24,11 @@ class Player {
     name: string;
     portrait: string;
 
-    charisma: number;
-    dexterity: number;
-    intelligence: number;
-    strength: number;
+    appeal: number;
+    attack: number;
+    armor: number;
+    agility: number;
+    arcane: number;
 
     health: number;
     maxHealth: number;
@@ -35,14 +37,15 @@ class Player {
     deck: Card[];
 
     constructor(params: PlayerParams) {
-        const { name, portrait, strength, dexterity, intelligence, charisma, health, gold, makeDeck } = params;
+        const { name, portrait, appeal, attack, armor, agility, arcane, health, gold, makeDeck } = params;
         this.name = name;
         this.portrait = portrait;
 
-        this.strength = strength;
-        this.dexterity = dexterity;
-        this.intelligence = intelligence;
-        this.charisma = charisma;
+        this.appeal = appeal;
+        this.attack = attack;
+        this.armor = armor;
+        this.agility = agility;
+        this.arcane = arcane;
 
         this.maxHealth = health;
         this.health = health;
@@ -56,10 +59,11 @@ export const koaParams: PlayerParams = {
     name: "Koa XIII",
     portrait: koaPortrait,
 
-    charisma: 5,
-    dexterity: 3,
-    intelligence: 3,
-    strength: 3,
+    appeal: 5,
+    attack: 3,
+    armor: 3,
+    agility: 3,
+    arcane: 3,
 
     health: 100,
     gold: 150,
@@ -79,10 +83,11 @@ export const nextCharacterParams: PlayerParams = {
     name: "Next Character",
     portrait: platypusPortrait,
 
-    charisma: 0,
-    dexterity: 0,
-    intelligence: 0,
-    strength: 0,
+    appeal: 0,
+    attack: 0,
+    armor: 0,
+    agility: 0,
+    arcane: 0,
 
     health: 0,
     gold: 0,

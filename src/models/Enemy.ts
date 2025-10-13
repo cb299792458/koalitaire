@@ -19,8 +19,8 @@ class Enemy {
     actions: number;
     impendingActions: EnemyAction[];
 
-    attackBonus: number;
-    defenseBonus: number;
+    attack: number;
+    armor: number;
 
     constructor(name: string, portrait: string, health: number, makeDeck: () => EnemyAction[]) {
         this.name = name;
@@ -33,8 +33,8 @@ class Enemy {
         this.actions = 1;
         this.impendingActions = [];
 
-        this.attackBonus = 0;
-        this.defenseBonus = 0;
+        this.attack = 0;
+        this.armor = 0;
     }
 }
 

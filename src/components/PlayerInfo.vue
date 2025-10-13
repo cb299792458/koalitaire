@@ -12,10 +12,11 @@ import type Player from '../models/Player';
         <img :src="props.player.portrait" alt="Player Portrait" width="100%"/>
         <p>Health: {{ props.player.health }} / {{ props.player.maxHealth }}</p>
         
-        <p>Strength: {{  props.player.strength }}</p>
-        <p>Dexterity: {{  props.player.dexterity }}</p>
-        <p>Intelligence: {{ props.player.intelligence }}</p>
-        <p>Charisma: {{ props.player.charisma }}</p>
+        <p>Appeal: {{ props.player.appeal }}</p>
+        <p>Attack: {{ props.player.attack }}</p>
+        <p>Armor: {{ props.player.armor }}</p>
+        <p>Agility: {{ props.player.agility }}</p>
+        <p>Arcane: {{ props.player.arcane }}</p>
         
         <p>Gold: {{  props.player.gold }}</p>
         <p>Deck Size: {{ props.player.deck.length }}</p>
