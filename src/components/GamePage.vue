@@ -4,15 +4,26 @@
     import useGameState from '../composables/useGameState';
     import { AREAS, type Area } from '../models/Areas';
     import ModalManager from './ModalManager.vue';
-    import { onMounted, ref, type Ref } from 'vue';
+    import { onMounted, ref, watch, type Ref } from 'vue';
     import type Player from '../models/Player';
     import { openModal } from '../stores/modalStore';
     import PlayerInfo from './PlayerInfo.vue';
-
+    import EnemyInfo from './EnemyInfo.vue';
+    import Enemy from '../models/Enemy';
+    import makeScenario from '../game/makeScenario';
     const player: Ref<Player | null> = ref(null);
     const setPlayer = (newPlayer: Player) => {
         player.value = newPlayer;
     };
+    const enemy: Ref<Enemy | null> = ref(null);
+    const scenario = makeScenario();
+    const level: Ref<number> = ref(0);
+
+    watch(player, () => level.value += 1);
+    watch(level, () => {
+        if (!scenario[level.value]) return;
+        enemy.value = scenario[level.value]!.enemy;
+    })
         
     const {
         selectedCard,
@@ -42,7 +53,6 @@
     }
 
     onMounted(() => {
-        console.log(player)
         openModal(
             'start',
             { setPlayer },
@@ -132,6 +142,7 @@
 
             <div class="game-right">
                 <h1>Enemy</h1>
+                <EnemyInfo :enemy="enemy" />
             </div>
         </div>
 

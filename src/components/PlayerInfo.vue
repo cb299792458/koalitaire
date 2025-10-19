@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type Player from '../models/Player';
+    import type Player from '../models/Player';
 
     const props = defineProps<{
         player: Player | null;

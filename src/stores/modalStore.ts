@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+import { markRaw, reactive } from 'vue'
 import TestModal from '../components/TestModal.vue'
 import CompostModal from '../components/CompostModal.vue'
 import StartModal from '../components/StartModal.vue'
@@ -15,9 +15,9 @@ interface ModalState {
 
 // Map of modal names to components
 const modals: Record<ModalName, any> = {
-    test: TestModal,
-    compost: CompostModal,
-    start: StartModal,
+    test: markRaw(TestModal),
+    compost: markRaw(CompostModal),
+    start: markRaw(StartModal),
 }
 
 // Reactive state for the current modal
@@ -44,3 +44,4 @@ export function closeModal() {
 export function useModalState() {
     return state
 }
+
