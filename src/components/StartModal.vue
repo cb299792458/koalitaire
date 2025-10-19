@@ -2,7 +2,7 @@
     import Player, { koaParams, nextCharacterParams, type PlayerParams } from '../models/Player';
 
     const props = defineProps<{
-        setPlayer: (player: Player) => void;
+        onSelect: (player: Player) => void;
     }>();
 
     const characters = [
@@ -14,8 +14,9 @@
         (e: 'close'): void;
     }>();
 
-    function selectCharacter(character: { name: string; params: PlayerParams }) {
-        props.setPlayer(new Player(character.params));
+    function selectCharacter(params: PlayerParams) {
+        const player = new Player(params);
+        props.onSelect(player);
         emit('close');
     }
 </script>
@@ -30,7 +31,7 @@
                 v-for="character in characters"
                 :key="character.name"
                 class="character-item"
-                @click="selectCharacter(character)"
+                @click="selectCharacter(character.params)"
             >
                 <img :src="character.params.portrait" alt="Character Portrait" height="100px"/>
                 {{ character.name }}

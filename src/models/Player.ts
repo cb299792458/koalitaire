@@ -23,6 +23,7 @@ export interface PlayerParams {
 class Player {
     name: string;
     portrait: string;
+    level: number;
 
     appeal: number;
     attack: number;
@@ -40,6 +41,7 @@ class Player {
         const { name, portrait, appeal, attack, armor, agility, arcane, health, gold, makeDeck } = params;
         this.name = name;
         this.portrait = portrait;
+        this.level = 1;
 
         this.appeal = appeal;
         this.attack = attack;

@@ -4,27 +4,15 @@
     import useGameState from '../composables/useGameState';
     import { AREAS, type Area } from '../models/Areas';
     import ModalManager from './ModalManager.vue';
-    import { onMounted, ref, watch, type Ref } from 'vue';
-    import type Player from '../models/Player';
+    import { onMounted, watch } from 'vue';
     import { openModal } from '../stores/modalStore';
     import PlayerInfo from './PlayerInfo.vue';
     import EnemyInfo from './EnemyInfo.vue';
-    import Enemy from '../models/Enemy';
     import makeScenario from '../game/makeScenario';
-    const player: Ref<Player | null> = ref(null);
-    const setPlayer = (newPlayer: Player) => {
-        player.value = newPlayer;
-    };
-    const enemy: Ref<Enemy | null> = ref(null);
-    const scenario = makeScenario();
-    const level: Ref<number> = ref(0);
+    import type Player from '../models/Player';
 
-    watch(player, () => level.value += 1);
-    watch(level, () => {
-        if (!scenario[level.value]) return;
-        enemy.value = scenario[level.value]!.enemy;
-    })
-        
+    const scenario = makeScenario();
+
     const {
         selectedCard,
         deck,
@@ -35,8 +23,16 @@
         manaPools,
         updateGameState,
         mana,
+        player,
+        enemy,
     } = useGameState();
-
+        
+    watch(() => player.value?.level, () => {
+        if (!player.value) return;
+        if (!scenario[player.value.level]) return;
+        enemy.value = scenario[player.value.level]!.enemy;
+    })
+        
     function onClick(payload: {
         card: Card | null;
         area: Area;
@@ -55,7 +51,7 @@
     onMounted(() => {
         openModal(
             'start',
-            { setPlayer },
+            { onSelect: (newPlayer: Player) => player.value = newPlayer},
             true, // keepOpen
         );
     })
@@ -95,7 +91,7 @@
                         <CardStack
                             :cards="[]"
                             :name="'Cast Card'"
-                            @mousedown.prevent
+                            @click="onClick"
                         />
                         <CardStack
                             :cards="[]"

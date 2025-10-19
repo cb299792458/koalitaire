@@ -2,10 +2,12 @@ import { ref, toRaw, type Ref } from 'vue';
 import Card, { suits } from '../models/Card';
 import { AREAS, type Area } from '../models/Areas';
 import { openModal } from '../stores/modalStore';
+import type Enemy from '../models/Enemy';
+import type Player from '../models/Player';
 
 let gameStateInstance: GameState | null = null; // singleton
 
-const TABLEAU_SIZE: number = 8;
+const TABLEAU_SIZE: number = 7;
 
 interface GameState {
     selectedCard: Ref<Card | null>;
@@ -18,6 +20,8 @@ interface GameState {
     mana: Ref<Record<string, number>>;
     manaPools: Ref<Record<string, Card[]>>;
     updateGameState: (card: Card | null, area: Area, arrayIndex?: number, cardIndex?: number) => void;
+    player: Ref<Player | null>;
+    enemy: Ref<Enemy | null>;
 }
 
 function useGameState() {
@@ -25,6 +29,8 @@ function useGameState() {
     
     const selectedCard: Ref<Card | null> = ref<Card | null>(null);
     function setSelectedCard (card: Card | null): void { gameStateInstance!.selectedCard.value = card };
+    const player: Ref<Player | null> = ref(null);
+    const enemy: Ref<Enemy | null> = ref(null);
 
     const deck = ref<Card[]>([]);
     for (let rank = 1; rank <= 13; rank++) {
@@ -37,7 +43,7 @@ function useGameState() {
     const compost = ref<Card[]>([]);
     const trash = ref<Card[]>([]);
     const hand = ref<Card[]>([]);
-    const mana = ref<Record<string, number>>(Object.fromEntries(suits.map(suit => [suit, 0])) as Record<typeof suits[number], number>);
+    const mana = ref<Record<string, number>>(Object.fromEntries(suits.map(suit => [suit, 100])) as Record<typeof suits[number], number>);
     const manaPools = ref<Record<string, Card[]>>(Object.fromEntries(suits.map(suit => [suit, [] as Card[]])) as Record<typeof suits[number], Card[]>);
 
     const tableau = ref<Card[][]>(Array.from({ length: TABLEAU_SIZE }, () => []));
@@ -49,19 +55,7 @@ function useGameState() {
             }
         }
         if (tableau.value[i]!.length > 0) tableau.value[i]![tableau.value[i]!.length - 1]!.revealed = true; // reveal the last card in each tableau column
-    }
-    // dealRowToTableau();
-
-    // function dealRowToTableau(): void {
-    //     for (let i = 0; i < TABLEAU_SIZE; i++) {
-    //         if (deck.value.length > 0) {
-    //             const card = deck.value.pop()!;
-    //             tableau.value[i]!.push(card);
-    //             card.revealed = true;
-    //         }
-    //     }
-    // }
-    
+    }    
 
     function shuffleDeck(): void {
         for (let i = deck.value.length - 1; i > 0; i--) {
@@ -130,6 +124,11 @@ function useGameState() {
             case 'Burn Card':
                 burnCard();
                 break;
+            
+            case 'Cast Card':
+                castCard();
+                break;
+                
             case AREAS.Trash:
             default:
                 break;
@@ -197,41 +196,6 @@ function useGameState() {
         setSelectedCard(null);
     }
 
-    // function placeSelectedCardInManaPools(clickedCard: Card | null, clickIndex?: number): void {
-    //     if (!selectedCard.value || clickIndex === undefined) return;
-    //     const suit = suits[clickIndex];
-        
-    //     if (!suit || !manaPools.value[suit] || suit !== selectedCard.value.suit) return;
-    //     if (clickedCard?.rank) {
-    //         if (selectedCard.value?.rank !== clickedCard.rank + 1) return;
-    //     } else {
-    //         if (selectedCard.value.rank !== 1) return;
-    //     }
-
-    //     // move selectedCard from hand
-    //     const handIndex = hand.value.indexOf(selectedCard.value);
-    //     if (handIndex !== -1) {
-    //         hand.value.splice(handIndex, 1);
-    //         manaPools.value[suit].push(selectedCard.value);
-    //     } else {
-    //         // move selectedCard from tableau
-    //         const tableauIndex = tableau.value.findIndex(col => col.includes(selectedCard.value!));
-    //         if (!tableau.value[tableauIndex]) return;
-    //         if (tableauIndex !== -1) {
-    //             const selectedCardIndex = tableau.value[tableauIndex]!.indexOf(selectedCard.value);
-    //             if (selectedCardIndex !== -1) {
-    //                 manaPools.value[suit].push(selectedCard.value);
-    //                 tableau.value[tableauIndex].splice(selectedCardIndex, 1);
-    //                 if (tableau.value[tableauIndex].length) tableau.value[tableauIndex][tableau.value[tableauIndex].length - 1]!.revealed = true;
-    //             } else {
-    //                 throw new Error(`Card not found in tableau: ${selectedCard.value.toString()}`);
-    //             }
-    //         } 
-    //     }
-
-    //     setSelectedCard(null);
-    // }
-
     function burnCard(): void {
         const scv = selectedCard.value;
         if (!scv) return;
@@ -270,6 +234,48 @@ function useGameState() {
         setSelectedCard(null);
     }
 
+    function castCard(): void {
+        const scv = selectedCard.value;
+        if (!scv) return;
+        const { rank, suit } = scv;
+
+
+        if (!mana.value[suit]) return;
+        if (mana.value[suit] < rank) return; // not enough mana to cast
+        if (!enemy.value || !player.value) return;
+        
+        const handIndex = hand.value.indexOf(scv);
+        const tableauIndex = tableau.value.findIndex(col => col.includes(scv));
+        let tableauJndex = -1;
+        if (tableauIndex !== -1) {
+            tableauJndex = tableau.value[tableauIndex]!.indexOf(scv);
+        }
+        
+        if (handIndex === -1 && tableauJndex === -1) return;
+        if (tableauIndex !== -1 && tableauJndex !== tableau.value[tableauIndex]!.length - 1) return;
+        
+        if (tableauIndex !== -1) {
+            tableau.value[tableauIndex]!.splice(tableauJndex, 1);
+            if (tableau.value[tableauIndex]!.length) tableau.value[tableauIndex]![tableau.value[tableauIndex]!.length - 1]!.revealed = true;
+        } else {
+            hand.value.splice(handIndex, 1);
+        }
+
+        mana.value[suit] -= rank;
+        scv.effect(player.value, enemy.value);
+
+        const manaColumn = manaPools.value[suit];
+        if (!manaColumn) return;
+        if (manaColumn.length === 0) {
+            manaColumn.push(scv);
+        } else {
+            const lastCard = manaColumn[manaColumn.length - 1];
+            if (rank > lastCard!.rank) manaColumn.push(scv);
+        }
+
+        setSelectedCard(null);
+    }
+
     gameStateInstance = {
         selectedCard,
         setSelectedCard,
@@ -281,6 +287,8 @@ function useGameState() {
         mana,
         manaPools,
         updateGameState,
+        player,
+        enemy,
     };
 
     return gameStateInstance;
