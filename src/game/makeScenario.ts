@@ -6,8 +6,6 @@ export default function makeScenario () {
         null, 
         { enemy: new Enemy(name, portrait, health, makeDeck) },
         { enemy: new Enemy(name, portrait, health, makeDeck) },
-        { enemy: new Enemy(name, portrait, health, makeDeck) },
-        { enemy: new Enemy(name, portrait, health, makeDeck) },
         { enemy: new Enemy('Elite ' + name, portrait, 3 * health, makeDeck) },
     ]
 }
