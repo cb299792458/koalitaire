@@ -7,7 +7,7 @@ class Card {
     rank: number;
     suit: string;
     revealed: boolean = false;
-    description: string = "This card has not yet been implemented, playing it will deal one damage to the enemy.";
+    description: string;
     effect: (player: Player, enemy: Enemy) => void;
     
     defaultEffect (player: Player, enemy: Enemy): void {
@@ -22,7 +22,7 @@ class Card {
     constructor(rank: number, suit: string, description?: string, effect?: (player: Player, enemy: Enemy) => void) {
         this.rank = rank;
         this.suit = suit;
-        this.description = description || this.description;
+        this.description = description || `NOT YET IMPLEMENTED\nDEALS ${this.rank} DAMAGE`;
         this.effect = effect || this.defaultEffect;
     }
 }
