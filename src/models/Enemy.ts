@@ -58,6 +58,13 @@ class Enemy {
         this.impendingActions = [];
         this.actions += 1; // Increment actions for the next turn
     }
+
+    takeDamage(damage: number): void {
+        const effectiveDamage = Math.max(0, damage - this.block);
+        this.health -= effectiveDamage;
+        this.block -= effectiveDamage;
+        if (this.health < 0) this.health = 0; // Prevent negative health
+    }
 }
 
 export default Enemy;

@@ -11,9 +11,8 @@ class Card {
     effect: (player: Player, enemy: Enemy) => void;
     
     defaultEffect (player: Player, enemy: Enemy): void {
-        enemy.health -= this.rank;
-        if (enemy.health <= 0) {
-            enemy.health = 0;
+        enemy.takeDamage(this.rank);
+        if (!enemy.health) {
             player.level += 1;
             player.gold += 10;
         }
