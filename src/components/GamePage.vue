@@ -25,12 +25,14 @@
         mana,
         player,
         enemy,
+        startCombat,
     } = useGameState();
         
     watch(() => player.value?.level, () => {
         if (!player.value) return;
         if (!scenario[player.value.level]) return;
         enemy.value = scenario[player.value.level]!.enemy;
+        startCombat();
     })
         
     function onClick(payload: {
@@ -51,7 +53,7 @@
     onMounted(() => {
         openModal(
             'start',
-            { onSelect: (newPlayer: Player) => player.value = newPlayer},
+            { onSelect: (newPlayer: Player) => player.value = newPlayer },
             true, // keepOpen
         );
     })

@@ -14,6 +14,9 @@
 <template>
     <div class="card-view" :class="{ selected: selectedCard === card }">
         <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
-        <p v-else>{{ symbols[card.rank] || card.rank }}{{ card.suit }}</p>
+        <p v-else>
+            {{ symbols[card.rank] || card.rank }}{{ card.suit }} <br />
+            <span class="card-description">{{ card.description }}</span>
+        </p>
     </div>
 </template>

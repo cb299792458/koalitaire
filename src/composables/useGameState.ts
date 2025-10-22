@@ -22,6 +22,7 @@ interface GameState {
     updateGameState: (card: Card | null, area: Area, arrayIndex?: number, cardIndex?: number) => void;
     player: Ref<Player | null>;
     enemy: Ref<Enemy | null>;
+    startCombat: () => void;
 }
 
 function useGameState() {
@@ -33,12 +34,6 @@ function useGameState() {
     const enemy: Ref<Enemy | null> = ref(null);
 
     const deck = ref<Card[]>([]);
-    for (let rank = 1; rank <= 13; rank++) {
-        for (const suit of suits) {
-            deck.value.push(new Card(rank, suit));
-        }
-    }
-    shuffleDeck();
 
     const compost = ref<Card[]>([]);
     const trash = ref<Card[]>([]);
@@ -47,15 +42,18 @@ function useGameState() {
     const manaPools = ref<Record<string, Card[]>>(Object.fromEntries(suits.map(suit => [suit, [] as Card[]])) as Record<typeof suits[number], Card[]>);
 
     const tableau = ref<Card[][]>(Array.from({ length: TABLEAU_SIZE }, () => []));
-    for (let i = 0; i < TABLEAU_SIZE; i++) {
-        for (let j = 0; j <= i; j++) {
-            if (deck.value.length > 0) {
-                const card = deck.value.pop()!;
-                tableau.value[i]!.push(card);
+
+    function dealTableau(): void {
+        for (let i = 0; i < TABLEAU_SIZE; i++) {
+            for (let j = 0; j <= i; j++) {
+                if (deck.value.length > 0) {
+                    const card = deck.value.pop()!;
+                    tableau.value[i]!.push(card);
+                }
             }
-        }
-        if (tableau.value[i]!.length > 0) tableau.value[i]![tableau.value[i]!.length - 1]!.revealed = true; // reveal the last card in each tableau column
-    }    
+            if (tableau.value[i]!.length > 0) tableau.value[i]![tableau.value[i]!.length - 1]!.revealed = true; // reveal the last card in each tableau column
+        }    
+    }
 
     function shuffleDeck(): void {
         for (let i = deck.value.length - 1; i > 0; i--) {
@@ -90,6 +88,13 @@ function useGameState() {
                 break; // no more cards to draw
             }
         }
+    }
+
+    function startCombat(): void {
+        deck.value = player.value?.deck || [];
+        shuffleDeck();
+        dealTableau();
+        drawCards(3);
     }
 
     function updateGameState(clickedCard: Card | null, clickArea: Area, clickIndex?: number, clickJndex?: number): void {
@@ -289,6 +294,7 @@ function useGameState() {
         updateGameState,
         player,
         enemy,
+        startCombat,
     };
 
     return gameStateInstance;
