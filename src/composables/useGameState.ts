@@ -23,6 +23,7 @@ interface GameState {
     player: Ref<Player | null>;
     enemy: Ref<Enemy | null>;
     startCombat: () => void;
+    endTurn: () => void;
 }
 
 function useGameState() {
@@ -49,6 +50,8 @@ function useGameState() {
                 if (deck.value.length > 0) {
                     const card = deck.value.pop()!;
                     tableau.value[i]!.push(card);
+
+                    card.revealed = true; // freecell style test
                 }
             }
             if (tableau.value[i]!.length > 0) tableau.value[i]![tableau.value[i]!.length - 1]!.revealed = true; // reveal the last card in each tableau column
@@ -94,7 +97,22 @@ function useGameState() {
         deck.value = player.value?.deck || [];
         shuffleDeck();
         dealTableau();
+
+        startTurn();
+    }
+    
+    function startTurn(): void {
         drawCards(3);
+        if (!enemy.value) return;
+        enemy.value.loadActions(enemy.value.actions);
+    }
+    
+    function endTurn(): void {
+        if (!player.value || !enemy.value) return;
+        enemy.value.block = 0;
+        enemy.value.executeActions(player.value);
+
+        startTurn();
     }
 
     function updateGameState(clickedCard: Card | null, clickArea: Area, clickIndex?: number, clickJndex?: number): void {
@@ -295,6 +313,7 @@ function useGameState() {
         player,
         enemy,
         startCombat,
+        endTurn,
     };
 
     return gameStateInstance;

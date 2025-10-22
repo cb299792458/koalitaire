@@ -1,4 +1,5 @@
 import EnemyAction, { enemyActions } from "./EnemyAction";
+import type Player from "./Player";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 
 interface EnemyParams {
@@ -36,6 +37,27 @@ class Enemy {
         this.attack = 0;
         this.armor = 0;
     }
+
+    loadActions(actions: number): void {
+        const deckCopy = [...this.deck];
+
+        for (let i = 0; i < actions; i++) {
+            if (deckCopy.length === 0) continue;
+            const randomIndex = Math.floor(Math.random() * deckCopy.length);
+            const action = deckCopy.splice(randomIndex, 1)[0];
+            if (action) {
+                this.impendingActions.push(action);
+            }
+        }
+    }
+
+    executeActions(player: Player): void {
+        for (const action of this.impendingActions) {
+            action.effect(this, player);
+        }
+        this.impendingActions = [];
+        this.actions += 1; // Increment actions for the next turn
+    }
 }
 
 export default Enemy;
@@ -44,6 +66,7 @@ export const platypusParams: EnemyParams = {
     name: "Platypus",
     portrait: platypusPortrait,
     health: 10,
+
     makeDeck: () => {
         const deck: EnemyAction[] = [];
         const cards: Partial<Record<keyof typeof enemyActions, number>> = {

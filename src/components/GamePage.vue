@@ -26,6 +26,7 @@
         player,
         enemy,
         startCombat,
+        endTurn,
     } = useGameState();
         
     watch(() => player.value?.level, () => {
@@ -154,6 +155,7 @@
                     @click="onClick"
                 />
             </div>
+            <button @click="endTurn">End Turn</button>
         </div>
     </div>
 </template>
