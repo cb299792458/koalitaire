@@ -11,6 +11,7 @@
         <h2>{{ props.player.name }}</h2>
         <img :src="props.player.portrait" alt="Player Portrait" width="100%"/>
         <p>Health: {{ props.player.health }} / {{ props.player.maxHealth }}</p>
+        <p>Block: {{ props.player.block }}</p>
         
         <p>Appeal: {{ props.player.appeal }}</p>
         <p>Attack: {{ props.player.attack }}</p>

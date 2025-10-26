@@ -39,7 +39,7 @@ function useGameState() {
     const compost = ref<Card[]>([]);
     const trash = ref<Card[]>([]);
     const hand = ref<Card[]>([]);
-    const mana = ref<Record<string, number>>(Object.fromEntries(suits.map(suit => [suit, 1100])) as Record<typeof suits[number], number>);
+    const mana = ref<Record<string, number>>(Object.fromEntries(suits.map(suit => [suit, 0])) as Record<typeof suits[number], number>);
     const manaPools = ref<Record<string, Card[]>>(Object.fromEntries(suits.map(suit => [suit, [] as Card[]])) as Record<typeof suits[number], Card[]>);
 
     const tableau = ref<Card[][]>(Array.from({ length: TABLEAU_SIZE }, () => []));
@@ -103,6 +103,10 @@ function useGameState() {
     
     function startTurn(): void {
         drawCards(3);
+
+        if (!player.value) return;
+        player.value.block = 0;
+        
         if (!enemy.value) return;
         enemy.value.loadActions(enemy.value.actions);
     }

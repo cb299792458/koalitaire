@@ -61,8 +61,8 @@ class Enemy {
 
     takeDamage(damage: number): void {
         const effectiveDamage = Math.max(0, damage - this.block);
+        this.block = Math.max(0, this.block - damage);
         this.health -= effectiveDamage;
-        this.block -= effectiveDamage;
         if (this.health < 0) this.health = 0; // Prevent negative health
     }
 }

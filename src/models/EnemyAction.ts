@@ -32,7 +32,7 @@ const weakAttack: EnemyActionParams = {
     name: "Weak Attack",
     description: "The enemy attacks you for 1 damage, plus its attack.",
     effect: (enemy, player) => {
-        player.health -= 1 + enemy.attack;
+        player.takeDamage(1 + enemy.attack);
     }
 }
 
@@ -40,7 +40,7 @@ const strongAttack: EnemyActionParams = {
     name: "Strong Attack",
     description: "The enemy attacks you for 3 damage, plus its attack.",
     effect: (enemy, player) => {
-        player.health -= 3 + enemy.attack;
+        player.takeDamage(3 + enemy.attack);
     }
 }
 

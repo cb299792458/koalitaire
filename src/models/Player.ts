@@ -33,6 +33,7 @@ class Player {
 
     health: number;
     maxHealth: number;
+    block: number;
     gold: number;
 
     deck: Card[];
@@ -51,9 +52,20 @@ class Player {
 
         this.maxHealth = health;
         this.health = health;
+        this.block = 0;
         this.gold = gold;
 
         this.deck = makeDeck();
+    }
+
+    takeDamage(amount: number): void {
+        const damage = Math.max(0, amount - this.block);
+        this.health -= damage;
+        this.block = Math.max(0, this.block - amount);
+        if (this.health <= 0) {
+            this.health = 0; // Ensure health doesn't go negative
+            console.warn(`${this.name} has been defeated!`);
+        }
     }
 }
 
