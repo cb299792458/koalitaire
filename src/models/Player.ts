@@ -3,6 +3,7 @@ import Card from "./Card";
 import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 import { suits } from "./Card";
+import { openMessageModal } from "../stores/modalStore";
 
 export interface PlayerParams {
     name: string;
@@ -64,7 +65,7 @@ class Player {
         this.block = Math.max(0, this.block - amount);
         if (this.health <= 0) {
             this.health = 0; // Ensure health doesn't go negative
-            console.warn(`${this.name} has been defeated!`);
+            openMessageModal('YOU DIED');
         }
     }
 }

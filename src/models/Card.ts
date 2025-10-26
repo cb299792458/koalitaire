@@ -1,3 +1,4 @@
+import { openMessageModal } from "../stores/modalStore";
 import type Enemy from "./Enemy";
 import type Player from "./Player";
 
@@ -17,8 +18,8 @@ class Card {
                 console.log('asdfsadf')
                 enemy.takeDamage(this.rank);
                 if (!enemy.health) {
+                    openMessageModal(`You defeated ${enemy.name}!`);
                     player.level += 1;
-                    player.gold += 10;
                 }
                 break;
             case "♥️":

@@ -2,8 +2,9 @@ import { markRaw, reactive } from 'vue'
 import TestModal from '../components/TestModal.vue'
 import CompostModal from '../components/CompostModal.vue'
 import StartModal from '../components/StartModal.vue'
+import MessageModal from '../components/MessageModal.vue'
 
-export type ModalName = 'test' | 'compost' | 'start'
+export type ModalName = 'test' | 'compost' | 'start' | 'message'
 
 interface ModalState {
     currentModal: {
@@ -18,6 +19,7 @@ const modals: Record<ModalName, any> = {
     test: markRaw(TestModal),
     compost: markRaw(CompostModal),
     start: markRaw(StartModal),
+    message: markRaw(MessageModal),
 }
 
 // Reactive state for the current modal
@@ -33,6 +35,10 @@ export function openModal(name: ModalName, props: Record<string, any> = {}, keep
     } else {
         console.warn(`Modal "${name}" does not exist.`)
     }
+}
+
+export function openMessageModal(message: string, keepOpen?: boolean) {
+    openModal('message', { message }, keepOpen)
 }
 
 // Close the current modal

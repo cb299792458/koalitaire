@@ -24,6 +24,7 @@ interface GameState {
     enemy: Ref<Enemy | null>;
     startCombat: () => void;
     endTurn: () => void;
+    giveMana: () => void;
 }
 
 function useGameState() {
@@ -122,7 +123,7 @@ function useGameState() {
     function updateGameState(clickedCard: Card | null, clickArea: Area, clickIndex?: number, clickJndex?: number): void {
         switch (clickArea) {
             case AREAS.Deck:
-                drawCards();
+                // drawCards();
                 // dealRowToTableau();
                 break;
 
@@ -303,6 +304,12 @@ function useGameState() {
         setSelectedCard(null);
     }
 
+    function giveMana(): void {
+        for (const suit of suits) {
+            mana.value[suit]! += 5;
+        }
+    }
+
     gameStateInstance = {
         selectedCard,
         setSelectedCard,
@@ -318,6 +325,7 @@ function useGameState() {
         enemy,
         startCombat,
         endTurn,
+        giveMana,
     };
 
     return gameStateInstance;
