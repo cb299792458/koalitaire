@@ -86,8 +86,11 @@ export const koaParams: PlayerParams = {
     makeDeck: () => {
         const deck: Card[] = [];
         for (const suit of suits) {
-            for (let rank = 1; rank <= 9; rank++) {
+            for (let rank = 1; rank <= 7; rank++) {
                 deck.push(new Card(rank, suit));
+                if (suit === '♥️') {
+                    deck.push(new Card(rank, suit));
+                }
             }
         }
         return deck;

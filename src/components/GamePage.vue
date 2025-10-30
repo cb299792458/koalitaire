@@ -22,12 +22,12 @@
         tableau,
         manaPools,
         updateGameState,
-        mana,
+        // mana,
         player,
         enemy,
         startCombat,
         endTurn,
-        giveMana,
+        // giveMana,
     } = useGameState();
         
     watch(() => player.value?.level, () => {
@@ -132,12 +132,12 @@
                             @click="onClick"
                         />
                     </div>
-                    <div class="mana-row">
+                    <!-- <div class="mana-row">
                         <p>Mana: </p>
                         <div v-for="(amount, suit) in mana" :key="suit" class="mana-suit">
                             <span>{{ suit }}: {{ amount }}</span>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
 
@@ -148,7 +148,7 @@
         </div>
 
         <div class="game-bottom">
-            <button @click="giveMana">Dev Mana</button>
+            <!-- <button @click="giveMana">Dev Mana</button> -->
             <div class="cards-hand">
                 <CardStack
                     :cards="hand"

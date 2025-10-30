@@ -17,14 +17,14 @@ interface GameState {
     trash: Ref<Card[]>;
     hand: Ref<Card[]>;
     tableau: Ref<Card[][]>;
-    mana: Ref<Record<string, number>>;
+    // mana: Ref<Record<string, number>>;
     manaPools: Ref<Record<string, Card[]>>;
     updateGameState: (card: Card | null, area: Area, arrayIndex?: number, cardIndex?: number) => void;
     player: Ref<Player | null>;
     enemy: Ref<Enemy | null>;
     startCombat: () => void;
     endTurn: () => void;
-    giveMana: () => void;
+    // giveMana: () => void;
 }
 
 function useGameState() {
@@ -40,7 +40,7 @@ function useGameState() {
     const compost = ref<Card[]>([]);
     const trash = ref<Card[]>([]);
     const hand = ref<Card[]>([]);
-    const mana = ref<Record<string, number>>(Object.fromEntries(suits.map(suit => [suit, 0])) as Record<typeof suits[number], number>);
+    // const mana = ref<Record<string, number>>(Object.fromEntries(suits.map(suit => [suit, 0])) as Record<typeof suits[number], number>);
     const manaPools = ref<Record<string, Card[]>>(Object.fromEntries(suits.map(suit => [suit, [] as Card[]])) as Record<typeof suits[number], Card[]>);
 
     const tableau = ref<Card[][]>(Array.from({ length: TABLEAU_SIZE }, () => []));
@@ -52,7 +52,6 @@ function useGameState() {
                     const card = deck.value.pop()!;
                     tableau.value[i]!.push(card);
 
-                    card.revealed = true; // freecell style test
                 }
             }
             if (tableau.value[i]!.length > 0) tableau.value[i]![tableau.value[i]!.length - 1]!.revealed = true; // reveal the last card in each tableau column
@@ -225,88 +224,91 @@ function useGameState() {
     }
 
     function burnCard(): void {
-        const scv = selectedCard.value;
-        if (!scv) return;
-        const { rank, suit } = scv;
-
-        const manaColumn = manaPools.value[suit];
-        if (!manaColumn) return;
-        
-        const handIndex = hand.value.indexOf(scv);
-        const tableauIndex = tableau.value.findIndex(col => col.includes(scv));
-        let tableauJndex = -1;
-        if (tableauIndex !== -1) {
-            tableauJndex = tableau.value[tableauIndex]!.indexOf(scv);
-        }
-
-        if (handIndex === -1 && tableauJndex === -1) return;
-        if (tableauIndex !== -1 && tableauJndex !== tableau.value[tableauIndex]!.length - 1) return;
-
-        if (manaColumn.length === 0) {
-            if (rank !== 1) return;
-        } else {
-            const lastCard = manaColumn[manaColumn.length - 1];
-            if (rank !== lastCard!.rank + 1) return;
-        }
-
-        if (tableauIndex !== -1) {
-            tableau.value[tableauIndex]!.splice(tableauJndex, 1);
-            if (tableau.value[tableauIndex]!.length) tableau.value[tableauIndex]![tableau.value[tableauIndex]!.length - 1]!.revealed = true;
-        } else {
-            hand.value.splice(handIndex, 1);
-        }
-
-        manaColumn.push(scv);
-
-        mana.value[suit]! += rank;
+        if (!canUseSelectedCard()) return;
+        moveCardToArea(selectedCard.value!, AREAS.ManaPools);
         setSelectedCard(null);
     }
 
     function castCard(): void {
         const scv = selectedCard.value;
         if (!scv) return;
-        const { rank, suit } = scv;
-
-
-        if (!mana.value[suit]) return;
-        if (mana.value[suit] < rank) return; // not enough mana to cast
         if (!enemy.value || !player.value) return;
-        
-        const handIndex = hand.value.indexOf(scv);
-        const tableauIndex = tableau.value.findIndex(col => col.includes(scv));
-        let tableauJndex = -1;
-        if (tableauIndex !== -1) {
-            tableauJndex = tableau.value[tableauIndex]!.indexOf(scv);
-        }
-        
-        if (handIndex === -1 && tableauJndex === -1) return;
-        if (tableauIndex !== -1 && tableauJndex !== tableau.value[tableauIndex]!.length - 1) return;
-        
-        if (tableauIndex !== -1) {
-            tableau.value[tableauIndex]!.splice(tableauJndex, 1);
-            if (tableau.value[tableauIndex]!.length) tableau.value[tableauIndex]![tableau.value[tableauIndex]!.length - 1]!.revealed = true;
-        } else {
-            hand.value.splice(handIndex, 1);
-        }
 
-        mana.value[suit] -= rank;
+        if (!canUseSelectedCard()) return;
         scv.effect(player.value, enemy.value);
 
-        const manaColumn = manaPools.value[suit];
-        if (!manaColumn) return;
-        if (manaColumn.length === 0) {
-            manaColumn.push(scv);
-        } else {
-            const lastCard = manaColumn[manaColumn.length - 1];
-            if (rank > lastCard!.rank) manaColumn.push(scv);
+        moveCardToArea(scv, AREAS.Compost); // move card to compost after casting
+        for (const card of manaPools.value[scv.suit]!) {
+            moveCardToArea(card, AREAS.Compost); // move all cards in mana pool to compost
         }
-
         setSelectedCard(null);
     }
 
-    function giveMana(): void {
-        for (const suit of suits) {
-            mana.value[suit]! += 5;
+    // function giveMana(): void {
+    //     for (const suit of suits) {
+    //         mana.value[suit]! += 5;
+    //     }
+    // }
+
+    function canUseSelectedCard(): boolean {
+        const scv = selectedCard.value;
+        if (!scv || !scv.revealed) return false;
+        const { rank, suit } = scv;
+
+        const { handIndex, tableauIndex, tableauJndex } = getCardIndices(selectedCard.value);
+        if (handIndex === -1) {
+            const tableauColumn = tableau.value[tableauIndex];
+            if (tableauJndex !== tableauColumn!.length - 1) return false; // can't use card from hand if it's not the last card in the tableau column
+        }
+
+        if (!manaPools.value[suit]) return false;
+        if (manaPools.value[suit].length === 0) return rank === 1;
+        return manaPools.value[suit][manaPools.value[suit].length - 1]!.rank + 1 === rank;
+    }
+
+    function getCardIndices(card: Card | null): { handIndex: number, tableauIndex: number, tableauJndex: number } {
+        if (!card) return { handIndex: -1, tableauIndex: -1, tableauJndex: -1 };
+
+        const handIndex = hand.value.indexOf(card);
+        const tableauIndex = tableau.value.findIndex(col => col.includes(card));
+        let tableauJndex = -1;
+        if (tableauIndex !== -1) {
+            tableauJndex = tableau.value[tableauIndex]!.indexOf(card);
+        }
+
+        return { handIndex, tableauIndex, tableauJndex };
+    }
+
+    function moveCardToArea(card: Card, area: Area): void {
+        const { handIndex, tableauIndex, tableauJndex } = getCardIndices(card);
+        if (handIndex !== -1) {
+            hand.value.splice(handIndex, 1);
+        } else if (tableauIndex !== -1) {
+            tableau.value[tableauIndex]!.splice(tableauJndex, 1);
+            if (tableau.value[tableauIndex]!.length) tableau.value[tableauIndex]![tableau.value[tableauIndex]!.length - 1]!.revealed = true;
+        } else {
+            // card is in mana pools
+            const manaPool = manaPools.value[card.suit];
+            if (!manaPool) return;
+            const manaIndex = manaPool.indexOf(card);
+            if (manaIndex !== -1) {
+                manaPools.value[card.suit] = [
+                    ...manaPool.slice(0, manaIndex),
+                    ...manaPool.slice(manaIndex + 1)
+                ];
+            }
+        }
+
+        switch (area) {
+            case AREAS.Compost:
+                compost.value.push(card);
+                break;
+            case AREAS.Trash:
+                trash.value.push(card);
+                break;
+            case AREAS.ManaPools:
+                manaPools.value[card.suit]!.push(card);
+                break;
         }
     }
 
@@ -318,14 +320,14 @@ function useGameState() {
         trash,
         hand,
         tableau,
-        mana,
+        // mana,
         manaPools,
         updateGameState,
         player,
         enemy,
         startCombat,
         endTurn,
-        giveMana,
+        // giveMana,
     };
 
     return gameStateInstance;
