@@ -88,9 +88,6 @@ export const koaParams: PlayerParams = {
         for (const suit of suits) {
             for (let rank = 1; rank <= 7; rank++) {
                 deck.push(new Card(rank, suit));
-                if (suit === '♥️') {
-                    deck.push(new Card(rank, suit));
-                }
             }
         }
         return deck;

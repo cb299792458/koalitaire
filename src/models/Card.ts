@@ -8,6 +8,7 @@ class Card {
     rank: number;
     suit: string;
     revealed: boolean = false;
+    name: string;
     description: string;
     effect: (player: Player, enemy: Enemy) => void;
     
@@ -37,10 +38,44 @@ class Card {
         }
     }
 
-    constructor(rank: number, suit: string, description?: string, effect?: (player: Player, enemy: Enemy) => void) {
+    defaultName(): string {
+        switch (this.suit) {
+            case "🌳":
+                return 'Bow Shot'
+            case "🪧":
+                return `Melee Strike`;
+            case "♥️":
+                return `Cure Wounds`;
+            case "⛊":
+                return `Shield Block`;
+            case "💎":
+                return `Dig for Gold`;
+            default:
+                return `${this.rank}${this.suit}`;
+        }
+    }
+
+    defaultDescription(): string {
+        switch (this.suit) {
+            case "🌳":
+            case "🪧":
+                return `Deal ${this.rank} damage to an enemy.`;
+            case "♥️":
+                return `Heal ${this.rank} health.`;
+            case "⛊":
+                return `Gain ${this.rank} block.`;
+            case "💎":
+                return `Gain ${this.rank} gold.`;
+            default:
+                return `Unknown card effect.`;
+        }
+    }
+
+    constructor(rank: number, suit: string, name?: string, description?: string, effect?: (player: Player, enemy: Enemy) => void) {
         this.rank = rank;
         this.suit = suit;
-        this.description = description || ``;
+        this.name = name || this.defaultName();
+        this.description = description || this.defaultDescription();
         this.effect = effect || this.defaultEffect;
     }
 }

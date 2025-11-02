@@ -154,9 +154,27 @@
     align-items: center;
 }
 
-.card-view p {
-    margin: 3px;
+.card-view {
     font-size: 12px;
+}
+
+.card-front {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.card-top {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px;
+}
+
+.card-description {
+    color: #555;
+    margin: 5px;
 }
 
 .card-back {
