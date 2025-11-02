@@ -127,6 +127,7 @@
     width: 100px;
     aspect-ratio: 5 / 7;
     background-color: white;
+    opacity: 1;
     margin: 10px;
     
     display: flex;
@@ -136,15 +137,71 @@
     border-radius: 10px;
     border: 1px solid black;
     cursor: pointer;
+
+    opacity: 1;
 }
 
-.card-view {
-    justify-content: flex-start;
-    align-items: flex-start;
+.card-view.start-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.5);
+    z-index: 999;
+    transition: none;
+    opacity: 1;
+}
+
+.card-view.fly-right {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(100vw, -50%) scale(2) rotate(180deg);
+    transition: transform 2s ease, opacity 2s ease;
+    opacity: 0;
+    z-index: 999;
+}
+
+.card-view.fly-left {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-100vw, -50%) scale(2) rotate(-180deg);
+    transition: transform 2s ease, opacity 2s ease;
+    opacity: 0;
+    z-index: 999;
+}
+
+.card-view.fly-up {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -100vh) scale(2) rotate(1800deg);
+    transition: transform 2s ease, opacity 2s ease;
+    opacity: 0;
+    z-index: 999;
+}
+
+@keyframes burn-flicker {
+    0%, 100% { transform: scale(1.2) rotate(-10deg); }
+    50% { transform: scale(1.3) rotate(10deg); }
+}
+
+.card-view.burn {
+    transform: scale(0.8);
+    transition: transform 2s ease, opacity 2s ease, box-shadow 0s ease;
+    animation: burn-flicker 2s ease forwards;
+    opacity: 0;
+    box-shadow: 
+        0 0 20px orange,
+        0 0 40px orange,
+        0 0 60px yellow,
+        0 0 80px red,
+        0 0 100px orange;
+    z-index: 999;
 }
 
 .card-view.selected {
-    box-shadow: 0 0 20px orange;
+    box-shadow: 0 0 20px purple;
     transform: scale(1.05);
     transition: border 0.2s, transform 0.2s, box-shadow 0.2s;
 }

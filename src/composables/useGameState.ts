@@ -17,14 +17,12 @@ interface GameState {
     trash: Ref<Card[]>;
     hand: Ref<Card[]>;
     tableau: Ref<Card[][]>;
-    // mana: Ref<Record<string, number>>;
     manaPools: Ref<Record<string, Card[]>>;
     updateGameState: (card: Card | null, area: Area, arrayIndex?: number, cardIndex?: number) => void;
     player: Ref<Player | null>;
     enemy: Ref<Enemy | null>;
     startCombat: () => void;
     endTurn: () => void;
-    // giveMana: () => void;
 }
 
 function useGameState() {
@@ -40,7 +38,6 @@ function useGameState() {
     const compost = ref<Card[]>([]);
     const trash = ref<Card[]>([]);
     const hand = ref<Card[]>([]);
-    // const mana = ref<Record<string, number>>(Object.fromEntries(suits.map(suit => [suit, 0])) as Record<typeof suits[number], number>);
     const manaPools = ref<Record<string, Card[]>>(Object.fromEntries(suits.map(suit => [suit, [] as Card[]])) as Record<typeof suits[number], Card[]>);
 
     const tableau = ref<Card[][]>(Array.from({ length: TABLEAU_SIZE }, () => []));
@@ -224,8 +221,15 @@ function useGameState() {
     }
 
     function burnCard(): void {
+        const scv = selectedCard.value;
+        if (!scv) return;
         if (!canUseSelectedCard()) return;
-        moveCardToArea(selectedCard.value!, AREAS.ManaPools);
+
+        scv.animateBurn();
+        setTimeout(() => {
+            moveCardToArea(scv, AREAS.ManaPools);
+        }, scv.animationTime); // move card as animation finishes
+
         setSelectedCard(null);
     }
 
@@ -235,20 +239,19 @@ function useGameState() {
         if (!enemy.value || !player.value) return;
 
         if (!canUseSelectedCard()) return;
-        scv.effect(player.value, enemy.value);
-
-        moveCardToArea(scv, AREAS.Compost); // move card to compost after casting
-        for (const card of manaPools.value[scv.suit]!) {
-            moveCardToArea(card, AREAS.Compost); // move all cards in mana pool to compost
-        }
+        scv.animate();
+        
+        setTimeout(() => {
+            if (!player.value || !enemy.value) return;
+            scv.effect(player.value, enemy.value);
+            moveCardToArea(scv, AREAS.Compost); // move card to compost after casting
+            for (const card of manaPools.value[scv.suit]!) {
+                moveCardToArea(card, AREAS.Compost); // move all cards in mana pool to compost
+            }
+        }, scv.animationTime); // move card as animation finishes
+        
         setSelectedCard(null);
     }
-
-    // function giveMana(): void {
-    //     for (const suit of suits) {
-    //         mana.value[suit]! += 5;
-    //     }
-    // }
 
     function canUseSelectedCard(): boolean {
         const scv = selectedCard.value;
@@ -320,14 +323,12 @@ function useGameState() {
         trash,
         hand,
         tableau,
-        // mana,
         manaPools,
         updateGameState,
         player,
         enemy,
         startCombat,
         endTurn,
-        // giveMana,
     };
 
     return gameStateInstance;

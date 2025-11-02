@@ -96,7 +96,7 @@
             <CardView v-for="(card, index) in cards"
                 :key="index" 
                 :card="card"
-                :style="cardPosition(index)"
+                :style="!card.animation || card.animation === 'burn' ? cardPosition(index) : {}"
                 :selectedCard="selectedCard"
                 @click.stop="handleClick(index)"
             />
