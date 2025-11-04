@@ -7,9 +7,9 @@ import type Player from '../models/Player';
 
 let gameStateInstance: GameState | null = null; // singleton
 
-const TABLEAU_SIZE: number = 7;
+const TABLEAU_SIZE: number = 5;
 
-interface GameState {
+export interface GameState {
     selectedCard: Ref<Card | null>;
     setSelectedCard: (card: Card | null) => void;
     deck: Ref<Card[]>;
@@ -23,13 +23,14 @@ interface GameState {
     enemy: Ref<Enemy | null>;
     startCombat: () => void;
     endTurn: () => void;
+    drawCards: (count?: number, keepHand?: boolean) => void;
 }
 
 function useGameState() {
     if (gameStateInstance) return gameStateInstance;
     
     const selectedCard: Ref<Card | null> = ref<Card | null>(null);
-    function setSelectedCard (card: Card | null): void { gameStateInstance!.selectedCard.value = card };
+    function setSelectedCard (card: Card | null): void { selectedCard.value = card };
     const player: Ref<Player | null> = ref(null);
     const enemy: Ref<Enemy | null> = ref(null);
 
@@ -65,10 +66,12 @@ function useGameState() {
         }
     }
 
-    function drawCards(count: number = 3) {
+    function drawCards(count: number = 3, keepHand: boolean = false) {
         // move all cards from hand to trash
-        while (hand.value.length) {
-            compost.value.push(hand.value.pop()!); 
+        if (!keepHand) {
+            while (hand.value.length) {
+                compost.value.push(hand.value.pop()!); 
+            }
         }
 
         // If deck is empty, move recycling into the deck
@@ -91,7 +94,7 @@ function useGameState() {
     }
 
     function startCombat(): void {
-        deck.value = player.value?.deck || [];
+        deck.value = player.value?.deck || [];  // TODO: Copy deck instead of reference
         shuffleDeck();
         dealTableau();
 
@@ -243,7 +246,7 @@ function useGameState() {
         
         setTimeout(() => {
             if (!player.value || !enemy.value) return;
-            scv.effect(player.value, enemy.value);
+            scv.effect(player.value, enemy.value, gameStateInstance!);
             moveCardToArea(scv, AREAS.Compost); // move card to compost after casting
             for (const card of manaPools.value[scv.suit]!) {
                 moveCardToArea(card, AREAS.Compost); // move all cards in mana pool to compost
@@ -329,6 +332,7 @@ function useGameState() {
         enemy,
         startCombat,
         endTurn,
+        drawCards,
     };
 
     return gameStateInstance;

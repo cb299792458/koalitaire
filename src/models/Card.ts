@@ -2,8 +2,23 @@ import { nextTick } from "vue";
 import { openMessageModal } from "../stores/modalStore";
 import type Enemy from "./Enemy";
 import type Player from "./Player";
+import type { GameState } from "../composables/useGameState";
 
-export const suits: string[] = ["♥️",  "🌳", "⛊", "💎", "🪧",];
+export const suits: string[] = [
+    "♥️",  
+    "🌳", 
+    "⛊", 
+    "💎", 
+    "🪧",
+];
+
+export interface CardParams {
+    rank: number;
+    suit: string;
+    name?: string;
+    description?: string;
+    effect?: (player: Player, enemy: Enemy, gameState: GameState) => void;
+}
 
 class Card {
     rank: number;
@@ -12,10 +27,10 @@ class Card {
     animation: string = '';
     name: string;
     description: string;
-    effect: (player: Player, enemy: Enemy) => void;
+    effect: (player: Player, enemy: Enemy, gameState: GameState) => void;
     animationTime: number = 1000; // Default animation time in milliseconds
     
-    defaultEffect (player: Player, enemy: Enemy): void {
+    defaultEffect (player: Player, enemy: Enemy, _gameState: GameState): void {
         switch (this.suit) {
             case "🌳":
             case "🪧":
@@ -73,7 +88,7 @@ class Card {
         }
     }
 
-    constructor(rank: number, suit: string, name?: string, description?: string, effect?: (player: Player, enemy: Enemy) => void) {
+    constructor(rank: number, suit: string, name?: string, description?: string, effect?: (player: Player, enemy: Enemy, gameState: GameState) => void) {
         this.rank = rank;
         this.suit = suit;
         this.name = name || this.defaultName();

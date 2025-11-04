@@ -4,6 +4,7 @@ import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 import { suits } from "./Card";
 import { openMessageModal } from "../stores/modalStore";
+import koaDeck from "../game/decks/koaDeck";
 
 export interface PlayerParams {
     name: string;
@@ -85,10 +86,8 @@ export const koaParams: PlayerParams = {
 
     makeDeck: () => {
         const deck: Card[] = [];
-        for (const suit of suits) {
-            for (let rank = 1; rank <= 7; rank++) {
-                deck.push(new Card(rank, suit));
-            }
+        for (const { rank, suit, name, description, effect } of koaDeck) {
+            deck.push(new Card(rank, suit, name, description, effect));
         }
         return deck;
     }
