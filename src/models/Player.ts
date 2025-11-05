@@ -2,7 +2,6 @@ import Card from "./Card";
 
 import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
-import { suits } from "./Card";
 import { openMessageModal } from "../stores/modalStore";
 import koaDeck from "../game/decks/koaDeck";
 
