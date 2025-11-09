@@ -6,7 +6,7 @@
     }>();
 
     const characters = [
-        { name: 'Koa XII', params: koaParams },
+        { name: 'Koa XIII', params: koaParams },
         { name: 'don\'t click this', params: nextCharacterParams },
     ]
 
@@ -23,7 +23,7 @@
 
 <template>
     <div class="modal">
-        <h2>Welome to Koalitaire</h2>
+        <h2>Welcome to Koalitaire</h2>
         <p>Choose Your Character</p>
         
         <div class="character-list">

@@ -134,8 +134,6 @@ class Card {
                 this.animation = '';
             }, 50 + this.animationTime);
         });
-
-
     }
 }
 

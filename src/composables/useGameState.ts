@@ -45,14 +45,20 @@ function useGameState() {
 
     function dealTableau(): void {
         for (let i = 0; i < TABLEAU_SIZE; i++) {
+            const column = tableau.value[i];
+            if (!column) continue;
+            
             for (let j = 0; j <= i; j++) {
                 if (deck.value.length > 0) {
                     const card = deck.value.pop()!;
-                    tableau.value[i]!.push(card);
-
+                    column.push(card);
                 }
             }
-            if (tableau.value[i]!.length > 0) tableau.value[i]![tableau.value[i]!.length - 1]!.revealed = true; // reveal the last card in each tableau column
+            // reveal the last card in each tableau column
+            if (column.length > 0) {
+                const lastCard = column[column.length - 1];
+                if (lastCard) lastCard.revealed = true;
+            }
         }    
     }
 
@@ -67,7 +73,7 @@ function useGameState() {
     }
 
     function drawCards(count: number = 3, keepHand: boolean = false) {
-        // move all cards from hand to trash
+        // move all cards from hand to compost
         if (!keepHand) {
             while (hand.value.length) {
                 compost.value.push(hand.value.pop()!); 
@@ -131,7 +137,10 @@ function useGameState() {
                 break;
 
             case AREAS.Tableau:
-                if (isCardSelection(clickedCard)) break;
+                // If clicking empty tableau column (dummy card) and have selected card, allow placement
+                // Otherwise, handle selection/deselection normally
+                const isEmptyTableauClick = (!clickedCard || !clickedCard.rank || clickedCard.suit === 'None') && clickJndex === -1;
+                if (!isEmptyTableauClick && isCardSelection(clickedCard)) break;
                 placeSelectedCardInTableau(clickedCard, clickIndex, clickJndex);
                 break;
 
@@ -169,10 +178,36 @@ function useGameState() {
             return true;
         }
 
-        // Deselect Card
-        if (!clickedCard || (clickedCard === toRaw(selectedCard.value))) {
+        // Deselect Card - empty area or dummy card (rank 0, suit 'None')
+        if (!clickedCard || !clickedCard.rank || clickedCard.suit === 'None') {
             setSelectedCard(null);
             return true;
+        }
+        
+        // Deselect if clicking the same card - compare by reference first
+        const selected = toRaw(selectedCard.value);
+        if (selected && clickedCard === selected) {
+            setSelectedCard(null);
+            return true;
+        }
+        
+        // Also check if it's the same card by checking if it's at the same position
+        if (selected) {
+            const clickedIndices = getCardIndices(clickedCard);
+            const selectedIndices = getCardIndices(selected);
+            
+            if (clickedIndices.handIndex === selectedIndices.handIndex && 
+                clickedIndices.handIndex !== -1) {
+                setSelectedCard(null);
+                return true;
+            }
+            
+            if (clickedIndices.tableauIndex === selectedIndices.tableauIndex && 
+                clickedIndices.tableauJndex === selectedIndices.tableauJndex &&
+                clickedIndices.tableauIndex !== -1) {
+                setSelectedCard(null);
+                return true;
+            }
         }
 
         return false;
@@ -184,18 +219,21 @@ function useGameState() {
         const clickedColumn = tableau.value[clickIndex];
         if (!scv || !clickedColumn || !tableau.value[clickIndex]) return;
 
-        if (clickedCard?.rank) {
+        // If clicking on a real card (not empty column), validate the move
+        if (clickedCard?.rank && clickedCard.suit !== 'None') {
             if (scv.suit === clickedCard.suit) return;
             if (scv.rank !== clickedCard.rank - 1) return;
         }
+        // If clicking on empty column, allow placement (no validation needed for empty columns)
 
         const handIndex = hand.value.indexOf(scv);
         if (handIndex !== -1) { // move selectedCard from hand
             hand.value.splice(handIndex, 1);
-            clickedColumn.push(scv); // untested, may need to use reference to tableau.value[clickIndex]
+            clickedColumn.push(scv);
         } else { // move selectedCard from tableau
-            // can't move to top or middle of column
-            if (clickJndex !== clickedColumn.length - 1) return;
+            // can't move to top or middle of column (unless column is empty)
+            const isEmptyColumn = clickedColumn.length === 0;
+            if (!isEmptyColumn && clickJndex !== clickedColumn.length - 1) return;
             
             const selectedCardIndex = tableau.value.findIndex(col => col.includes(scv));
             const selectedCardColumn = tableau.value[selectedCardIndex];
@@ -210,11 +248,10 @@ function useGameState() {
                 if (above && below && above.rank !== below.rank + 1) return;
             }
 
-            // move card and all below
-            while (selectedCardJndex < selectedCardColumn.length) {
-                tableau.value[clickIndex].push(selectedCardColumn[selectedCardJndex]!);
-                tableau.value[selectedCardIndex].splice(selectedCardJndex, 1);
-            }
+            // move card and all below - calculate cards to move first to avoid mutation during iteration
+            const cardsToMove = selectedCardColumn.slice(selectedCardJndex);
+            tableau.value[clickIndex].push(...cardsToMove);
+            tableau.value[selectedCardIndex].splice(selectedCardJndex, cardsToMove.length);
 
             // reveal the last card in the column if it exists
             if (selectedCardColumn.length) selectedCardColumn[selectedCardColumn.length - 1]!.revealed = true;
@@ -248,8 +285,14 @@ function useGameState() {
             if (!player.value || !enemy.value) return;
             scv.effect(player.value, enemy.value, gameStateInstance!);
             moveCardToArea(scv, AREAS.Compost); // move card to compost after casting
-            for (const card of manaPools.value[scv.suit]!) {
-                moveCardToArea(card, AREAS.Compost); // move all cards in mana pool to compost
+            // move all cards in mana pool to compost
+            const manaPool = manaPools.value[scv.suit];
+            if (manaPool) {
+                // Create a copy of the array to avoid mutation during iteration
+                const cardsToCompost = [...manaPool];
+                for (const card of cardsToCompost) {
+                    moveCardToArea(card, AREAS.Compost);
+                }
             }
         }, scv.animationTime); // move card as animation finishes
         
@@ -264,12 +307,15 @@ function useGameState() {
         const { handIndex, tableauIndex, tableauJndex } = getCardIndices(selectedCard.value);
         if (handIndex === -1) {
             const tableauColumn = tableau.value[tableauIndex];
-            if (tableauJndex !== tableauColumn!.length - 1) return false; // can't use card from hand if it's not the last card in the tableau column
+            if (!tableauColumn || tableauJndex !== tableauColumn.length - 1) return false; // can't use card if it's not the last card in the tableau column
         }
 
         if (!manaPools.value[suit]) return false;
-        if (manaPools.value[suit].length === 0) return rank === 1;
-        return manaPools.value[suit][manaPools.value[suit].length - 1]!.rank + 1 === rank;
+        const manaPool = manaPools.value[suit];
+        if (!manaPool || manaPool.length === 0) return rank === 1;
+        const lastCard = manaPool[manaPool.length - 1];
+        if (!lastCard) return rank === 1;
+        return lastCard.rank + 1 === rank;
     }
 
     function getCardIndices(card: Card | null): { handIndex: number, tableauIndex: number, tableauJndex: number } {
@@ -290,18 +336,26 @@ function useGameState() {
         if (handIndex !== -1) {
             hand.value.splice(handIndex, 1);
         } else if (tableauIndex !== -1) {
-            tableau.value[tableauIndex]!.splice(tableauJndex, 1);
-            if (tableau.value[tableauIndex]!.length) tableau.value[tableauIndex]![tableau.value[tableauIndex]!.length - 1]!.revealed = true;
+            const tableauColumn = tableau.value[tableauIndex];
+            if (tableauColumn && tableauJndex !== -1) {
+                tableauColumn.splice(tableauJndex, 1);
+                // reveal the last card in the column if it exists
+                if (tableauColumn.length > 0) {
+                    const lastCard = tableauColumn[tableauColumn.length - 1];
+                    if (lastCard) lastCard.revealed = true;
+                }
+            }
         } else {
             // card is in mana pools
             const manaPool = manaPools.value[card.suit];
-            if (!manaPool) return;
-            const manaIndex = manaPool.indexOf(card);
-            if (manaIndex !== -1) {
-                manaPools.value[card.suit] = [
-                    ...manaPool.slice(0, manaIndex),
-                    ...manaPool.slice(manaIndex + 1)
-                ];
+            if (manaPool) {
+                const manaIndex = manaPool.indexOf(card);
+                if (manaIndex !== -1) {
+                    manaPools.value[card.suit] = [
+                        ...manaPool.slice(0, manaIndex),
+                        ...manaPool.slice(manaIndex + 1)
+                    ];
+                }
             }
         }
 
@@ -313,7 +367,10 @@ function useGameState() {
                 trash.value.push(card);
                 break;
             case AREAS.ManaPools:
-                manaPools.value[card.suit]!.push(card);
+                const targetManaPool = manaPools.value[card.suit];
+                if (targetManaPool) {
+                    targetManaPool.push(card);
+                }
                 break;
         }
     }

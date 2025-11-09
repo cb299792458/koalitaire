@@ -17,17 +17,14 @@
         selectedCard,
         deck,
         compost,
-        // trash,
         hand,
         tableau,
         manaPools,
         updateGameState,
-        // mana,
         player,
         enemy,
         startCombat,
         endTurn,
-        // giveMana,
     } = useGameState();
         
     watch(() => player.value?.level, () => {
@@ -88,11 +85,6 @@
                             :name="AREAS.Compost"
                             @click="onClick"
                         />
-                        <!-- <CardStack
-                            :cards="trash"
-                            :name="AREAS.Trash"
-                            @mousedown.prevent
-                        /> -->
                         <CardStack
                             :cards="[]"
                             :name="'Cast Card'"
@@ -132,12 +124,6 @@
                             @click="onClick"
                         />
                     </div>
-                    <!-- <div class="mana-row">
-                        <p>Mana: </p>
-                        <div v-for="(amount, suit) in mana" :key="suit" class="mana-suit">
-                            <span>{{ suit }}: {{ amount }}</span>
-                        </div>
-                    </div> -->
                 </div>
             </div>
 
@@ -148,7 +134,6 @@
         </div>
 
         <div class="game-bottom">
-            <!-- <button @click="giveMana">Dev Mana</button> -->
             <div class="cards-hand">
                 <CardStack
                     :cards="hand"
