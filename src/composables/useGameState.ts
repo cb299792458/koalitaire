@@ -45,6 +45,7 @@ function useGameState() {
 
     function dealTableau(): void {
         for (let i = 0; i < TABLEAU_SIZE; i++) {
+            tableau.value[i] = [];
             const column = tableau.value[i];
             if (!column) continue;
             
@@ -100,7 +101,28 @@ function useGameState() {
     }
 
     function startCombat(): void {
-        deck.value = player.value?.deck || [];  // TODO: Copy deck instead of reference
+        if (!player.value) {
+            deck.value = [];
+        } else {
+            deck.value = player.value.deck.map((card) => new Card(
+                card.rank,
+                card.suit,
+                card.name,
+                card.description,
+                card.effect,
+            ));
+        }
+
+        compost.value = [];
+        trash.value = [];
+        hand.value = [];
+
+        manaPools.value = Object.fromEntries(
+            suits.map((suit) => [suit, [] as Card[]]),
+        ) as Record<typeof suits[number], Card[]>;
+
+        tableau.value = Array.from({ length: TABLEAU_SIZE }, () => []);
+
         shuffleDeck();
         dealTableau();
 

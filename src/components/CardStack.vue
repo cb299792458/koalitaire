@@ -30,6 +30,14 @@
                 const cardWidth = 100;
                 const maxStackWidth = 740;
                 const numCards = props.cards.length;
+                if (numCards <= 1) {
+                    return {
+                        position: 'absolute',
+                        top: '0px',
+                        left: `${(maxStackWidth - cardWidth) / 2}px`,
+                        zIndex: index + 1,
+                    };
+                }
                 spacing = (maxStackWidth - cardWidth) / (numCards - 1);
                 const stackWidth = spacing * (numCards - 1) + cardWidth;
                 const left = (maxStackWidth - stackWidth) / 2 + index * spacing;

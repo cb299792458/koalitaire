@@ -72,11 +72,20 @@ const heal: EnemyActionParams = {
     }
 }
 
+const haste: EnemyActionParams = {
+    name: "Haste",
+    description: "The enemy haste itself, increasing its actions by 1.",
+    effect: (enemy) => {
+        enemy.actions += 1;
+    }
+}
+
 export const enemyActions: Record<string, EnemyActionParams> = {
     doNothing,
     weakAttack,
     strongAttack,
     block,
     buff,
-    heal
+    heal,
+    haste,
 };

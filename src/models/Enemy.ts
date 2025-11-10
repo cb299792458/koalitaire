@@ -56,7 +56,6 @@ class Enemy {
             action.effect(this, player);
         }
         this.impendingActions = [];
-        this.actions += 1; // Increment actions for the next turn
     }
 
     takeDamage(damage: number): void {
@@ -82,7 +81,8 @@ export const platypusParams: EnemyParams = {
             "strongAttack": 1,
             "block": 3,
             "buff": 1,
-            "heal": 1
+            "heal": 1,
+            "haste": 1,
         }
         for (const [key, count] of Object.entries(cards)) {
             for (let i = 0; i < (count ?? 0); i++) {
