@@ -45,9 +45,8 @@ function useGameState() {
 
     function dealTableau(): void {
         for (let i = 0; i < TABLEAU_SIZE; i++) {
-            tableau.value[i] = [];
-            const column = tableau.value[i];
-            if (!column) continue;
+            const column: Card[] = [];
+            tableau.value[i] = column;
             
             for (let j = 0; j <= i; j++) {
                 if (deck.value.length > 0) {

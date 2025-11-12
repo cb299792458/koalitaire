@@ -98,7 +98,7 @@
             v-if="!cards.length"
             @click.stop="handleEmptyClick"
         >
-            {{ name === AREAS.ManaPools ? suits[arrayIndex || 0] : name }}
+            {{ name === AREAS.ManaPools ? suits[arrayIndex ?? 0] ?? suits[0] : name }}
         </div>
         <template v-else>
             <CardView v-for="(card, index) in cards"

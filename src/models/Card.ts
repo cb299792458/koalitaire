@@ -3,6 +3,7 @@ import { openMessageModal } from "../stores/modalStore";
 import type Enemy from "./Enemy";
 import type Player from "./Player";
 import type { GameState } from "../composables/useGameState";
+import useDamageNumbers from "../composables/useDamageNumbers";
 
 export const suits: string[] = [
     "♥️",  
@@ -31,6 +32,8 @@ class Card {
     animationTime: number = 1000; // Default animation time in milliseconds
     
     defaultEffect (player: Player, enemy: Enemy, _gameState: GameState): void {
+        const damageNumbers = useDamageNumbers();
+        
         switch (this.suit) {
             case "🌳":
             case "🪧":
@@ -41,11 +44,20 @@ class Card {
                 }
                 break;
             case "♥️":
+                const previousHealth = player.health;
                 player.health += this.rank;
                 player.health = Math.min(player.health, player.maxHealth);
+                const healAmount = player.health - previousHealth;
+                if (healAmount > 0) {
+                    // Small delay to ensure it appears after card animation
+                    setTimeout(() => {
+                        damageNumbers.addPlayerNumber(healAmount, 'heal');
+                    }, 50);
+                }
                 break;
             case "⛊":
                 player.block += this.rank;
+                damageNumbers.addPlayerNumber(this.rank, 'block-gain');
                 break;
             case "💎":
                 player.gold += this.rank;

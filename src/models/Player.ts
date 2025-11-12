@@ -4,6 +4,7 @@ import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 import { openMessageModal } from "../stores/modalStore";
 import koaDeck from "../game/decks/koaDeck";
+import useDamageNumbers from "../composables/useDamageNumbers";
 
 export interface PlayerParams {
     name: string;
@@ -60,9 +61,20 @@ class Player {
     }
 
     takeDamage(amount: number): void {
+        const previousBlock = this.block;
         const damage = Math.max(0, amount - this.block);
+        const blockLost = Math.min(amount, previousBlock);
         this.health -= damage;
         this.block = Math.max(0, this.block - amount);
+        
+        const damageNumbers = useDamageNumbers();
+        if (blockLost > 0) {
+            damageNumbers.addPlayerNumber(blockLost, 'block-loss');
+        }
+        if (damage > 0) {
+            damageNumbers.addPlayerNumber(damage, 'damage');
+        }
+        
         if (this.health <= 0) {
             this.health = 0; // Ensure health doesn't go negative
             openMessageModal('YOU DIED');

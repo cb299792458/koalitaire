@@ -268,4 +268,39 @@
 
 .enemy-info {
     overflow: scroll; /* This is a placeholder which sucks */
+    position: relative;
+    transition: background-color 0.3s ease;
+}
+
+.player-info {
+    position: relative;
+    transition: background-color 0.3s ease;
+}
+
+.enemy-info.flash-red,
+.player-info.flash-red {
+    animation: flash-red-bg 0.3s ease-out;
+}
+
+.enemy-info.flash-gray,
+.player-info.flash-gray {
+    animation: flash-gray-bg 0.3s ease-out;
+}
+
+@keyframes flash-red-bg {
+    0%, 100% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(255, 0, 0, 0.3);
+    }
+}
+
+@keyframes flash-gray-bg {
+    0%, 100% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(128, 128, 128, 0.3);
+    }
 }

@@ -1,5 +1,6 @@
 import type Enemy from "./Enemy";
 import type Player from "./Player";
+import useDamageNumbers from "../composables/useDamageNumbers";
 
 interface EnemyActionParams {
     name: string;
@@ -48,7 +49,10 @@ const block: EnemyActionParams = {
     name: "Block",
     description: "The enemy blocks for 2, plus its armor.",
     effect: (enemy) => {
-        enemy.block += 2 + enemy.armor;
+        const blockGain = 2 + enemy.armor;
+        enemy.block += blockGain;
+        const damageNumbers = useDamageNumbers();
+        damageNumbers.addEnemyNumber(blockGain, 'block-gain');
     }
 }
 
@@ -65,9 +69,15 @@ const heal: EnemyActionParams = {
     name: "Heal",
     description: "The enemy heals itself for 2 health.",
     effect: (enemy) => {
+        const previousHealth = enemy.health;
         enemy.health += 2;
         if (enemy.health > enemy.maxHealth) {
             enemy.health = enemy.maxHealth;
+        }
+        const healAmount = enemy.health - previousHealth;
+        if (healAmount > 0) {
+            const damageNumbers = useDamageNumbers();
+            damageNumbers.addEnemyNumber(healAmount, 'heal');
         }
     }
 }

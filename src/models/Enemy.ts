@@ -1,6 +1,7 @@
 import EnemyAction, { enemyActions } from "./EnemyAction";
 import type Player from "./Player";
 import platypusPortrait from "/enemy_portraits/platypus.png";
+import useDamageNumbers from "../composables/useDamageNumbers";
 
 interface EnemyParams {
     name: string;
@@ -59,9 +60,20 @@ class Enemy {
     }
 
     takeDamage(damage: number): void {
+        const previousBlock = this.block;
         const effectiveDamage = Math.max(0, damage - this.block);
+        const blockLost = Math.min(damage, previousBlock);
         this.block = Math.max(0, this.block - damage);
         this.health -= effectiveDamage;
+        
+        const damageNumbers = useDamageNumbers();
+        if (blockLost > 0) {
+            damageNumbers.addEnemyNumber(blockLost, 'block-loss');
+        }
+        if (effectiveDamage > 0) {
+            damageNumbers.addEnemyNumber(effectiveDamage, 'damage');
+        }
+        
         if (this.health < 0) this.health = 0; // Prevent negative health
     }
 }
