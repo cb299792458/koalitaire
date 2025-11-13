@@ -35,6 +35,7 @@
         <img :src="props.player.portrait" alt="Player Portrait" width="100%"/>
         <p>Health: {{ props.player.health }} / {{ props.player.maxHealth }}</p>
         <p>Block: {{ props.player.block }}</p>
+        <p>Mana Diamonds: {{ props.player.manaDiamonds }}</p>
         
         <p>Appeal: {{ props.player.appeal }}</p>
         <p>Attack: {{ props.player.attack }}</p>

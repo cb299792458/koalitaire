@@ -25,7 +25,7 @@ export interface PlayerParams {
 class Player {
     name: string;
     portrait: string;
-    level: number;
+    level: number = 1;
 
     appeal: number;
     attack: number;
@@ -35,7 +35,8 @@ class Player {
 
     health: number;
     maxHealth: number;
-    block: number;
+    manaDiamonds: number = 0;
+    block: number = 0;
     gold: number;
 
     deck: Card[];
@@ -44,7 +45,6 @@ class Player {
         const { name, portrait, appeal, attack, armor, agility, arcane, health, gold, makeDeck } = params;
         this.name = name;
         this.portrait = portrait;
-        this.level = 1;
 
         this.appeal = appeal;
         this.attack = attack;
@@ -54,10 +54,18 @@ class Player {
 
         this.maxHealth = health;
         this.health = health;
-        this.block = 0;
         this.gold = gold;
 
         this.deck = makeDeck();
+    }
+
+    gainHealth(amount: number): void {
+        this.health += amount;
+        if (this.health > this.maxHealth) {
+            this.health = this.maxHealth;
+        }
+        const damageNumbers = useDamageNumbers();
+        damageNumbers.addPlayerNumber(amount, 'heal');
     }
 
     takeDamage(amount: number): void {
@@ -79,6 +87,12 @@ class Player {
             this.health = 0; // Ensure health doesn't go negative
             openMessageModal('YOU DIED');
         }
+    }
+
+    gainBlock(amount: number): void {
+        this.block += amount;
+        const damageNumbers = useDamageNumbers();
+        damageNumbers.addPlayerNumber(amount, 'block-gain');
     }
 }
 

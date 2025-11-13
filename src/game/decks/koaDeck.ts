@@ -42,7 +42,24 @@ const koaDeck: CardParams[] = [
         rank: 7, suit: "♥️", name: "Wheel", description: "Discard your hand and draw 7 cards.",
         effect: (_player, _enemy, gameState) => gameState.drawCards(7, false)
     },
-    ...makeDefaultCards([1, 2, 3, 4, 5, 6, 7], ["🌳", "🪧", "⛊", "💎"]),
+    {
+        rank: 1, suit: "🌳", name: "Crappy Shot", description: "Deals 1 damage (not affected by agility)",
+        effect: (_player, enemy) => enemy.takeDamage(1)
+    },
+    {
+        rank: 1, suit: "🪧", name: "Crappy Strike", description: "Deals 1 damage (not affected by attack)",
+        effect: (_player, enemy) => enemy.takeDamage(1)
+    },
+    {
+        rank: 1, suit: "⛊", name: "Crappy Block", description: "Gain 1 block (not affected by armor)",
+        effect: (player) => player.gainBlock(1)
+    },
+    {
+        rank: 1, suit: "💎", name: "Condense Mana", description: "Gain 1 Mana Diamond",
+        effect: (player) => player.manaDiamonds += 1
+    },
+    // Default cards for the Koa deck
+    ...makeDefaultCards([2, 3, 4, 5, 6, 7], ["🌳", "🪧", "⛊", "💎"]),
 ]
 
 export default koaDeck;

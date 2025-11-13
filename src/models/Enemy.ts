@@ -59,6 +59,15 @@ class Enemy {
         this.impendingActions = [];
     }
 
+    gainHealth(amount: number): void {
+        this.health += amount;
+        if (this.health > this.maxHealth) {
+            this.health = this.maxHealth;
+        }
+        const damageNumbers = useDamageNumbers();
+        damageNumbers.addEnemyNumber(amount, 'heal');
+    }
+
     takeDamage(damage: number): void {
         const previousBlock = this.block;
         const effectiveDamage = Math.max(0, damage - this.block);
@@ -75,6 +84,12 @@ class Enemy {
         }
         
         if (this.health < 0) this.health = 0; // Prevent negative health
+    }
+
+    gainBlock(amount: number): void {
+        this.block += amount;
+        const damageNumbers = useDamageNumbers();
+        damageNumbers.addEnemyNumber(amount, 'block-gain');
     }
 }
 
