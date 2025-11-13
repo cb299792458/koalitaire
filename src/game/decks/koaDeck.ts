@@ -1,65 +1,12 @@
-import type { CardParams } from "../../models/Card";
+import type { CardParams, Suit } from "../../models/Card";
+import allCards from "../cardParams";
 
-function makeDefaultCards(ranks: number[], suits: string[]): CardParams[] {
-    return ranks.flatMap(rank =>
-        suits.map(suit => ({
-            rank,
-            suit,
-        }))
-    );
-}
-
-
-const koaDeck: CardParams[] = [
-    {
-        rank: 1, suit: "♥️", name: "Strong Strike", description: "Deal damage equal to your attack.",
-        effect: (player, enemy) => enemy.takeDamage(player.attack)
-    },
-    {
-        rank: 2, suit: "♥️", name: "Melee Strike", description: "Deal 2 damage to an enemy.", 
-        effect: (_player, enemy) => enemy.takeDamage(2)
-    },
-    {
-        rank: 3, suit: "♥️", name: "Divination", description: "Draw 2 cards",
-        effect: (_player, _enemy, gameState) => gameState.drawCards(2, true)
-    },
-    {
-        rank: 4, suit: "♥️", name: "Bow Shot", description: "Deal 4 damage to an enemy.",
-        effect: (_player, enemy) => enemy.takeDamage(4)
-    },
-    {
-        rank: 5, suit: "♥️", name: "Shield Bash", description: "Deal 5 damage to an enemy and gain 2 block.",
-        effect: (player, enemy) => {
-            enemy.takeDamage(5);
-            player.block += 2;
-        }
-    },
-    {
-        rank: 6, suit: "♥️", name: "Full heal", description: "Fully heal yourself.",
-        effect: (player) => player.health = player.maxHealth
-    },
-    {
-        rank: 7, suit: "♥️", name: "Wheel", description: "Discard your hand and draw 7 cards.",
-        effect: (_player, _enemy, gameState) => gameState.drawCards(7, false)
-    },
-    {
-        rank: 1, suit: "🌳", name: "Crappy Shot", description: "Deals 1 damage (not affected by agility)",
-        effect: (_player, enemy) => enemy.takeDamage(1)
-    },
-    {
-        rank: 1, suit: "🪧", name: "Crappy Strike", description: "Deals 1 damage (not affected by attack)",
-        effect: (_player, enemy) => enemy.takeDamage(1)
-    },
-    {
-        rank: 1, suit: "⛊", name: "Crappy Block", description: "Gain 1 block (not affected by armor)",
-        effect: (player) => player.gainBlock(1)
-    },
-    {
-        rank: 1, suit: "💎", name: "Condense Mana", description: "Gain 1 Mana Diamond",
-        effect: (player) => player.manaDiamonds += 1
-    },
-    // Default cards for the Koa deck
-    ...makeDefaultCards([2, 3, 4, 5, 6, 7], ["🌳", "🪧", "⛊", "💎"]),
-]
+const koaDeck: CardParams[] = Object.entries(allCards).map(([suit, cards]) => {
+    return cards.map((card, index) => ({
+        ...card,
+        suit: suit as Suit,
+        rank: index + 1,
+    }));
+}).flat();
 
 export default koaDeck;

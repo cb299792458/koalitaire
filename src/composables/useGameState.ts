@@ -1,5 +1,5 @@
 import { ref, toRaw, type Ref } from 'vue';
-import Card, { suits } from '../models/Card';
+import Card, { Suit, Suits } from '../models/Card';
 import { AREAS, type Area } from '../models/Areas';
 import { openModal } from '../stores/modalStore';
 import type Enemy from '../models/Enemy';
@@ -39,7 +39,9 @@ function useGameState() {
     const compost = ref<Card[]>([]);
     const trash = ref<Card[]>([]);
     const hand = ref<Card[]>([]);
-    const manaPools = ref<Record<string, Card[]>>(Object.fromEntries(suits.map(suit => [suit, [] as Card[]])) as Record<typeof suits[number], Card[]>);
+    const manaPools = ref<Record<string, Card[]>>(
+        Object.fromEntries(Suits.map(suit => [suit, [] as Card[]])) as Record<Suit, Card[]>
+    );
 
     const tableau = ref<Card[][]>(Array.from({ length: TABLEAU_SIZE }, () => []));
 
@@ -117,8 +119,8 @@ function useGameState() {
         hand.value = [];
 
         manaPools.value = Object.fromEntries(
-            suits.map((suit) => [suit, [] as Card[]]),
-        ) as Record<typeof suits[number], Card[]>;
+            Suits.map((suit) => [suit, [] as Card[]]),
+        ) as Record<Suit, Card[]>;
 
         tableau.value = Array.from({ length: TABLEAU_SIZE }, () => []);
 

@@ -3,7 +3,7 @@
     import Card from '../models/Card';
     import { AREAS, type Area } from '../models/Areas';
     import { toRaw } from 'vue';
-    import { suits } from '../models/Card';
+    import { Suits } from '../models/Card';
     
     const props = defineProps<{ 
         cards: Card[], 
@@ -78,12 +78,8 @@
         });
     }
     function handleEmptyClick() {
-        const dummyCard = new Card(
-            0,
-            'None',
-        );
         emit('click', {
-            card: dummyCard,
+            card: null,
             area: props.name as Area,
             arrayIndex: props.arrayIndex,
             cardIndex: -1,
@@ -98,7 +94,7 @@
             v-if="!cards.length"
             @click.stop="handleEmptyClick"
         >
-            {{ name === AREAS.ManaPools ? suits[arrayIndex ?? 0] ?? suits[0] : name }}
+            {{ name === AREAS.ManaPools ? Suits[arrayIndex ?? 0] : name }}
         </div>
         <template v-else>
             <CardView v-for="(card, index) in cards"
