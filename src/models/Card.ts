@@ -10,17 +10,13 @@ export const Suit = {
     Metal: "🪙",
     Water: "💧",
 } as const;
-
 export type Suit = typeof Suit[keyof typeof Suit];
 export const Suits: Suit[] = Object.values(Suit);
-
-
 export interface BaseCardParams {
     name: string;
     description: string;
     effect: (player: Player, enemy: Enemy, gameState: GameState) => void;
 }
-
 export interface CardParams extends BaseCardParams {
     rank: number;
     suit: Suit;
