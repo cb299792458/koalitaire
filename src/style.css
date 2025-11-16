@@ -1,3 +1,8 @@
+html, body {
+    background-color: #444444;
+    overflow: hidden;
+}
+
 .game-page {
     display: flex;
     flex-direction: column;
@@ -5,84 +10,71 @@
     height: 100vh;
 }
 
-.game-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 5%;
+.scale-wrapper {
+    width: 1920px;   /* your design width */
+    height: 1080px;  /* your design height */
+}
+
+.scale-container {
     width: 100%;
-    background-color: #808080;
-}
-
-.game-main {
-    display: flex;
-    height: 70%
-}
-
-.game-right, .game-left {
-    background-color: lightblue;
-    width: 20%;
     height: 100%;
+    transform-origin: top center;
+}
+
+.combat-top {
+    display: flex;
+    flex-direction: row;
+    height: 860px;
+}
+
+.combat-right, .combat-left {
+    background-color: lightblue;
+    width: 260px;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
-.game-middle {
+.combat-middle {
     background-color: lightgreen;
-    width: 60%;
-    height: 100%;
+    width: 1400px;
     display: flex;
     flex-direction: column;
 }
 
-.game-bottom {
+.combat-bottom {
     background-color: pink;
-    height: 25%;
+    height: 220px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    width: 100%;
 }
 
-.game-bottom button {
-    width: 100px;
-    height: 50px;
+#end-turn-button {
+    width: 200px;
+    height: 100px;
     margin: 10px;
     background-color: #f0f0f0;
     border: none;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
 }
 
 .cards-top {
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    height: 30%;
 }
 
 .cards-stock {
     display: flex;
     justify-content: flex-start;
-    width: 40%;
+    width: 560px;
 }
 
 .mana-pools {
     display: flex;
     justify-content: flex-end;
-    width: 60%;
-}
-
-.cards-bottom {
-    height: 30%;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: flex-start;
-    height: 100%;
+    width: 840px;
 }
 
 .tableau {
@@ -112,7 +104,7 @@
 
 .card-stack.pile {
     position: relative;
-    height: 200px; /* or card height */
+    height: 200px;
     width: 100%;
 }
 
@@ -124,7 +116,7 @@
 }
 
 .card-view, .card-stack-empty {
-    width: 100px;
+    width: 120px;
     aspect-ratio: 5 / 7;
     background-color: white;
     opacity: 1;
@@ -222,7 +214,6 @@
 }
 
 .card-top {
-    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: center;
