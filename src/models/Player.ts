@@ -35,7 +35,7 @@ class Player {
 
     health: number;
     maxHealth: number;
-    manaDiamonds: number = 0;
+    manaCrystals: number = 0;
     block: number = 0;
     gold: number;
 

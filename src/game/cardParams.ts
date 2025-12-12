@@ -1,4 +1,3 @@
-// import type { GameState } from "../composables/useGameState";
 import { Suit } from "../models/Card";
 import type Enemy from "../models/Enemy";
 import type Player from "../models/Player";
@@ -7,8 +6,11 @@ const allCards = {
     [Suit.Wood]: [
         {
             name: "Crappy Shot",
-            description: "Deals 1 damage (not affected by agility)",
-            effect: (_player: Player, enemy: Enemy) => enemy.takeDamage(1),
+            description: "Deals 1 damage (not affected by agility) and gain 1 Mana Crystal",
+            effect: (player: Player, enemy: Enemy) => {
+                enemy.takeDamage(1);
+                player.manaCrystals += 1;
+            },
         },
         {
             name: "Very Weak Shot",
@@ -44,8 +46,11 @@ const allCards = {
     [Suit.Fire]: [
         {
             name: "Crappy Blast",
-            description: "Deals 1 damage (not affected by arcane)",
-            effect: (_player: Player, enemy: Enemy) => enemy.takeDamage(1),
+            description: "Deals 1 damage (not affected by arcane) and gain 1 Mana Crystal",
+            effect: (player: Player, enemy: Enemy) => {
+                enemy.takeDamage(1);
+                player.manaCrystals += 1;
+            },
         },
         {
             name: "Very Weak Blast",
@@ -81,8 +86,11 @@ const allCards = {
     [Suit.Earth]: [
         {
             name: "Crappy Block",
-            description: "Gain 1 block (not affected by armor)",
-            effect: (player: Player) => player.gainBlock(1),
+            description: "Gain 1 block (not affected by armor) and 1 Mana Crystal",
+            effect: (player: Player) => {
+                player.gainBlock(1);
+                player.manaCrystals += 1;
+            },
         },
         {
             name: "Very Weak Block",
@@ -118,8 +126,11 @@ const allCards = {
     [Suit.Metal]: [
         {
             name: "Crappy Strike",
-            description: "Deals 1 damage (not affected by attack)",
-            effect: (_player: Player, enemy: Enemy) => enemy.takeDamage(1),
+            description: "Deals 1 damage (not affected by attack) and gain 1 Mana Crystal",
+            effect: (player: Player, enemy: Enemy) => {
+                enemy.takeDamage(1);
+                player.manaCrystals += 1;
+            },
         },
         {
             name: "Very Weak Strike",
@@ -155,8 +166,11 @@ const allCards = {
     [Suit.Water]: [
         {
             name: "Crappy Dodge",
-            description: "Gain 1 block (not affected by agility)",
-            effect: (player: Player) => player.gainBlock(1),
+            description: "Gain 1 block (not affected by agility) and 1 Mana Crystal",
+            effect: (player: Player) => {
+                player.gainBlock(1);
+                player.manaCrystals += 1;
+            },
         },
         {
             name: "Very Weak Dodge",

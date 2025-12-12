@@ -196,7 +196,7 @@ function useGameState() {
                 
     function isCardSelection(clickedCard: Card | null): boolean {
         // Select Card
-        if (!selectedCard.value && clickedCard?.rank && clickedCard.revealed) {
+        if (!selectedCard.value  && clickedCard?.revealed) {
             setSelectedCard(clickedCard);
             return true;
         }
@@ -335,10 +335,11 @@ function useGameState() {
 
         if (!manaPools.value[suit]) return false;
         const manaPool = manaPools.value[suit];
-        if (!manaPool || manaPool.length === 0) return rank === 1;
-        const lastCard = manaPool[manaPool.length - 1];
-        if (!lastCard) return rank === 1;
-        return lastCard.rank + 1 === rank;
+        return manaPool.length >= rank;
+        // if (!manaPool || manaPool.length === 0) return rank === 0;
+        // const lastCard = manaPool[manaPool.length - 1];
+        // if (!lastCard) return rank === 1;
+        // return lastCard.rank === rank;
     }
 
     function getCardIndices(card: Card | null): { handIndex: number, tableauIndex: number, tableauJndex: number } {
