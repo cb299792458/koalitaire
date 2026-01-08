@@ -43,9 +43,7 @@
         <p>Agility: {{ props.player.agility }}</p>
         <p>Arcane: {{ props.player.arcane }}</p>
         
-        <p>Gold: {{  props.player.gold }}</p>
+        <p>Gold: {{ props.player.gold }}</p>
         <p>Deck Size: {{ props.player.deck.length }}</p>
-    </div>
-    <div v-else>
     </div>
 </template>

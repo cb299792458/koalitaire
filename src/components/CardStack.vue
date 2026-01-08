@@ -10,7 +10,6 @@
         name: string, 
         layout?: string,
         selectedCard?: Card | null
-        selectCard?: (card: Card | null) => void
         arrayIndex?: number
     }>();
 

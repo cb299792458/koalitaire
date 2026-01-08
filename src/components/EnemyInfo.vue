@@ -32,7 +32,7 @@
             :number="number"
         />
         <h2>{{ props.enemy.name }}</h2>
-        <img :src="props.enemy.portrait" alt="enemy Portrait" width="100%"/>
+        <img :src="props.enemy.portrait" alt="Enemy Portrait" width="100%"/>
         <p>Health: {{ props.enemy.health }} / {{ props.enemy.maxHealth }}</p>
         <p>Block: {{ props.enemy.block }}</p>
         
@@ -41,10 +41,8 @@
 
         <br/>
         <p>Actions: {{ props.enemy.actions }}</p>
-        <p v-for="action in props.enemy.impendingActions" :key="props.enemy.impendingActions.indexOf(action)">
+        <p v-for="(action, index) in props.enemy.impendingActions" :key="index">
             {{ action.name }}: {{ action.description }}
         </p>
-    </div>
-    <div v-else>
     </div>
 </template>

@@ -151,8 +151,6 @@ function useGameState() {
     function updateGameState(clickedCard: Card | null, clickArea: Area, clickIndex?: number, clickJndex?: number): void {
         switch (clickArea) {
             case AREAS.Deck:
-                // drawCards();
-                // dealRowToTableau();
                 break;
 
             case AREAS.Hand:
@@ -160,16 +158,15 @@ function useGameState() {
                 break;
 
             case AREAS.Tableau:
-                // If clicking empty tableau column (dummy card) and have selected card, allow placement
+                // If clicking empty tableau column and have selected card, allow placement
                 // Otherwise, handle selection/deselection normally
-                const isEmptyTableauClick = (!clickedCard || !clickedCard.rank || clickedCard.suit === 'None') && clickJndex === -1;
+                const isEmptyTableauClick = (!clickedCard || !clickedCard.rank) && clickJndex === -1;
                 if (!isEmptyTableauClick && isCardSelection(clickedCard)) break;
                 placeSelectedCardInTableau(clickedCard, clickIndex, clickJndex);
                 break;
 
             case AREAS.ManaPools:
                 if (isCardSelection(clickedCard)) break;
-                // placeSelectedCardInManaPools(clickedCard, clickIndex);
                 break;
                 
             case AREAS.Board:
@@ -201,8 +198,8 @@ function useGameState() {
             return true;
         }
 
-        // Deselect Card - empty area or dummy card (rank 0, suit 'None')
-        if (!clickedCard || !clickedCard.rank || clickedCard.suit === 'None') {
+        // Deselect Card - empty area or dummy card (rank 0)
+        if (!clickedCard || !clickedCard.rank) {
             setSelectedCard(null);
             return true;
         }
@@ -243,7 +240,7 @@ function useGameState() {
         if (!scv || !clickedColumn || !tableau.value[clickIndex]) return;
 
         // If clicking on a real card (not empty column), validate the move
-        if (clickedCard?.rank && clickedCard.suit !== 'None') {
+        if (clickedCard?.rank) {
             if (scv.suit === clickedCard.suit) return;
             if (scv.rank !== clickedCard.rank - 1) return;
         }
@@ -336,10 +333,6 @@ function useGameState() {
         if (!manaPools.value[suit]) return false;
         const manaPool = manaPools.value[suit];
         return manaPool.length >= rank;
-        // if (!manaPool || manaPool.length === 0) return rank === 0;
-        // const lastCard = manaPool[manaPool.length - 1];
-        // if (!lastCard) return rank === 1;
-        // return lastCard.rank === rank;
     }
 
     function getCardIndices(card: Card | null): { handIndex: number, tableauIndex: number, tableauJndex: number } {

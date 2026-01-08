@@ -24,7 +24,7 @@ export interface CardParams extends BaseCardParams {
 
 class Card {
     rank: number;
-    suit: string;
+    suit: Suit;
     revealed: boolean = false;
     animation: string = '';
     name: string;
@@ -33,7 +33,7 @@ class Card {
     animationTime: number = 1000; // Default animation time in milliseconds
 
     constructor(
-        rank: number, suit: string, name: string, description: string, 
+        rank: number, suit: Suit, name: string, description: string, 
         effect: (player: Player, enemy: Enemy, gameState: GameState) => void
     ) {
         this.rank = rank;
@@ -49,18 +49,18 @@ class Card {
         nextTick(() => {
             setTimeout(() => {
                 switch (this.suit) {
-                    case "🌳":
-                    case "🪧":
+                    case Suit.Wood:
+                    case Suit.Earth:
                         this.animation = 'fly-right';
                         break;
-                    case "♥️":
-                    case "⛊":
+                    case Suit.Fire:
+                    case Suit.Metal:
                         this.animation = 'fly-left';
                         break;
-                    case "💎":
+                    case Suit.Water:
                     default:
                         this.animation = 'fly-up';
-                };
+                }
             }, 50); // tiny delay to allow the card to appear in center
 
             // Reset after animation duration
