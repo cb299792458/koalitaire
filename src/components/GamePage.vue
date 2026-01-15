@@ -1,10 +1,10 @@
 <script setup lang="ts">
     import Card from '../models/Card';
     import CardStack from './CardStack.vue';
-    import useGameState from '../composables/useGameState';
+    import { useCombat } from '../composables/useCombat';
     import { AREAS, type Area } from '../models/Areas';
     import ModalManager from './ModalManager.vue';
-    import { onMounted, onBeforeUnmount, ref, watch } from 'vue';
+    import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue';
     import { openModal } from '../stores/modalStore';
     import PlayerInfo from './PlayerInfo.vue';
     import EnemyInfo from './EnemyInfo.vue';
@@ -13,26 +13,31 @@
 
     const scenario = makeScenario();
 
-    const {
-        selectedCard,
-        deck,
-        compost,
-        hand,
-        tableau,
-        manaPools,
-        updateGameState,
-        player,
-        enemy,
-        startCombat,
-        endTurn,
-    } = useGameState();
+    const combat = useCombat(); // useCombat always returns a Combat instance
         
+    // Create refs for player and enemy for template reactivity  
+    const player = ref(combat.player);
+    const enemy = ref(combat.enemy);
+    
+    const deck = combat.deck;
+    const compost = combat.compost;
+    const hand = combat.hand;
+    const tableau = combat.tableau;
+    const manaPools = combat.manaPools;
+    const selectedCard = combat.selectedCard;
+    
+    function startCombatForPlayer(newPlayer: Player) {
+        if (!scenario[newPlayer.level]) return;
+        const levelEnemy = scenario[newPlayer.level]!.enemy;
+        combat.start(newPlayer, levelEnemy);
+        // Update refs after start
+        player.value = combat.player;
+        enemy.value = combat.enemy;
+    }
+    
     watch(() => player.value?.level, () => {
         if (!player.value) return;
-        if (!scenario[player.value.level]) return;
-
-        enemy.value = scenario[player.value.level]!.enemy;
-        startCombat();
+        startCombatForPlayer(player.value);
     })
         
     function onClick(payload: {
@@ -42,7 +47,7 @@
         cardIndex: number;
     }) {
         const { card, area, arrayIndex, cardIndex } = payload;
-        updateGameState(
+        combat.updateGameState(
             card,
             area,
             arrayIndex,
@@ -53,7 +58,10 @@
     onMounted(() => {
         openModal(
             'start',
-            { onSelect: (newPlayer: Player) => player.value = newPlayer },
+            { onSelect: (newPlayer: Player) => {
+                player.value = newPlayer;
+                startCombatForPlayer(newPlayer);
+            }},
             true, // keepOpen
         );
     })
@@ -95,12 +103,12 @@
                             <div class="cards-top">
                                 <div class="cards-stock">
                                     <CardStack
-                                        :cards="deck"
+                                        :cards="deck.cards"
                                         :name="AREAS.Deck"
                                         @click="onClick"
                                     />
                                     <CardStack
-                                        :cards="compost"
+                                        :cards="compost.cards"
                                         :name="AREAS.Compost"
                                         @click="onClick"
                                     />
@@ -118,9 +126,9 @@
             
                                 <div class="mana-pools">
                                     <CardStack
-                                        v-for="([_suit, cards], index) in Object.entries(manaPools)"
+                                        v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
                                         :key="index"
-                                        :cards="cards"
+                                        :cards="(manaPool as any).cards"
                                         :name="AREAS.ManaPools"
                                         :arrayIndex="index"
                                         @mousedown.prevent
@@ -137,7 +145,7 @@
                                     :name="AREAS.Tableau"
                                     layout="vertical"
                                     :selectedCard="selectedCard"
-                                    :arrayIndex="index"
+                                    :arrayIndex="index as number"
                                     @mousedown.prevent
                                     @click="onClick"
                                 />
@@ -153,14 +161,14 @@
                     <div class="combat-bottom">
                         <div class="cards-hand">
                             <CardStack
-                                :cards="hand"
+                                :cards="hand.cards"
                                 :name="AREAS.Hand"
                                 layout="horizontal"
                                 :selectedCard="selectedCard"
                                 @click="onClick"
                             />
                         </div>
-                        <button @click="endTurn" id="end-turn-button">End Turn</button>
+                        <button @click="combat.endTurn" id="end-turn-button">End Turn</button>
                     </div>
                 </div>
             </div>

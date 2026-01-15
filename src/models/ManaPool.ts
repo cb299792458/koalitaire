@@ -10,6 +10,42 @@ class ManaPool {
         this.cards = [];
     }
 
+    /**
+     * Add a card to the mana pool
+     */
+    addCard(card: Card): void {
+        if (card.suit !== this.suit) {
+            throw new Error(`Cannot add ${card.suit} card to ${this.suit} mana pool`);
+        }
+        this.cards.push(card);
+    }
+
+    /**
+     * Remove a card from the mana pool
+     * @returns true if card was found and removed, false otherwise
+     */
+    removeCard(card: Card): boolean {
+        const index = this.cards.indexOf(card);
+        if (index !== -1) {
+            this.cards.splice(index, 1);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Get the count of available mana (number of cards in the pool)
+     */
+    getManaCount(): number {
+        return this.cards.length;
+    }
+
+    /**
+     * Check if there's enough mana for a given rank
+     */
+    hasEnoughMana(rank: number): boolean {
+        return this.getManaCount() >= rank;
+    }
 }
 
 
