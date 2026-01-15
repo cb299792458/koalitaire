@@ -22,9 +22,9 @@
     const deck = combat.deck;
     const compost = combat.compost;
     const hand = combat.hand;
-    const tableau = combat.tableau;
+    const tableau = computed(() => combat.tableau.getCardsArrays());
     const manaPools = combat.manaPools;
-    const selectedCard = combat.selectedCard;
+    const selectedCard = computed(() => combat.selectedCard);
     
     function startCombatForPlayer(newPlayer: Player) {
         if (!scenario[newPlayer.level]) return;

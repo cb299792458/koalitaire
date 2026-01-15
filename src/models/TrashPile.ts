@@ -1,17 +1,16 @@
 import type Card from "./Card";
+import CardGroup from "./CardGroup";
 
-class TrashPile {
-    cards: Card[] = [];
-
+class TrashPile extends CardGroup {
     constructor(cards: Card[] = []) {
-        this.cards = [...cards];
+        super(cards);
     }
 
     /**
      * Add a card to the trash pile
      */
     addCard(card: Card): void {
-        this.cards.push(card);
+        this.add(card);
     }
 
     /**
@@ -25,7 +24,7 @@ class TrashPile {
      * Get the number of cards in the trash pile
      */
     getCount(): number {
-        return this.cards.length;
+        return this.size();
     }
 
     /**

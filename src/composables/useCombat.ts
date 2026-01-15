@@ -1,5 +1,5 @@
-import { ref, triggerRef, toRaw, type Ref } from 'vue';
-import Card, { Suit, Suits } from '../models/Card';
+import { ref, triggerRef, toRaw } from 'vue';
+import Card, { Suits } from '../models/Card';
 import { AREAS, type Area } from '../models/Areas';
 import { openModal } from '../stores/modalStore';
 import Enemy from '../models/Enemy';
@@ -9,23 +9,10 @@ import EnemyAction from '../models/EnemyAction';
 import DrawPile from '../models/DrawPile';
 import CompostPile from '../models/CompostPile';
 import TrashPile from '../models/TrashPile';
+import Hand from '../models/Hand';
+import Tableau from '../models/Tableau';
 
 const TABLEAU_SIZE: number = 5;
-
-class Hand {
-    cards: Card[];
-    constructor() {
-        this.cards = []
-    }
-
-    addCard(card: Card) {
-        this.cards.push(card)
-    }
-
-    clear() {
-        this.cards = []
-    }
-}
 
 export class Combat {
     listeners: Set<() => void>;
@@ -37,7 +24,7 @@ export class Combat {
     compost: CompostPile;
     trash: TrashPile;
     hand: Hand;
-    tableau: Card[][];
+    tableau: Tableau;
     manaPools: Record<string, ManaPool>;
 
     constructor(player: Player, enemy: Enemy) {
@@ -51,7 +38,7 @@ export class Combat {
         this.compost = new CompostPile();
         this.trash = new TrashPile();
         this.hand = new Hand();
-        this.tableau = Array.from({ length: TABLEAU_SIZE }, () => []);
+        this.tableau = new Tableau(TABLEAU_SIZE);
         
         // Initialize mana pools with ManaPool instances
         this.manaPools = Object.fromEntries(
@@ -85,8 +72,7 @@ export class Combat {
         this.trash.clear();
         this.hand.clear();
 
-        this.tableau = Array.from({ length: TABLEAU_SIZE }, () => []);
-
+        this.initializeTableau();
         this.shuffleDeck();
         this.dealTableau();
         this.startTurn();
@@ -183,24 +169,12 @@ export class Combat {
         this.deck.shuffle();
     }
 
+    initializeTableau(): void {
+        this.tableau = new Tableau(TABLEAU_SIZE);
+    }
+
     dealTableau(): void {
-        for (let i = 0; i < TABLEAU_SIZE; i++) {
-            console.log('dealing')
-            const column: Card[] = [];
-            this.tableau[i] = column;
-            
-            for (let j = 0; j <= i; j++) {
-                const card = this.deck.draw();
-                if (card) {
-                    column.push(card);
-                }
-            }
-            // reveal the last card in each tableau column
-            if (column.length > 0) {
-                const lastCard = column[column.length - 1];
-                if (lastCard) lastCard.revealed = true;
-            }
-        }
+        this.tableau.deal(this.deck);
         this.notify();
     }
 
@@ -312,8 +286,8 @@ export class Combat {
     private placeSelectedCardInTableau(clickedCard: Card | null, clickIndex?: number, clickJndex?: number): void {
         const scv = this.selectedCard;
         if (clickIndex === undefined) return;
-        const clickedColumn = this.tableau[clickIndex];
-        if (!scv || !clickedColumn || !this.tableau[clickIndex]) return;
+        const clickedColumn = this.tableau.getColumn(clickIndex);
+        if (!scv || !clickedColumn) return;
 
         // If clicking on a real card (not empty column), validate the move
         if (clickedCard?.rank) {
@@ -325,32 +299,35 @@ export class Combat {
         const handIndex = this.hand.cards.indexOf(scv);
         if (handIndex !== -1) { // move selectedCard from hand
             this.hand.cards.splice(handIndex, 1);
-            clickedColumn.push(scv);
+            clickedColumn.add(scv);
         } else { // move selectedCard from tableau
             // can't move to top or middle of column (unless column is empty)
-            const isEmptyColumn = clickedColumn.length === 0;
-            if (!isEmptyColumn && clickJndex !== clickedColumn.length - 1) return;
+            const isEmptyColumn = clickedColumn.size() === 0;
+            if (!isEmptyColumn && clickJndex !== clickedColumn.size() - 1) return;
             
-            const selectedCardIndex = this.tableau.findIndex(col => col.includes(scv));
-            const selectedCardColumn = this.tableau[selectedCardIndex];
-            if (!selectedCardColumn || !this.tableau[selectedCardIndex]) return;
-            const selectedCardJndex = this.tableau[selectedCardIndex]!.indexOf(scv);
+            const selectedCardIndex = this.tableau.getColumns().findIndex(col => col.cards.includes(scv));
+            const selectedCardColumn = this.tableau.getColumn(selectedCardIndex);
+            if (!selectedCardColumn) return;
+            const selectedCardJndex = selectedCardColumn.cards.indexOf(scv);
 
             // can't move if there are cards below that don't match suit or rank
-            for (let i = selectedCardJndex + 1; i < selectedCardColumn.length; i++) {
-                const above = selectedCardColumn[i - 1];
-                const below = selectedCardColumn[i];
+            for (let i = selectedCardJndex + 1; i < selectedCardColumn.cards.length; i++) {
+                const above = selectedCardColumn.cards[i - 1];
+                const below = selectedCardColumn.cards[i];
                 if (above && below && above.suit === below.suit) return;
                 if (above && below && above.rank !== below.rank + 1) return;
             }
 
             // move card and all below - calculate cards to move first to avoid mutation during iteration
-            const cardsToMove = selectedCardColumn.slice(selectedCardJndex);
-            this.tableau[clickIndex].push(...cardsToMove);
-            this.tableau[selectedCardIndex].splice(selectedCardJndex, cardsToMove.length);
+            const cardsToMove = selectedCardColumn.cards.slice(selectedCardJndex);
+            clickedColumn.cards.push(...cardsToMove);
+            selectedCardColumn.cards.splice(selectedCardJndex, cardsToMove.length);
 
             // reveal the last card in the column if it exists
-            if (selectedCardColumn.length) selectedCardColumn[selectedCardColumn.length - 1]!.revealed = true;
+            if (selectedCardColumn.cards.length > 0) {
+                const lastCard = selectedCardColumn.cards[selectedCardColumn.cards.length - 1];
+                if (lastCard) lastCard.revealed = true;
+            }
         }
 
         this.setSelectedCard(null);
@@ -405,8 +382,8 @@ export class Combat {
 
         const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);
         if (handIndex === -1) {
-            const tableauColumn = this.tableau[tableauIndex];
-            if (!tableauColumn || tableauJndex !== tableauColumn.length - 1) return false; // can't use card if it's not the last card in the tableau column
+            const tableauColumn = this.tableau.getColumn(tableauIndex);
+            if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return false; // can't use card if it's not the last card in the tableau column
         }
 
         const manaPool = this.manaPools[suit];
@@ -418,10 +395,13 @@ export class Combat {
         if (!card) return { handIndex: -1, tableauIndex: -1, tableauJndex: -1 };
 
         const handIndex = this.hand.cards.indexOf(card);
-        const tableauIndex = this.tableau.findIndex(col => col.includes(card));
+        const tableauIndex = this.tableau.getColumns().findIndex(col => col.cards.includes(card));
         let tableauJndex = -1;
         if (tableauIndex !== -1) {
-            tableauJndex = this.tableau[tableauIndex]!.indexOf(card);
+            const column = this.tableau.getColumn(tableauIndex);
+            if (column) {
+                tableauJndex = column.cards.indexOf(card);
+            }
         }
 
         return { handIndex, tableauIndex, tableauJndex };
@@ -432,12 +412,12 @@ export class Combat {
         if (handIndex !== -1) {
             this.hand.cards.splice(handIndex, 1);
         } else if (tableauIndex !== -1) {
-            const tableauColumn = this.tableau[tableauIndex];
+            const tableauColumn = this.tableau.getColumn(tableauIndex);
             if (tableauColumn && tableauJndex !== -1) {
-                tableauColumn.splice(tableauJndex, 1);
+                tableauColumn.remove(card);
                 // reveal the last card in the column if it exists
-                if (tableauColumn.length > 0) {
-                    const lastCard = tableauColumn[tableauColumn.length - 1];
+                if (tableauColumn.cards.length > 0) {
+                    const lastCard = tableauColumn.cards[tableauColumn.cards.length - 1];
                     if (lastCard) lastCard.revealed = true;
                 }
             }

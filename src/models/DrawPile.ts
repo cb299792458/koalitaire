@@ -1,17 +1,16 @@
 import type Card from "./Card";
+import CardGroup from "./CardGroup";
 
-class DrawPile {
-    cards: Card[] = [];
-
+class DrawPile extends CardGroup {
     constructor(cards: Card[] = []) {
-        this.cards = [...cards];
+        super(cards);
     }
 
     /**
      * Add a card to the bottom of the draw pile
      */
     addCard(card: Card): void {
-        this.cards.push(card);
+        this.add(card);
     }
 
     /**
@@ -48,7 +47,7 @@ class DrawPile {
      * Get the number of cards in the draw pile
      */
     getCount(): number {
-        return this.cards.length;
+        return this.size();
     }
 
     /**

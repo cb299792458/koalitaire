@@ -1,18 +1,17 @@
 import type Card from "./Card";
 import type DrawPile from "./DrawPile";
+import CardGroup from "./CardGroup";
 
-class CompostPile {
-    cards: Card[] = [];
-
+class CompostPile extends CardGroup {
     constructor(cards: Card[] = []) {
-        this.cards = [...cards];
+        super(cards);
     }
 
     /**
      * Add a card to the compost pile
      */
     addCard(card: Card): void {
-        this.cards.push(card);
+        this.add(card);
     }
 
     /**
@@ -26,7 +25,7 @@ class CompostPile {
      * Get the number of cards in the compost pile
      */
     getCount(): number {
-        return this.cards.length;
+        return this.size();
     }
 
     /**
