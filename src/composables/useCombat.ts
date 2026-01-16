@@ -357,9 +357,7 @@ export class Combat {
         
         setTimeout(() => {
             if (!this.player || !this.enemy) return;
-            // Note: Card effect signature expects GameState but effects don't actually use it
-            // They only use player and enemy. We pass this for compatibility.
-            scv.effect(this.player, this.enemy, this as any);
+            scv.effect(this);
             this.moveCardToArea(scv, AREAS.Compost); // move card to compost after casting
             // move all cards in mana pool to compost
             const manaPool = this.manaPools[scv.suit];

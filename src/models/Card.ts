@@ -1,7 +1,5 @@
 import { nextTick } from "vue";
-import type Enemy from "./Enemy";
-import type Player from "./Player";
-import type { GameState } from "../composables/useGameState";
+import type { Combat } from "../composables/useCombat";
 
 export const Suit = {
     Wood: "🪵",
@@ -15,7 +13,7 @@ export const Suits: Suit[] = Object.values(Suit);
 export interface BaseCardParams {
     name: string;
     description: string;
-    effect: (player: Player, enemy: Enemy, gameState: GameState) => void;
+    effect: (combat: Combat) => void;
 }
 export interface CardParams extends BaseCardParams {
     rank: number;
@@ -29,12 +27,12 @@ class Card {
     animation: string = '';
     name: string;
     description: string;
-    effect: (player: Player, enemy: Enemy, gameState: GameState) => void;
+    effect: (combat: Combat) => void;
     animationTime: number = 1000; // Default animation time in milliseconds
 
     constructor(
         rank: number, suit: Suit, name: string, description: string, 
-        effect: (player: Player, enemy: Enemy, gameState: GameState) => void
+        effect: (combat: Combat) => void
     ) {
         this.rank = rank;
         this.suit = suit;
