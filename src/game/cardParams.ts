@@ -1,5 +1,6 @@
 import { Suit } from "../models/Card";
 import type { Combat } from "../composables/useCombat";
+import { createSummon, summons } from "./summons";
 
 const allCards = {
     [Suit.Wood]: [
@@ -58,6 +59,17 @@ const allCards = {
             effect: (combat: Combat) => {
                 const { player, enemy } = combat;
                 enemy.takeDamage(21 + player.agility);
+            },
+        },
+        {
+            name: "Summon Koala",
+            description: "Summon a Koala. At the end of each turn, gain 2 block.",
+            effect: (combat: Combat) => {
+                const { player } = combat;
+                const koala = summons.koala;
+                if (koala) {
+                    player.summons.push(createSummon(koala));
+                }
             },
         },
     ],
@@ -119,6 +131,17 @@ const allCards = {
                 enemy.takeDamage(21 + player.arcane);
             },
         },
+        {
+            name: "Summon Fire Salamander",
+            description: "Summon a Fire Salamander. At the end of each turn, deal 2 damage to the enemy.",
+            effect: (combat: Combat) => {
+                const { player } = combat;
+                const fireSpirit = summons.fireSpirit;
+                if (fireSpirit) {
+                    player.summons.push(createSummon(fireSpirit));
+                }
+            },
+        },
     ],
     [Suit.Earth]: [
         {
@@ -176,6 +199,17 @@ const allCards = {
             effect: (combat: Combat) => {
                 const { player } = combat;
                 player.gainBlock(21 + player.armor);
+            },
+        },
+        {
+            name: "Summon Stone Wombat",
+            description: "Summon a Stone Wombat. At the end of each turn, gain 4 block.",
+            effect: (combat: Combat) => {
+                const { player } = combat;
+                const stoneGolem = summons.stoneGolem;
+                if (stoneGolem) {
+                    player.summons.push(createSummon(stoneGolem));
+                }
             },
         },
     ],
@@ -237,6 +271,17 @@ const allCards = {
                 enemy.takeDamage(21 + player.attack);
             },
         },
+        {
+            name: "Summon Blade Quokka",
+            description: "Summon a Blade Quokka. At the end of each turn, deal 1 + floor(attack/2) damage to the enemy.",
+            effect: (combat: Combat) => {
+                const { player } = combat;
+                const bladeFamiliar = summons.bladeFamiliar;
+                if (bladeFamiliar) {
+                    player.summons.push(createSummon(bladeFamiliar));
+                }
+            },
+        },
     ],
     [Suit.Water]: [
         {
@@ -294,6 +339,28 @@ const allCards = {
             effect: (combat: Combat) => {
                 const { player } = combat;
                 player.gainBlock(21 + player.agility);
+            },
+        },
+        {
+            name: "Summon Healing Platypus",
+            description: "Summon a Healing Platypus. At the end of each turn, restore 3 health.",
+            effect: (combat: Combat) => {
+                const { player } = combat;
+                const healingTide = summons.healingTide;
+                if (healingTide) {
+                    player.summons.push(createSummon(healingTide));
+                }
+            },
+        },
+        {
+            name: "Summon Forest Guardian",
+            description: "Summon a Forest Guardian. At the end of each turn, gain 3 block and deal 2 damage to the enemy.",
+            effect: (combat: Combat) => {
+                const { player } = combat;
+                const forestGuardian = summons.forestGuardian;
+                if (forestGuardian) {
+                    player.summons.push(createSummon(forestGuardian));
+                }
             },
         },
     ],
