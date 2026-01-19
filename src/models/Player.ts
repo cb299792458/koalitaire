@@ -1,4 +1,5 @@
 import Card from "./Card";
+import Summon from "./Summon";
 
 import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
@@ -40,6 +41,7 @@ class Player {
     gold: number;
 
     deck: Card[];
+    summons: Summon[];
 
     constructor(params: PlayerParams) {
         const { name, portrait, appeal, attack, armor, agility, arcane, health, gold, makeDeck } = params;
@@ -57,6 +59,7 @@ class Player {
         this.gold = gold;
 
         this.deck = makeDeck();
+        this.summons = [];
     }
 
     gainHealth(amount: number): void {

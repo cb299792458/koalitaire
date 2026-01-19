@@ -1,5 +1,7 @@
 import EnemyAction, { enemyActions } from "./EnemyAction";
 import type Player from "./Player";
+import Summon from "./Summon";
+import type { Combat } from "../composables/useCombat";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 import useDamageNumbers from "../composables/useDamageNumbers";
 
@@ -23,6 +25,7 @@ class Enemy {
 
     attack: number;
     armor: number;
+    summons: Summon[];
 
     constructor(name: string, portrait: string, health: number, makeDeck: () => EnemyAction[]) {
         this.name = name;
@@ -37,6 +40,7 @@ class Enemy {
 
         this.attack = 0;
         this.armor = 0;
+        this.summons = [];
     }
 
     loadActions(actions: number): void {
@@ -52,11 +56,16 @@ class Enemy {
         }
     }
 
-    executeActions(player: Player): void {
+    executeActions(player: Player, combat: Combat): void {
         for (const action of this.impendingActions) {
             action.effect(this, player);
         }
         this.impendingActions = [];
+        
+        // Enemy summons run after all enemy actions
+        for (const summon of this.summons) {
+            summon.effect(combat);
+        }
     }
 
     gainHealth(amount: number): void {

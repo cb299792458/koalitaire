@@ -192,8 +192,14 @@ export class Combat {
 
     endTurn(): void {
         if (!this.player || !this.enemy) return;
+        
+        // Player summons run at the end of the player turn
+        for (const summon of this.player.summons) {
+            summon.effect(this);
+        }
+        
         this.enemy.block = 0;
-        this.enemy.executeActions(this.player);
+        this.enemy.executeActions(this.player, this);
 
         this.startTurn();
     }
