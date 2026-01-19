@@ -1,24 +1,28 @@
 import { ref, triggerRef, toRaw } from 'vue';
+
+// Models
 import Card, { Suits } from '../models/Card';
-import { AREAS, type Area } from '../models/Areas';
-import { openModal } from '../stores/modalStore';
-import Enemy from '../models/Enemy';
 import Player from '../models/Player';
-import ManaPool from '../models/ManaPool';
-import EnemyAction from '../models/EnemyAction';
+import Enemy from '../models/Enemy';
 import DrawPile from '../models/DrawPile';
 import CompostPile from '../models/CompostPile';
 import TrashPile from '../models/TrashPile';
 import Hand from '../models/Hand';
 import Tableau from '../models/Tableau';
+import ManaPool from '../models/ManaPool';
 
-const TABLEAU_SIZE: number = 5;
+// Types & Constants
+import { AREAS, type Area } from '../models/Areas';
+import { openModal } from '../stores/modalStore';
+
+const TABLEAU_SIZE = 5;
 
 export class Combat {
-    listeners: Set<() => void>;
+    // Game entities
     player: Player;
     enemy: Enemy;
     
+    // Game state
     selectedCard: Card | null;
     deck: DrawPile;
     compost: CompostPile;
@@ -26,13 +30,15 @@ export class Combat {
     hand: Hand;
     tableau: Tableau;
     manaPools: Record<string, ManaPool>;
+    
+    // Observer pattern
+    listeners: Set<() => void>;
 
     constructor(player: Player, enemy: Enemy) {
         this.player = player;
         this.enemy = enemy;
         this.listeners = new Set();
         
-        // Initialize game state
         this.selectedCard = null;
         this.deck = new DrawPile();
         this.compost = new CompostPile();
@@ -40,19 +46,19 @@ export class Combat {
         this.hand = new Hand();
         this.tableau = new Tableau(TABLEAU_SIZE);
         
-        // Initialize mana pools with ManaPool instances
         this.manaPools = Object.fromEntries(
             Suits.map(suit => [suit, new ManaPool(suit)])
-        )
+        );
     }
+
+    // ==================== Lifecycle Methods ====================
 
     /**
      * Start a new combat by copying the given player and enemy
      */
     start(player: Player, enemy: Enemy): void {
-        // Create deep copies of player and enemy
-        this.player = this.copyPlayer(player);
-        this.enemy = this.copyEnemy(enemy);
+        this.player = player.copy();
+        this.enemy = enemy.copy();
         
         // Reset game state
         if (!this.player) {
@@ -80,103 +86,7 @@ export class Combat {
         this.notify();
     }
 
-    /**
-     * Create a deep copy of a player
-     */
-    private copyPlayer(player: Player): Player {
-        const playerCopy = new Player({
-            name: player.name,
-            portrait: player.portrait,
-            appeal: player.appeal,
-            attack: player.attack,
-            armor: player.armor,
-            agility: player.agility,
-            arcane: player.arcane,
-            health: player.maxHealth,
-            gold: player.gold,
-            makeDeck: () => player.deck.map(card => new Card(
-                card.rank,
-                card.suit,
-                card.name,
-                card.description,
-                card.effect
-            ))
-        });
-        playerCopy.level = player.level;
-        playerCopy.health = player.health; // Copy current health
-        playerCopy.manaCrystals = player.manaCrystals;
-        playerCopy.block = player.block;
-        return playerCopy;
-    }
-
-    /**
-     * Create a deep copy of an enemy
-     */
-    private copyEnemy(enemy: Enemy): Enemy {
-        const enemyCopy = new Enemy(
-            enemy.name,
-            enemy.portrait,
-            enemy.maxHealth,
-            () => enemy.deck.map(action => new EnemyAction(
-                action.name,
-                action.description,
-                action.effect
-            ))
-        );
-        enemyCopy.actions = enemy.actions;
-        enemyCopy.health = enemy.health; // Copy current health
-        enemyCopy.block = enemy.block;
-        enemyCopy.attack = enemy.attack;
-        enemyCopy.armor = enemy.armor;
-        return enemyCopy;
-    }
-
-    subscribe(fn: () => void) {
-        this.listeners.add(fn);
-    }
-
-    notify() {
-        for (const fn of this.listeners) fn();
-    }
-
-    setSelectedCard(card: Card | null): void {
-        this.selectedCard = card;
-    }
-
-    drawCards(count: number = 3, keepHand: boolean = false): void {
-        // move all cards from hand to compost
-        if (!keepHand) {
-            this.compost.addCards([...this.hand.cards]);
-            this.hand.clear();
-        }
-
-        // If deck is empty, recycle compost into the deck
-        if (this.deck.isEmpty()) {
-            this.compost.recycleInto(this.deck);
-            this.deck.shuffle();
-        }
-
-        // Draw cards and reveal them
-        const drawnCards = this.deck.drawMultiple(count);
-        for (const card of drawnCards) {
-            card.revealed = true;
-            this.hand.addCard(card);
-        }
-        this.notify();
-    }
-
-    shuffleDeck(): void {
-        this.deck.shuffle();
-    }
-
-    initializeTableau(): void {
-        this.tableau = new Tableau(TABLEAU_SIZE);
-    }
-
-    dealTableau(): void {
-        this.tableau.deal(this.deck);
-        this.notify();
-    }
+    // ==================== Turn Management ====================
 
     startTurn(): void {
         this.drawCards(3);
@@ -203,6 +113,95 @@ export class Combat {
 
         this.startTurn();
     }
+
+    // ==================== Card Drawing & Deck Management ====================
+
+    drawCards(count: number = 3, keepHand: boolean = false): void {
+        // Move all cards from hand to compost
+        if (!keepHand) {
+            this.compost.addCards([...this.hand.cards]);
+            this.hand.clear();
+        }
+
+        // If deck is empty, recycle compost into the deck
+        if (this.deck.isEmpty()) {
+            this.compost.recycleInto(this.deck);
+            this.deck.shuffle();
+        }
+
+        // Draw cards and reveal them
+        const drawnCards = this.deck.drawMultiple(count);
+        for (const card of drawnCards) {
+            card.revealed = true;
+            this.hand.addCard(card);
+        }
+        this.notify();
+    }
+
+    shuffleDeck(): void {
+        this.deck.shuffle();
+    }
+
+    // ==================== Tableau Management ====================
+
+    initializeTableau(): void {
+        this.tableau = new Tableau(TABLEAU_SIZE);
+    }
+
+    dealTableau(): void {
+        this.tableau.deal(this.deck);
+        this.notify();
+    }
+
+    // ==================== Card Selection ====================
+
+    setSelectedCard(card: Card | null): void {
+        this.selectedCard = card;
+    }
+
+    private isCardSelection(clickedCard: Card | null): boolean {
+        // Select card
+        if (!this.selectedCard && clickedCard?.revealed) {
+            this.setSelectedCard(clickedCard);
+            return true;
+        }
+
+        // Deselect card - empty area or dummy card (rank 0)
+        if (!clickedCard || !clickedCard.rank) {
+            this.setSelectedCard(null);
+            return true;
+        }
+        
+        // Deselect if clicking the same card - compare by reference first
+        const selected = toRaw(this.selectedCard);
+        if (selected && clickedCard === selected) {
+            this.setSelectedCard(null);
+            return true;
+        }
+        
+        // Check if it's the same card by checking position
+        if (selected) {
+            const clickedIndices = this.getCardIndices(clickedCard);
+            const selectedIndices = this.getCardIndices(selected);
+            
+            if (clickedIndices.handIndex === selectedIndices.handIndex && 
+                clickedIndices.handIndex !== -1) {
+                this.setSelectedCard(null);
+                return true;
+            }
+            
+            if (clickedIndices.tableauIndex === selectedIndices.tableauIndex && 
+                clickedIndices.tableauJndex === selectedIndices.tableauJndex &&
+                clickedIndices.tableauIndex !== -1) {
+                this.setSelectedCard(null);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // ==================== Card Actions ====================
 
     updateGameState(clickedCard: Card | null, clickArea: Area, clickIndex?: number, clickJndex?: number): void {
         switch (clickArea) {
@@ -233,11 +232,11 @@ export class Combat {
                 openModal('compost', { compost: this.compost.cards });
                 break;
 
-            case 'Burn Card':
+            case AREAS['Burn Card']:
                 this.burnCard();
                 break;
             
-            case 'Cast Card':
+            case AREAS['Cast Card']:
                 this.castCard();
                 break;
                 
@@ -247,76 +246,91 @@ export class Combat {
         }
     }
 
-    private isCardSelection(clickedCard: Card | null): boolean {
-        // Select Card
-        if (!this.selectedCard && clickedCard?.revealed) {
-            this.setSelectedCard(clickedCard);
-            return true;
-        }
+    private burnCard(): void {
+        if (!this.selectedCard || !this.canUseSelectedCard()) return;
 
-        // Deselect Card - empty area or dummy card (rank 0)
-        if (!clickedCard || !clickedCard.rank) {
-            this.setSelectedCard(null);
-            return true;
-        }
-        
-        // Deselect if clicking the same card - compare by reference first
-        const selected = toRaw(this.selectedCard);
-        if (selected && clickedCard === selected) {
-            this.setSelectedCard(null);
-            return true;
-        }
-        
-        // Also check if it's the same card by checking if it's at the same position
-        if (selected) {
-            const clickedIndices = this.getCardIndices(clickedCard);
-            const selectedIndices = this.getCardIndices(selected);
-            
-            if (clickedIndices.handIndex === selectedIndices.handIndex && 
-                clickedIndices.handIndex !== -1) {
-                this.setSelectedCard(null);
-                return true;
-            }
-            
-            if (clickedIndices.tableauIndex === selectedIndices.tableauIndex && 
-                clickedIndices.tableauJndex === selectedIndices.tableauJndex &&
-                clickedIndices.tableauIndex !== -1) {
-                this.setSelectedCard(null);
-                return true;
-            }
-        }
+        const selectedCard = this.selectedCard;
+        selectedCard.animateBurn();
+        setTimeout(() => {
+            this.moveCardToArea(selectedCard, AREAS.ManaPools);
+        }, selectedCard.animationTime);
 
-        return false;
+        this.setSelectedCard(null);
     }
 
-    private placeSelectedCardInTableau(clickedCard: Card | null, clickIndex?: number, clickJndex?: number): void {
-        const scv = this.selectedCard;
-        if (clickIndex === undefined) return;
-        const clickedColumn = this.tableau.getColumn(clickIndex);
-        if (!scv || !clickedColumn) return;
+    private castCard(): void {
+        if (!this.selectedCard || !this.player || !this.enemy) return;
+        if (!this.canUseSelectedCard()) return;
 
-        // If clicking on a real card (not empty column), validate the move
-        if (clickedCard?.rank) {
-            if (scv.suit === clickedCard.suit) return;
-            if (scv.rank !== clickedCard.rank - 1) return;
+        const selectedCard = this.selectedCard;
+        selectedCard.animate();
+        
+        setTimeout(() => {
+            if (!this.player || !this.enemy) return;
+            selectedCard.effect(this);
+            this.moveCardToArea(selectedCard, AREAS.Compost);
+            
+            // Move all cards in mana pool to compost
+            const manaPool = this.manaPools[selectedCard.suit];
+            if (manaPool) {
+                const cardsToCompost = [...manaPool.cards];
+                for (const card of cardsToCompost) {
+                    this.moveCardToArea(card, AREAS.Compost);
+                }
+            }
+        }, selectedCard.animationTime);
+        
+        this.setSelectedCard(null);
+    }
+
+    private canUseSelectedCard(): boolean {
+        if (!this.selectedCard || !this.selectedCard.revealed) return false;
+        
+        const { rank, suit } = this.selectedCard;
+        const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);
+        
+        if (handIndex === -1) {
+            const tableauColumn = this.tableau.getColumn(tableauIndex);
+            if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return false;
         }
-        // If clicking on empty column, allow placement (no validation needed for empty columns)
 
-        const handIndex = this.hand.cards.indexOf(scv);
-        if (handIndex !== -1) { // move selectedCard from hand
+        const manaPool = this.manaPools[suit];
+        if (!manaPool) return false;
+        return manaPool.hasEnoughMana(rank);
+    }
+
+    // ==================== Tableau Placement ====================
+
+    private placeSelectedCardInTableau(clickedCard: Card | null, clickIndex?: number, clickJndex?: number): void {
+        const selectedCard = this.selectedCard;
+        if (clickIndex === undefined || !selectedCard) return;
+        
+        const clickedColumn = this.tableau.getColumn(clickIndex);
+        if (!clickedColumn) return;
+
+        // Validate move if clicking on a real card
+        if (clickedCard?.rank) {
+            if (selectedCard.suit === clickedCard.suit) return;
+            if (selectedCard.rank !== clickedCard.rank - 1) return;
+        }
+
+        // Move card from hand or tableau
+        const handIndex = this.hand.cards.indexOf(selectedCard);
+        if (handIndex !== -1) {
+            // Move from hand
             this.hand.cards.splice(handIndex, 1);
-            clickedColumn.add(scv);
-        } else { // move selectedCard from tableau
-            // can't move to top or middle of column (unless column is empty)
+            clickedColumn.add(selectedCard);
+        } else {
+            // Move from tableau
             const isEmptyColumn = clickedColumn.size() === 0;
             if (!isEmptyColumn && clickJndex !== clickedColumn.size() - 1) return;
             
-            const selectedCardIndex = this.tableau.getColumns().findIndex(col => col.cards.includes(scv));
+            const selectedCardIndex = this.tableau.getColumns().findIndex(col => col.cards.includes(selectedCard));
             const selectedCardColumn = this.tableau.getColumn(selectedCardIndex);
             if (!selectedCardColumn) return;
-            const selectedCardJndex = selectedCardColumn.cards.indexOf(scv);
+            const selectedCardJndex = selectedCardColumn.cards.indexOf(selectedCard);
 
-            // can't move if there are cards below that don't match suit or rank
+            // Validate that cards below match suit and rank
             for (let i = selectedCardJndex + 1; i < selectedCardColumn.cards.length; i++) {
                 const above = selectedCardColumn.cards[i - 1];
                 const below = selectedCardColumn.cards[i];
@@ -324,12 +338,12 @@ export class Combat {
                 if (above && below && above.rank !== below.rank + 1) return;
             }
 
-            // move card and all below - calculate cards to move first to avoid mutation during iteration
+            // Move card and all below it
             const cardsToMove = selectedCardColumn.cards.slice(selectedCardJndex);
             clickedColumn.cards.push(...cardsToMove);
             selectedCardColumn.cards.splice(selectedCardJndex, cardsToMove.length);
 
-            // reveal the last card in the column if it exists
+            // Reveal the last card in the column if it exists
             if (selectedCardColumn.cards.length > 0) {
                 const lastCard = selectedCardColumn.cards[selectedCardColumn.cards.length - 1];
                 if (lastCard) lastCard.revealed = true;
@@ -340,67 +354,15 @@ export class Combat {
         this.notify();
     }
 
-    private burnCard(): void {
-        const scv = this.selectedCard;
-        if (!scv) return;
-        if (!this.canUseSelectedCard()) return;
+    // ==================== Card Movement ====================
 
-        scv.animateBurn();
-        setTimeout(() => {
-            this.moveCardToArea(scv, AREAS.ManaPools);
-        }, scv.animationTime); // move card as animation finishes
-
-        this.setSelectedCard(null);
-    }
-
-    private castCard(): void {
-        const scv = this.selectedCard;
-        if (!scv) return;
-        if (!this.enemy || !this.player) return;
-
-        if (!this.canUseSelectedCard()) return;
-        scv.animate();
-        
-        setTimeout(() => {
-            if (!this.player || !this.enemy) return;
-            scv.effect(this);
-            this.moveCardToArea(scv, AREAS.Compost); // move card to compost after casting
-            // move all cards in mana pool to compost
-            const manaPool = this.manaPools[scv.suit];
-            if (manaPool) {
-                // Create a copy of the array to avoid mutation during iteration
-                const cardsToCompost = [...manaPool.cards];
-                for (const card of cardsToCompost) {
-                    this.moveCardToArea(card, AREAS.Compost);
-                }
-            }
-        }, scv.animationTime); // move card as animation finishes
-        
-        this.setSelectedCard(null);
-    }
-
-    private canUseSelectedCard(): boolean {
-        const scv = this.selectedCard;
-        if (!scv || !scv.revealed) return false;
-        const { rank, suit } = scv;
-
-        const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);
-        if (handIndex === -1) {
-            const tableauColumn = this.tableau.getColumn(tableauIndex);
-            if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return false; // can't use card if it's not the last card in the tableau column
-        }
-
-        const manaPool = this.manaPools[suit];
-        if (!manaPool) return false;
-        return manaPool.hasEnoughMana(rank);
-    }
-
-    private getCardIndices(card: Card | null): { handIndex: number, tableauIndex: number, tableauJndex: number } {
+    private getCardIndices(card: Card | null): { handIndex: number; tableauIndex: number; tableauJndex: number } {
         if (!card) return { handIndex: -1, tableauIndex: -1, tableauJndex: -1 };
 
         const handIndex = this.hand.cards.indexOf(card);
         const tableauIndex = this.tableau.getColumns().findIndex(col => col.cards.includes(card));
         let tableauJndex = -1;
+        
         if (tableauIndex !== -1) {
             const column = this.tableau.getColumn(tableauIndex);
             if (column) {
@@ -413,26 +375,29 @@ export class Combat {
 
     private moveCardToArea(card: Card, area: Area): void {
         const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(card);
+        
+        // Remove card from current location
         if (handIndex !== -1) {
             this.hand.cards.splice(handIndex, 1);
         } else if (tableauIndex !== -1) {
             const tableauColumn = this.tableau.getColumn(tableauIndex);
             if (tableauColumn && tableauJndex !== -1) {
                 tableauColumn.remove(card);
-                // reveal the last card in the column if it exists
+                // Reveal the last card in the column if it exists
                 if (tableauColumn.cards.length > 0) {
                     const lastCard = tableauColumn.cards[tableauColumn.cards.length - 1];
                     if (lastCard) lastCard.revealed = true;
                 }
             }
         } else {
-            // card is in mana pools
+            // Card is in mana pools
             const manaPool = this.manaPools[card.suit];
             if (manaPool) {
                 manaPool.removeCard(card);
             }
         }
 
+        // Add card to target area
         switch (area) {
             case AREAS.Compost:
                 this.compost.addCard(card);
@@ -449,14 +414,24 @@ export class Combat {
         }
         this.notify();
     }
+
+    // ==================== Observer Pattern ====================
+
+    subscribe(fn: () => void): void {
+        this.listeners.add(fn);
+    }
+
+    notify(): void {
+        for (const fn of this.listeners) fn();
+    }
 }
 
-// useCombat composable
+// ==================== Composable ====================
+
 const combatRef = ref<Combat | null>(null);
 
-export function useCombat() {
+export function useCombat(): Combat {
     if (!combatRef.value) {
-        // Create a default combat instance - will be initialized by start()
         const defaultPlayer = new Player({
             name: '',
             portrait: '',
@@ -473,7 +448,7 @@ export function useCombat() {
         
         const combat = new Combat(defaultPlayer, defaultEnemy);
 
-        // whenever combat logic changes, notify Vue
+        // Whenever combat logic changes, notify Vue
         combat.subscribe(() => {
             triggerRef(combatRef);
         });
@@ -481,5 +456,5 @@ export function useCombat() {
         combatRef.value = combat;
     }
 
-    return combatRef.value;
+    return combatRef.value as Combat;
 }

@@ -97,6 +97,32 @@ class Player {
         const damageNumbers = useDamageNumbers();
         damageNumbers.addPlayerNumber(amount, 'block-gain');
     }
+
+    copy(): Player {
+        const playerCopy = new Player({
+            name: this.name,
+            portrait: this.portrait,
+            appeal: this.appeal,
+            attack: this.attack,
+            armor: this.armor,
+            agility: this.agility,
+            arcane: this.arcane,
+            health: this.maxHealth,
+            gold: this.gold,
+            makeDeck: () => this.deck.map(card => new Card(
+                card.rank,
+                card.suit,
+                card.name,
+                card.description,
+                card.effect
+            ))
+        });
+        playerCopy.level = this.level;
+        playerCopy.health = this.health;
+        playerCopy.manaCrystals = this.manaCrystals;
+        playerCopy.block = this.block;
+        return playerCopy;
+    }
 }
 
 export const koaParams: PlayerParams = {

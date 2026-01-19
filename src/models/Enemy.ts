@@ -100,6 +100,25 @@ class Enemy {
         const damageNumbers = useDamageNumbers();
         damageNumbers.addEnemyNumber(amount, 'block-gain');
     }
+
+    copy(): Enemy {
+        const enemyCopy = new Enemy(
+            this.name,
+            this.portrait,
+            this.maxHealth,
+            () => this.deck.map(action => new EnemyAction(
+                action.name,
+                action.description,
+                action.effect
+            ))
+        );
+        enemyCopy.actions = this.actions;
+        enemyCopy.health = this.health;
+        enemyCopy.block = this.block;
+        enemyCopy.attack = this.attack;
+        enemyCopy.armor = this.armor;
+        return enemyCopy;
+    }
 }
 
 export default Enemy;
