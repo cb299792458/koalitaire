@@ -215,60 +215,59 @@ const allCards = {
     ],
     [Suit.Metal]: [
         {
-            name: "Crappy Strike",
-            description: "Deals 1 damage (not affected by attack) and gain 1 Mana Crystal",
+            name: "Crappy Channel",
+            description: "Gain 1 Mana Crystal",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(1);
+                const { player } = combat;
                 player.manaCrystals += 1;
             },
         },
         {
-            name: "Very Weak Strike",
-            description: "Deals 1 damage, plus 1 damage for each point of attack",
+            name: "Very Weak Channel",
+            description: "Gain 2 Mana Crystals",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(1 + player.attack);
+                const { player } = combat;
+                player.manaCrystals += 2;
             },
         },
         {
-            name: "Weak Strike",
-            description: "Deals 3 damage, plus 1 damage for each point of attack",
+            name: "Weak Channel",
+            description: "Gain 4 Mana Crystals",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(3 + player.attack);
+                const { player } = combat;
+                player.manaCrystals += 4;
             },
         },
         {
-            name: "Moderate Strike",
-            description: "Deals 6 damage, plus 1 damage for each point of attack",
+            name: "Moderate Channel",
+            description: "Gain 6 Mana Crystals",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(6 + player.attack);
+                const { player } = combat;
+                player.manaCrystals += 6;
             },
         },
         {
-            name: "Strong Strike",
-            description: "Deals 10 damage, plus 1 damage for each point of attack",
+            name: "Strong Channel",
+            description: "Gain 9 Mana Crystals",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(10 + player.attack);
+                const { player } = combat;
+                player.manaCrystals += 9;
             },
         },
         {
-            name: "Very Strong Strike",
-            description: "Deals 15 damage, plus 1 damage for each point of attack",
+            name: "Very Strong Channel",
+            description: "Gain 13 Mana Crystals",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(15 + player.attack);
+                const { player } = combat;
+                player.manaCrystals += 13;
             },
         },
         {
-            name: "Critical Strike",
-            description: "Deals 21 damage, plus 1 damage for each point of attack",
+            name: "Critical Channel",
+            description: "Gain 18 Mana Crystals",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(21 + player.attack);
+                const { player } = combat;
+                player.manaCrystals += 18;
             },
         },
         {

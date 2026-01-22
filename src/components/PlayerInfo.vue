@@ -2,6 +2,7 @@
     import { computed } from 'vue';
     import type Player from '../models/Player';
     import FloatingNumber from './FloatingNumber.vue';
+    import SummonDisplay from './SummonDisplay.vue';
     import useDamageNumbers from '../composables/useDamageNumbers';
 
     const props = defineProps<{
@@ -45,5 +46,14 @@
         
         <p>Gold: {{ props.player.gold }}</p>
         <p>Deck Size: {{ props.player.deck.length }}</p>
+        
+        <div class="summons-list" v-if="props.player.summons.length">
+            <h3>Summons</h3>
+            <SummonDisplay
+                v-for="(summon, index) in props.player.summons"
+                :key="index"
+                :summon="summon"
+            />
+        </div>
     </div>
 </template>

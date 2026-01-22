@@ -15,7 +15,7 @@ import ManaPool from '../models/ManaPool';
 import { AREAS, type Area } from '../models/Areas';
 import { openModal } from '../stores/modalStore';
 
-const TABLEAU_SIZE = 5;
+const TABLEAU_SIZE = 6;
 
 export class Combat {
     // Game entities
@@ -160,7 +160,7 @@ export class Combat {
     }
 
     private isCardSelection(clickedCard: Card | null): boolean {
-        // Select card
+        // Select card if none selected
         if (!this.selectedCard && clickedCard?.revealed) {
             this.setSelectedCard(clickedCard);
             return true;
@@ -198,6 +198,12 @@ export class Combat {
             }
         }
 
+        // If a card is already selected and clicking a different revealed card, select the new one
+        if (this.selectedCard && clickedCard?.revealed && clickedCard !== selected) {
+            this.setSelectedCard(clickedCard);
+            return true;
+        }
+
         return false;
     }
 
@@ -213,33 +219,53 @@ export class Combat {
                 break;
 
             case AREAS.Tableau:
-                // If clicking empty tableau column and have selected card, allow placement
-                // Otherwise, handle selection/deselection normally
-                const isEmptyTableauClick = (!clickedCard || !clickedCard.rank) && clickJndex === -1;
-                if (!isEmptyTableauClick && this.isCardSelection(clickedCard)) break;
-                this.placeSelectedCardInTableau(clickedCard, clickIndex, clickJndex);
+                // Try to place the selected card first
+                if (this.selectedCard && clickIndex !== undefined) {
+                    const clickedColumn = this.tableau.getColumn(clickIndex);
+                    if (clickedColumn) {
+                        // Check if placement is valid
+                        const isEmptyColumn = clickedColumn.size() === 0;
+                        const canPlace = isEmptyColumn || 
+                            (clickedCard?.rank && 
+                             this.selectedCard.suit !== clickedCard.suit && 
+                             this.selectedCard.rank === clickedCard.rank - 1);
+                        
+                        if (canPlace) {
+                            this.placeSelectedCardInTableau(clickedCard, clickIndex, clickJndex);
+                            break;
+                        }
+                    }
+                }
+                // If placement not valid or no selected card, handle selection/deselection
+                this.isCardSelection(clickedCard);
                 break;
 
-            case AREAS.ManaPools:
-                if (this.isCardSelection(clickedCard)) break;
+            case AREAS.ManaPools: {
+                const clickedPoolSuit = clickIndex !== undefined ? Suits[clickIndex] : undefined;
+                const canBurn = this.selectedCard
+                    && this.canUseSelectedCard()
+                    && clickedPoolSuit !== undefined
+                    && this.selectedCard.suit === clickedPoolSuit;
+                if (canBurn) {
+                    this.burnCard();
+                } else {
+                    if (this.isCardSelection(clickedCard)) break;
+                }
                 break;
+            }
                 
             case AREAS.Board:
                 this.isCardSelection(clickedCard);
                 break;
 
             case AREAS.Compost:
-                openModal('compost', { compost: this.compost.cards });
+                if (this.selectedCard && this.canUseSelectedCard()) {
+                    this.castCard();
+                } else {
+                    openModal('compost', { compost: this.compost.cards });
+                }
                 break;
 
-            case AREAS['Burn Card']:
-                this.burnCard();
-                break;
-            
-            case AREAS['Cast Card']:
-                this.castCard();
-                break;
-                
             case AREAS.Trash:
             default:
                 break;
@@ -278,6 +304,8 @@ export class Combat {
                     this.moveCardToArea(card, AREAS.Compost);
                 }
             }
+            
+            this.notify();
         }, selectedCard.animationTime);
         
         this.setSelectedCard(null);
@@ -297,6 +325,75 @@ export class Combat {
         const manaPool = this.manaPools[suit];
         if (!manaPool) return false;
         return manaPool.hasEnoughMana(rank);
+    }
+
+    /**
+     * Check if the selected card can be burned (moved to mana pool)
+     * A card can be burned if it's from the hand or the last card in a tableau column
+     */
+    canBurnSelectedCard(): boolean {
+        if (!this.selectedCard || !this.selectedCard.revealed) return false;
+        
+        const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);
+        
+        // Can burn if from hand
+        if (handIndex !== -1) return true;
+        
+        // Can burn if it's the last card in a tableau column
+        if (tableauIndex !== -1) {
+            const tableauColumn = this.tableau.getColumn(tableauIndex);
+            if (tableauColumn && tableauJndex === tableauColumn.size() - 1) return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if the selected card is playable (can be cast)
+     * A card is playable if the mana pool of its suit has a number of cards equal to the card's rank
+     */
+    isSelectedCardPlayable(): boolean {
+        if (!this.selectedCard || !this.selectedCard.revealed) return false;
+        
+        const { rank, suit } = this.selectedCard;
+        const manaPool = this.manaPools[suit];
+        if (!manaPool) return false;
+        
+        return manaPool.hasEnoughMana(rank);
+    }
+
+    /**
+     * Check if the selected card can be placed in tableau columns
+     * Returns an array of column indices where the card can be placed
+     */
+    canPlaceSelectedCardInTableau(): number[] {
+        if (!this.selectedCard || !this.selectedCard.revealed) return [];
+        
+        const selectedCard = this.selectedCard;
+        const columns = this.tableau.getColumns();
+        const validColumns: number[] = [];
+        
+        for (let i = 0; i < columns.length; i++) {
+            const column = columns[i];
+            if (!column) continue;
+            
+            // Empty column - any card can be placed
+            if (column.size() === 0) {
+                validColumns.push(i);
+                continue;
+            }
+            
+            // Check if can be placed on top of the last card
+            const lastCard = column.cards[column.size() - 1];
+            if (!lastCard) continue;
+            
+            // Must be different suit and rank must be one less
+            if (selectedCard.suit !== lastCard.suit && selectedCard.rank === lastCard.rank - 1) {
+                validColumns.push(i);
+            }
+        }
+        
+        return validColumns;
     }
 
     // ==================== Tableau Placement ====================

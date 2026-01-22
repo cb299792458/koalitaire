@@ -2,6 +2,7 @@
     import { computed } from 'vue';
     import type Enemy from '../models/Enemy';
     import FloatingNumber from './FloatingNumber.vue';
+    import SummonDisplay from './SummonDisplay.vue';
     import useDamageNumbers from '../composables/useDamageNumbers';
 
     const props = defineProps<{
@@ -44,5 +45,14 @@
         <p v-for="(action, index) in props.enemy.impendingActions" :key="index">
             {{ action.name }}: {{ action.description }}
         </p>
+        
+        <div class="summons-list" v-if="props.enemy.summons.length">
+            <h3>Summons</h3>
+            <SummonDisplay
+                v-for="(summon, index) in props.enemy.summons"
+                :key="index"
+                :summon="summon"
+            />
+        </div>
     </div>
 </template>

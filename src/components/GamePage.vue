@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import Card from '../models/Card';
+    import Card, { Suits } from '../models/Card';
     import CardStack from './CardStack.vue';
     import { useCombat } from '../composables/useCombat';
     import { AREAS, type Area } from '../models/Areas';
@@ -15,9 +15,9 @@
 
     const combat = useCombat(); // useCombat always returns a Combat instance
         
-    // Create refs for player and enemy for template reactivity  
-    const player = ref(combat.player);
-    const enemy = ref(combat.enemy);
+    // Create computed refs for player and enemy for template reactivity  
+    const player = computed(() => combat.player);
+    const enemy = computed(() => combat.enemy);
     
     const deck = combat.deck;
     const compost = combat.compost;
@@ -26,13 +26,75 @@
     const manaPools = combat.manaPools;
     const selectedCard = computed(() => combat.selectedCard);
     
+    // Make mana pools reactive by accessing them in a computed
+    const allManaPoolCounts = computed(() => {
+        return Object.values(combat.manaPools).map(pool => pool.cards.length);
+    });
+    
+    const isCompostHighlighted = computed(() => {
+        // Use the reactive selectedCard computed
+        const card = selectedCard.value;
+        if (!card || !card.revealed) return false;
+        
+        const { rank, suit } = card;
+        const manaPool = combat.manaPools[suit];
+        if (!manaPool) return false;
+        
+        // Access allManaPoolCounts to ensure reactivity - track changes to all mana pools
+        void allManaPoolCounts.value;
+        
+        return manaPool.cards.length === rank;
+    });
+    
+    // Get the suit index for the selected card's mana pool highlighting
+    const highlightedManaPoolIndex = computed(() => {
+        const card = selectedCard.value;
+        if (!card || !card.revealed) return -1;
+        
+        const { rank, suit } = card;
+        const manaPool = combat.manaPools[suit];
+        if (!manaPool) return -1;
+        
+        // Access allManaPoolCounts to ensure reactivity
+        void allManaPoolCounts.value;
+        
+        // Check if rank matches mana pool count (required for burning)
+        if (manaPool.cards.length !== rank) return -1;
+        
+        // Card must be from hand or last in tableau
+        const handIndex = combat.hand.cards.indexOf(card);
+        if (handIndex === -1) {
+            // Check if it's the last card in a tableau column
+            const tableauColumns = combat.tableau.getColumns();
+            let isLastInTableau = false;
+            for (const column of tableauColumns) {
+                if (column.cards.length > 0) {
+                    const lastCard = column.cards[column.cards.length - 1];
+                    if (lastCard === card) {
+                        isLastInTableau = true;
+                        break;
+                    }
+                }
+            }
+            if (!isLastInTableau) return -1;
+        }
+        
+        // Find the index of this suit in the Suits array
+        const suitIndex = Suits.indexOf(suit);
+        return suitIndex;
+    });
+    
+    // Get the tableau column indices that can accept the selected card
+    const highlightedTableauIndices = computed(() => {
+        // Access tableau to ensure reactivity
+        void tableau.value;
+        return combat.canPlaceSelectedCardInTableau();
+    });
+    
     function startCombatForPlayer(newPlayer: Player) {
         if (!scenario[newPlayer.level]) return;
         const levelEnemy = scenario[newPlayer.level]!.enemy;
         combat.start(newPlayer, levelEnemy);
-        // Update refs after start
-        player.value = combat.player;
-        enemy.value = combat.enemy;
     }
     
     watch(() => player.value?.level, () => {
@@ -59,7 +121,6 @@
         openModal(
             'start',
             { onSelect: (newPlayer: Player) => {
-                player.value = newPlayer;
                 startCombatForPlayer(newPlayer);
             }},
             true, // keepOpen
@@ -105,21 +166,14 @@
                                     <CardStack
                                         :cards="deck.cards"
                                         :name="AREAS.Deck"
+                                        layout="pile"
                                         @click="onClick"
                                     />
                                     <CardStack
                                         :cards="compost.cards"
                                         :name="AREAS.Compost"
-                                        @click="onClick"
-                                    />
-                                    <CardStack
-                                        :cards="[]"
-                                        :name="'Cast Card'"
-                                        @click="onClick"
-                                    />
-                                    <CardStack
-                                        :cards="[]"
-                                        :name="'Burn Card'"
+                                        :highlighted="isCompostHighlighted"
+                                        :alwaysShowDummy="true"
                                         @click="onClick"
                                     />
                                 </div>
@@ -131,6 +185,7 @@
                                         :cards="(manaPool as any).cards"
                                         :name="AREAS.ManaPools"
                                         :arrayIndex="index"
+                                        :highlighted="highlightedManaPoolIndex === index"
                                         @mousedown.prevent
                                         @click="onClick"
                                     />
@@ -146,6 +201,7 @@
                                     layout="vertical"
                                     :selectedCard="selectedCard"
                                     :arrayIndex="index as number"
+                                    :highlighted="highlightedTableauIndices.includes(index)"
                                     @mousedown.prevent
                                     @click="onClick"
                                 />
