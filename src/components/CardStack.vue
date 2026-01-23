@@ -116,7 +116,6 @@
 <template>
     <div :class="['card-stack', layout || 'pile']">
         <template v-if="alwaysShowDummy">
-            <div v-if="customLabel" class="card-stack-label">{{ customLabel }}</div>
             <div
                 class="card-stack-empty"
                 :class="{ 
