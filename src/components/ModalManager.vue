@@ -24,4 +24,8 @@
         align-items: center;
         z-index: 9999;
     }
+    
+    .modal-overlay:has(.enemy-defeated-modal) {
+        background: rgba(0, 0, 0, 0.8);
+    }
 </style>

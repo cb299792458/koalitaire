@@ -63,21 +63,32 @@ html, body {
 
 .cards-top {
     display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
 }
 
-.cards-stock {
+.deck-wrapper {
+    position: relative;
     display: flex;
-    justify-content: flex-start;
-    width: 560px;
+    justify-content: center;
+    align-items: center;
+    min-width: 120px;
+    height: 200px;
+}
+
+.deck-wrapper > .card-stack {
+    width: 120px !important;
+    margin: 0;
 }
 
 .mana-pools {
     display: flex;
     justify-content: flex-end;
-    width: 840px;
 }
 
 .tableau {
+    margin-top: 20px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -109,10 +120,57 @@ html, body {
 }
 
 
-.card-stack-empty.castable-highlight,
-.card-view.castable-highlight {
+.card-stack-empty.burnable-highlight,
+.card-view.burnable-highlight {
     box-shadow: 0 0 50px red;
     transition: border 0.2s, box-shadow 0.2s;
+}
+
+.card-stack-empty.castable-highlight,
+.card-view.castable-highlight {
+    box-shadow: 0 0 50px #00aaff;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+
+.compost-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    min-width: 120px;
+    margin-left: 10px;
+    padding-right: 20px;
+}
+
+.compost-wrapper > .card-stack {
+    flex-shrink: 0;
+    width: 120px !important;
+    margin: 0;
+}
+
+.compost-wrapper > .card-stack.pile {
+    width: 120px !important;
+}
+
+.mana-crystals-cost {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #00aaff;
+    border-radius: 6px;
+    color: #00aaff;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .card-stack.vertical {

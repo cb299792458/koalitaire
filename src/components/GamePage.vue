@@ -5,7 +5,7 @@
     import { AREAS, type Area } from '../models/Areas';
     import ModalManager from './ModalManager.vue';
     import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue';
-    import { openModal } from '../stores/modalStore';
+    import { openModal, closeModal } from '../stores/modalStore';
     import PlayerInfo from './PlayerInfo.vue';
     import EnemyInfo from './EnemyInfo.vue';
     import makeScenario from '../game/makeScenario';
@@ -14,6 +14,17 @@
     const scenario = makeScenario();
 
     const combat = useCombat(); // useCombat always returns a Combat instance
+    
+    // Set up enemy defeat callbacks
+    combat.onEnemyDefeated = () => {
+        // Modal will be shown automatically
+    };
+    
+    combat.onEnemyDefeatedContinue = () => {
+        closeModal();
+        if (!player.value) return;
+        startCombatForPlayer(player.value);
+    };
         
     // Create computed refs for player and enemy for template reactivity  
     const player = computed(() => combat.player);
@@ -36,14 +47,23 @@
         const card = selectedCard.value;
         if (!card || !card.revealed) return false;
         
-        const { rank, suit } = card;
-        const manaPool = combat.manaPools[suit];
-        if (!manaPool) return false;
-        
-        // Access allManaPoolCounts to ensure reactivity - track changes to all mana pools
-        void allManaPoolCounts.value;
-        
-        return manaPool.cards.length === rank;
+        // Check if card is castable (uses manaCrystals)
+        return combat.isSelectedCardPlayable();
+    });
+    
+    const manaCrystalsCost = computed(() => {
+        const cost = combat.getManaCrystalsNeededForCast();
+        // Only show cost if card is castable (player has enough mana crystals)
+        if (cost > 0 && combat.isSelectedCardPlayable()) {
+            return cost;
+        }
+        return null;
+    });
+    
+    const compostHighlightType = computed(() => {
+        const cost = combat.getManaCrystalsNeededForCast();
+        // If cost is 0, use burn highlight (red), otherwise use cast highlight (blue)
+        return cost === 0 ? 'burn' : 'cast';
     });
     
     // Get the suit index for the selected card's mana pool highlighting
@@ -162,22 +182,28 @@
             
                         <div class="combat-middle">
                             <div class="cards-top">
-                                <div class="cards-stock">
+                                <div class="deck-wrapper">
                                     <CardStack
                                         :cards="deck.cards"
                                         :name="AREAS.Deck"
                                         layout="pile"
                                         @click="onClick"
                                     />
+                                </div>
+                                <div class="compost-wrapper">
+                                    <div v-if="manaCrystalsCost !== null" class="mana-crystals-cost">
+                                        -{{ manaCrystalsCost }} mana crystals
+                                    </div>
                                     <CardStack
                                         :cards="compost.cards"
                                         :name="AREAS.Compost"
                                         :highlighted="isCompostHighlighted"
+                                        :highlightType="compostHighlightType"
                                         :alwaysShowDummy="true"
+                                        customLabel="discard"
                                         @click="onClick"
                                     />
                                 </div>
-            
                                 <div class="mana-pools">
                                     <CardStack
                                         v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
@@ -186,6 +212,7 @@
                                         :name="AREAS.ManaPools"
                                         :arrayIndex="index"
                                         :highlighted="highlightedManaPoolIndex === index"
+                                        highlightType="burn"
                                         @mousedown.prevent
                                         @click="onClick"
                                     />
@@ -202,6 +229,7 @@
                                     :selectedCard="selectedCard"
                                     :arrayIndex="index as number"
                                     :highlighted="highlightedTableauIndices.includes(index)"
+                                    highlightType="cast"
                                     @mousedown.prevent
                                     @click="onClick"
                                 />
@@ -224,7 +252,12 @@
                                 @click="onClick"
                             />
                         </div>
-                        <button @click="combat.endTurn" id="end-turn-button">End Turn</button>
+                        <button 
+                            @click="combat.endTurn" 
+                            id="end-turn-button"
+                            :disabled="combat.isProcessingTurn"
+                            v-if="!combat.isProcessingTurn"
+                        >End Turn</button>
                     </div>
                 </div>
             </div>

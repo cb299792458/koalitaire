@@ -3,8 +3,9 @@ import TestModal from '../components/TestModal.vue'
 import CompostModal from '../components/CompostModal.vue'
 import StartModal from '../components/StartModal.vue'
 import MessageModal from '../components/MessageModal.vue'
+import EnemyDefeatedModal from '../components/EnemyDefeatedModal.vue'
 
-export type ModalName = 'test' | 'compost' | 'start' | 'message'
+export type ModalName = 'test' | 'compost' | 'start' | 'message' | 'enemyDefeated'
 
 interface ModalState {
     currentModal: {
@@ -20,6 +21,7 @@ const modals: Record<ModalName, any> = {
     compost: markRaw(CompostModal),
     start: markRaw(StartModal),
     message: markRaw(MessageModal),
+    enemyDefeated: markRaw(EnemyDefeatedModal),
 }
 
 // Reactive state for the current modal

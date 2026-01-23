@@ -12,6 +12,7 @@
         selectedCard?: Card | null
         arrayIndex?: number
         highlighted?: boolean
+        highlightType?: 'burn' | 'cast'
         customLabel?: string
         alwaysShowDummy?: boolean
     }>();
@@ -118,7 +119,10 @@
             <div v-if="customLabel" class="card-stack-label">{{ customLabel }}</div>
             <div
                 class="card-stack-empty"
-                :class="{ 'castable-highlight': highlighted }"
+                :class="{ 
+                    'castable-highlight': highlighted && highlightType === 'cast',
+                    'burnable-highlight': highlighted && highlightType === 'burn'
+                }"
                 :style="dummyPosition()"
                 @click.stop="handleEmptyClick"
             >
@@ -135,7 +139,10 @@
         <template v-else>
             <div
                 class="card-stack-empty"
-                :class="{ 'castable-highlight': highlighted && !cards.length }"
+                :class="{ 
+                    'castable-highlight': highlighted && !cards.length && highlightType === 'cast',
+                    'burnable-highlight': highlighted && !cards.length && highlightType === 'burn'
+                }"
                 v-if="!cards.length"
                 @click.stop="handleEmptyClick"
             >
@@ -146,7 +153,10 @@
                 <CardView v-for="(card, index) in cards"
                     :key="index" 
                     :card="card"
-                    :class="{ 'castable-highlight': highlighted && ((layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1) }"
+                    :class="{ 
+                        'castable-highlight': highlighted && ((layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1) && highlightType === 'cast',
+                        'burnable-highlight': highlighted && ((layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1) && highlightType === 'burn'
+                    }"
                     :style="!card.animation || card.animation === 'burn' ? cardPosition(index, card) : {}"
                     :selectedCard="selectedCard"
                     @click.stop="handleClick(index)"

@@ -5,12 +5,14 @@ import { createSummon, summons } from "./summons";
 const allCards = {
     [Suit.Wood]: [
         {
-            name: "Crappy Shot",
-            description: "Deals 1 damage (not affected by agility) and gain 1 Mana Crystal",
+            name: "Summon Koala",
+            description: "Summon a Koala. At the end of each turn, gain 1 mana crystal.",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(1);
-                player.manaCrystals += 1;
+                const { player } = combat;
+                const koala = summons.koala;
+                if (koala) {
+                    player.summons.push(createSummon(koala));
+                }
             },
         },
         {
@@ -61,26 +63,17 @@ const allCards = {
                 enemy.takeDamage(21 + player.agility);
             },
         },
-        {
-            name: "Summon Koala",
-            description: "Summon a Koala. At the end of each turn, gain 2 block.",
-            effect: (combat: Combat) => {
-                const { player } = combat;
-                const koala = summons.koala;
-                if (koala) {
-                    player.summons.push(createSummon(koala));
-                }
-            },
-        },
     ],
     [Suit.Fire]: [
         {
-            name: "Crappy Blast",
-            description: "Deals 1 damage (not affected by arcane) and gain 1 Mana Crystal",
+            name: "Summon Fire Salamander",
+            description: "Summon a Fire Salamander. At the end of each turn, deal 2 damage to the enemy.",
             effect: (combat: Combat) => {
-                const { player, enemy } = combat;
-                enemy.takeDamage(1);
-                player.manaCrystals += 1;
+                const { player } = combat;
+                const fireSpirit = summons.fireSpirit;
+                if (fireSpirit) {
+                    player.summons.push(createSummon(fireSpirit));
+                }
             },
         },
         {
@@ -131,26 +124,17 @@ const allCards = {
                 enemy.takeDamage(21 + player.arcane);
             },
         },
-        {
-            name: "Summon Fire Salamander",
-            description: "Summon a Fire Salamander. At the end of each turn, deal 2 damage to the enemy.",
-            effect: (combat: Combat) => {
-                const { player } = combat;
-                const fireSpirit = summons.fireSpirit;
-                if (fireSpirit) {
-                    player.summons.push(createSummon(fireSpirit));
-                }
-            },
-        },
     ],
     [Suit.Earth]: [
         {
-            name: "Crappy Block",
-            description: "Gain 1 block (not affected by armor) and 1 Mana Crystal",
+            name: "Summon Stone Wombat",
+            description: "Summon a Stone Wombat. At the end of each turn, gain 4 block.",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.gainBlock(1);
-                player.manaCrystals += 1;
+                const stoneGolem = summons.stoneGolem;
+                if (stoneGolem) {
+                    player.summons.push(createSummon(stoneGolem));
+                }
             },
         },
         {
@@ -201,25 +185,17 @@ const allCards = {
                 player.gainBlock(21 + player.armor);
             },
         },
-        {
-            name: "Summon Stone Wombat",
-            description: "Summon a Stone Wombat. At the end of each turn, gain 4 block.",
-            effect: (combat: Combat) => {
-                const { player } = combat;
-                const stoneGolem = summons.stoneGolem;
-                if (stoneGolem) {
-                    player.summons.push(createSummon(stoneGolem));
-                }
-            },
-        },
     ],
     [Suit.Metal]: [
         {
-            name: "Crappy Channel",
-            description: "Gain 1 Mana Crystal",
+            name: "Summon Blade Quokka",
+            description: "Summon a Blade Quokka. At the end of each turn, deal 5 damage to the enemy.",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.manaCrystals += 1;
+                const bladeFamiliar = summons.bladeFamiliar;
+                if (bladeFamiliar) {
+                    player.summons.push(createSummon(bladeFamiliar));
+                }
             },
         },
         {
@@ -270,26 +246,17 @@ const allCards = {
                 player.manaCrystals += 18;
             },
         },
-        {
-            name: "Summon Blade Quokka",
-            description: "Summon a Blade Quokka. At the end of each turn, deal 1 + floor(attack/2) damage to the enemy.",
-            effect: (combat: Combat) => {
-                const { player } = combat;
-                const bladeFamiliar = summons.bladeFamiliar;
-                if (bladeFamiliar) {
-                    player.summons.push(createSummon(bladeFamiliar));
-                }
-            },
-        },
     ],
     [Suit.Water]: [
         {
-            name: "Crappy Dodge",
-            description: "Gain 1 block (not affected by agility) and 1 Mana Crystal",
+            name: "Summon Healing Platypus",
+            description: "Summon a Healing Platypus. At the end of each turn, restore 3 health.",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.gainBlock(1);
-                player.manaCrystals += 1;
+                const healingTide = summons.healingTide;
+                if (healingTide) {
+                    player.summons.push(createSummon(healingTide));
+                }
             },
         },
         {
@@ -338,28 +305,6 @@ const allCards = {
             effect: (combat: Combat) => {
                 const { player } = combat;
                 player.gainBlock(21 + player.agility);
-            },
-        },
-        {
-            name: "Summon Healing Platypus",
-            description: "Summon a Healing Platypus. At the end of each turn, restore 3 health.",
-            effect: (combat: Combat) => {
-                const { player } = combat;
-                const healingTide = summons.healingTide;
-                if (healingTide) {
-                    player.summons.push(createSummon(healingTide));
-                }
-            },
-        },
-        {
-            name: "Summon Forest Guardian",
-            description: "Summon a Forest Guardian. At the end of each turn, gain 3 block and deal 2 damage to the enemy.",
-            effect: (combat: Combat) => {
-                const { player } = combat;
-                const forestGuardian = summons.forestGuardian;
-                if (forestGuardian) {
-                    player.summons.push(createSummon(forestGuardian));
-                }
             },
         },
     ],

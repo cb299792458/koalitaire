@@ -30,9 +30,14 @@ export class Combat {
     hand: Hand;
     tableau: Tableau;
     manaPools: Record<string, ManaPool>;
+    isProcessingTurn: boolean;
     
     // Observer pattern
     listeners: Set<() => void>;
+    
+    // Callback for when enemy is defeated
+    onEnemyDefeated?: () => void;
+    onEnemyDefeatedContinue?: () => void;
 
     constructor(player: Player, enemy: Enemy) {
         this.player = player;
@@ -45,6 +50,7 @@ export class Combat {
         this.trash = new TrashPile();
         this.hand = new Hand();
         this.tableau = new Tableau(TABLEAU_SIZE);
+        this.isProcessingTurn = false;
         
         this.manaPools = Object.fromEntries(
             Suits.map(suit => [suit, new ManaPool(suit)])
@@ -81,6 +87,13 @@ export class Combat {
         this.initializeTableau();
         this.shuffleDeck();
         this.dealTableau();
+        
+        // Reset player state
+        if (this.player) {
+            this.player.block = 0;
+            this.player.manaCrystals = 3;
+        }
+        
         this.startTurn();
         
         this.notify();
@@ -100,18 +113,72 @@ export class Combat {
         this.notify();
     }
 
-    endTurn(): void {
+    async endTurn(): Promise<void> {
         if (!this.player || !this.enemy) return;
+        if (this.isProcessingTurn) return; // Prevent multiple simultaneous end turns
         
-        // Player summons run at the end of the player turn
-        for (const summon of this.player.summons) {
-            summon.effect(this);
-        }
+        this.isProcessingTurn = true;
+        this.notify();
         
-        this.enemy.block = 0;
-        this.enemy.executeActions(this.player, this);
+        try {
+            // Player summons run at the end of the player turn
+            for (const summon of this.player.summons) {
+                summon.effect(this);
+                this.notify();
+                await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each summon
+            }
+            
+            // Check if enemy is dead after player summons
+            if (this.enemy.health <= 0) {
+                this.defeatEnemy();
+                return;
+            }
+            
+            this.enemy.block = 0;
+            await this.enemy.executeActions(this.player, this);
+            
+            // Check if enemy is dead after enemy actions
+            if (this.enemy.health <= 0) {
+                this.defeatEnemy();
+                return;
+            }
 
-        this.startTurn();
+            this.startTurn();
+        } finally {
+            this.isProcessingTurn = false;
+            this.notify();
+        }
+    }
+    
+    checkEnemyDeath(): boolean {
+        if (!this.enemy || !this.player) return false;
+        
+        if (this.enemy.health <= 0) {
+            this.defeatEnemy();
+            return true;
+        }
+        return false;
+    }
+    
+    private defeatEnemy(): void {
+        if (!this.player) return;
+        
+        // Advance player level
+        this.player.level += 1;
+        
+        // Open enemy defeated modal with continue callback
+        openModal('enemyDefeated', { 
+            onContinue: () => {
+                if (this.onEnemyDefeatedContinue) {
+                    this.onEnemyDefeatedContinue();
+                }
+            }
+        }, true);
+        
+        // Notify that enemy was defeated
+        if (this.onEnemyDefeated) {
+            this.onEnemyDefeated();
+        }
     }
 
     // ==================== Card Drawing & Deck Management ====================
@@ -243,7 +310,7 @@ export class Combat {
             case AREAS.ManaPools: {
                 const clickedPoolSuit = clickIndex !== undefined ? Suits[clickIndex] : undefined;
                 const canBurn = this.selectedCard
-                    && this.canUseSelectedCard()
+                    && this.canBurnSelectedCard()
                     && clickedPoolSuit !== undefined
                     && this.selectedCard.suit === clickedPoolSuit;
                 if (canBurn) {
@@ -259,7 +326,7 @@ export class Combat {
                 break;
 
             case AREAS.Compost:
-                if (this.selectedCard && this.canUseSelectedCard()) {
+                if (this.selectedCard && this.canCastSelectedCard()) {
                     this.castCard();
                 } else {
                     openModal('compost', { compost: this.compost.cards });
@@ -273,7 +340,7 @@ export class Combat {
     }
 
     private burnCard(): void {
-        if (!this.selectedCard || !this.canUseSelectedCard()) return;
+        if (!this.selectedCard || !this.canBurnSelectedCard()) return;
 
         const selectedCard = this.selectedCard;
         selectedCard.animateBurn();
@@ -286,23 +353,38 @@ export class Combat {
 
     private castCard(): void {
         if (!this.selectedCard || !this.player || !this.enemy) return;
-        if (!this.canUseSelectedCard()) return;
+        if (!this.canCastSelectedCard()) return;
 
         const selectedCard = this.selectedCard;
         selectedCard.animate();
         
         setTimeout(() => {
             if (!this.player || !this.enemy) return;
-            selectedCard.effect(this);
-            this.moveCardToArea(selectedCard, AREAS.Compost);
             
-            // Move all cards in mana pool to compost
+            // Calculate and remove manaCrystals needed
             const manaPool = this.manaPools[selectedCard.suit];
             if (manaPool) {
+                const manaCrystalsNeeded = selectedCard.rank - manaPool.cards.length;
+                if (manaCrystalsNeeded > 0) {
+                    this.player.manaCrystals -= manaCrystalsNeeded;
+                    if (this.player.manaCrystals < 0) {
+                        this.player.manaCrystals = 0;
+                    }
+                }
+                
+                // Move all cards in mana pool to compost
                 const cardsToCompost = [...manaPool.cards];
                 for (const card of cardsToCompost) {
                     this.moveCardToArea(card, AREAS.Compost);
                 }
+            }
+            
+            selectedCard.effect(this);
+            this.moveCardToArea(selectedCard, AREAS.Compost);
+            
+            // Check if enemy died from card effect
+            if (this.checkEnemyDeath()) {
+                return;
             }
             
             this.notify();
@@ -311,55 +393,78 @@ export class Combat {
         this.setSelectedCard(null);
     }
 
-    private canUseSelectedCard(): boolean {
-        if (!this.selectedCard || !this.selectedCard.revealed) return false;
+    private canCastSelectedCard(): boolean {
+        if (!this.selectedCard || !this.selectedCard.revealed || !this.player) return false;
         
         const { rank, suit } = this.selectedCard;
         const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);
         
+        // Must be from hand or last in tableau
         if (handIndex === -1) {
             const tableauColumn = this.tableau.getColumn(tableauIndex);
             if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return false;
         }
 
+        // Check if player has enough manaCrystals
         const manaPool = this.manaPools[suit];
         if (!manaPool) return false;
-        return manaPool.hasEnoughMana(rank);
+        
+        const manaCrystalsNeeded = rank - manaPool.cards.length;
+        return manaCrystalsNeeded <= this.player.manaCrystals;
+    }
+
+    /**
+     * Get the number of mana crystals needed to cast the selected card
+     * Returns -1 if the card cannot be cast or calculation is not applicable
+     */
+    getManaCrystalsNeededForCast(): number {
+        if (!this.selectedCard || !this.selectedCard.revealed || !this.player) return -1;
+        
+        const { rank, suit } = this.selectedCard;
+        const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);
+        
+        // Must be from hand or last in tableau
+        if (handIndex === -1) {
+            const tableauColumn = this.tableau.getColumn(tableauIndex);
+            if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return -1;
+        }
+
+        const manaPool = this.manaPools[suit];
+        if (!manaPool) return -1;
+        
+        const manaCrystalsNeeded = rank - manaPool.cards.length;
+        return manaCrystalsNeeded > 0 ? manaCrystalsNeeded : 0;
     }
 
     /**
      * Check if the selected card can be burned (moved to mana pool)
-     * A card can be burned if it's from the hand or the last card in a tableau column
+     * A card can be burned if it's from the hand or the last card in a tableau column,
+     * and the mana pool has enough cards matching the card's rank
      */
     canBurnSelectedCard(): boolean {
         if (!this.selectedCard || !this.selectedCard.revealed) return false;
         
+        const { rank, suit } = this.selectedCard;
         const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);
         
-        // Can burn if from hand
-        if (handIndex !== -1) return true;
-        
-        // Can burn if it's the last card in a tableau column
-        if (tableauIndex !== -1) {
+        // Must be from hand or last in tableau
+        if (handIndex === -1) {
             const tableauColumn = this.tableau.getColumn(tableauIndex);
-            if (tableauColumn && tableauJndex === tableauColumn.size() - 1) return true;
+            if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return false;
         }
-        
-        return false;
+
+        // Check if mana pool has enough cards for burning
+        const manaPool = this.manaPools[suit];
+        if (!manaPool) return false;
+        return manaPool.hasEnoughManaForBurn(rank);
     }
 
     /**
      * Check if the selected card is playable (can be cast)
-     * A card is playable if the mana pool of its suit has a number of cards equal to the card's rank
+     * Uses canCastSelectedCard to determine if the card can be cast
      */
     isSelectedCardPlayable(): boolean {
-        if (!this.selectedCard || !this.selectedCard.revealed) return false;
-        
-        const { rank, suit } = this.selectedCard;
-        const manaPool = this.manaPools[suit];
-        if (!manaPool) return false;
-        
-        return manaPool.hasEnoughMana(rank);
+        return this.canCastSelectedCard();
     }
 
     /**

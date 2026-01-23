@@ -3,6 +3,10 @@ import type Player from "./Player";
 import Summon from "./Summon";
 import type { Combat } from "../composables/useCombat";
 import platypusPortrait from "/enemy_portraits/platypus.png";
+import dwambatPortrait from "/player_portraits/dwambat.jpg";
+import gnokkaPortrait from "/player_portraits/gnokka.jpg";
+import squirrelfPortrait from "/player_portraits/squirrelf.jpg";
+import dingorcPortrait from "/player_portraits/dingorc.jpg";
 import useDamageNumbers from "../composables/useDamageNumbers";
 
 interface EnemyParams {
@@ -56,15 +60,19 @@ class Enemy {
         }
     }
 
-    executeActions(player: Player, combat: Combat): void {
+    async executeActions(player: Player, combat: Combat): Promise<void> {
         for (const action of this.impendingActions) {
             action.effect(this, player);
+            combat.notify();
+            await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each enemy action
         }
         this.impendingActions = [];
         
         // Enemy summons run after all enemy actions
         for (const summon of this.summons) {
             summon.effect(combat);
+            combat.notify();
+            await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each enemy summon
         }
     }
 
@@ -138,6 +146,118 @@ export const platypusParams: EnemyParams = {
             "buff": 1,
             "heal": 1,
             "haste": 1,
+        }
+        for (const [key, count] of Object.entries(cards)) {
+            for (let i = 0; i < (count ?? 0); i++) {
+                const actionParams = enemyActions[key];
+                if (!actionParams) throw new Error(`Unknown enemy action: ${key}`);
+                const { name, description, effect } = actionParams;
+                deck.push(new EnemyAction(name, description, effect));
+            }
+        }
+        return deck;
+    }
+};
+
+export const dwambatParams: EnemyParams = {
+    name: "Dwambat",
+    portrait: dwambatPortrait,
+    health: 15,
+
+    makeDeck: () => {
+        const deck: EnemyAction[] = [];
+        const cards: Partial<Record<keyof typeof enemyActions, number>> = {
+            "doNothing": 2,
+            "weakAttack": 4,
+            "strongAttack": 2,
+            "block": 2,
+            "buff": 1,
+            "heal": 1,
+            "haste": 1,
+        }
+        for (const [key, count] of Object.entries(cards)) {
+            for (let i = 0; i < (count ?? 0); i++) {
+                const actionParams = enemyActions[key];
+                if (!actionParams) throw new Error(`Unknown enemy action: ${key}`);
+                const { name, description, effect } = actionParams;
+                deck.push(new EnemyAction(name, description, effect));
+            }
+        }
+        return deck;
+    }
+};
+
+export const gnokkaParams: EnemyParams = {
+    name: "Gnokka",
+    portrait: gnokkaPortrait,
+    health: 20,
+
+    makeDeck: () => {
+        const deck: EnemyAction[] = [];
+        const cards: Partial<Record<keyof typeof enemyActions, number>> = {
+            "doNothing": 2,
+            "weakAttack": 3,
+            "strongAttack": 3,
+            "block": 3,
+            "buff": 2,
+            "heal": 2,
+            "haste": 1,
+        }
+        for (const [key, count] of Object.entries(cards)) {
+            for (let i = 0; i < (count ?? 0); i++) {
+                const actionParams = enemyActions[key];
+                if (!actionParams) throw new Error(`Unknown enemy action: ${key}`);
+                const { name, description, effect } = actionParams;
+                deck.push(new EnemyAction(name, description, effect));
+            }
+        }
+        return deck;
+    }
+};
+
+export const squirrelfParams: EnemyParams = {
+    name: "Squirrelf",
+    portrait: squirrelfPortrait,
+    health: 25,
+
+    makeDeck: () => {
+        const deck: EnemyAction[] = [];
+        const cards: Partial<Record<keyof typeof enemyActions, number>> = {
+            "doNothing": 1,
+            "weakAttack": 3,
+            "strongAttack": 4,
+            "block": 3,
+            "buff": 2,
+            "heal": 2,
+            "haste": 2,
+        }
+        for (const [key, count] of Object.entries(cards)) {
+            for (let i = 0; i < (count ?? 0); i++) {
+                const actionParams = enemyActions[key];
+                if (!actionParams) throw new Error(`Unknown enemy action: ${key}`);
+                const { name, description, effect } = actionParams;
+                deck.push(new EnemyAction(name, description, effect));
+            }
+        }
+        return deck;
+    }
+};
+
+export const dingorcParams: EnemyParams = {
+    name: "Dingorc",
+    portrait: dingorcPortrait,
+    health: 35,
+
+    makeDeck: () => {
+        const deck: EnemyAction[] = [];
+        const cards: Partial<Record<keyof typeof enemyActions, number>> = {
+            "doNothing": 1,
+            "weakAttack": 2,
+            "strongAttack": 5,
+            "block": 4,
+            "buff": 3,
+            "heal": 3,
+            "haste": 2,
         }
         for (const [key, count] of Object.entries(cards)) {
             for (let i = 0; i < (count ?? 0); i++) {

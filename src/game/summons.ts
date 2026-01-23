@@ -27,19 +27,20 @@ export const summons: Record<string, SummonTemplate> = {
     // Wood summons
     koala: {
         name: "Koala Guard",
-        description: "A protective koala companion.",
+        description: "Grants 1 mana crystal each turn.",
         maxhp: 5,
         hp: 5,
         race: Race.Koala,
-        effect: (_combat: Combat) => {
-            // Koala Guard does nothing
+        effect: (combat: Combat) => {
+            const { player } = combat;
+            player.manaCrystals += 1;
         },
     },
     
     // Fire summons
     fireSpirit: {
         name: "Fire Salamander",
-        description: "A fiery salamander that burns enemies at the end of each turn.",
+        description: "Deals 2 damage to the enemy each turn.",
         maxhp: 3,
         hp: 3,
         race: Race.Salamander,
@@ -53,7 +54,7 @@ export const summons: Record<string, SummonTemplate> = {
     // Earth summons
     stoneGolem: {
         name: "Stone Wombat",
-        description: "A sturdy wombat that provides strong defense each turn.",
+        description: "Grants 4 block each turn.",
         maxhp: 8,
         hp: 8,
         race: Race.Wombat,
@@ -67,21 +68,21 @@ export const summons: Record<string, SummonTemplate> = {
     // Metal summons
     bladeFamiliar: {
         name: "Blade Quokka",
-        description: "A fierce quokka that strikes enemies based on your attack power.",
+        description: "Deals 5 damage to the enemy each turn.",
         maxhp: 4,
         hp: 4,
         race: Race.Quokka,
         effect: (combat: Combat) => {
-            const { enemy, player } = combat;
-            // Blade Quokka deals damage based on player's attack
-            enemy.takeDamage(1 + Math.floor(player.attack / 2));
+            const { enemy } = combat;
+            // Blade Quokka deals fixed damage
+            enemy.takeDamage(5);
         },
     },
     
     // Water summons
     healingTide: {
         name: "Healing Platypus",
-        description: "A gentle platypus that restores your health each turn.",
+        description: "Restores 3 health each turn.",
         maxhp: 5,
         hp: 5,
         race: Race.Platypus,
@@ -95,7 +96,7 @@ export const summons: Record<string, SummonTemplate> = {
     // Special summons
     forestGuardian: {
         name: "Forest Guardian",
-        description: "A powerful flying squirrel that protects and attacks simultaneously.",
+        description: "Grants 3 block and deals 2 damage to the enemy each turn.",
         maxhp: 10,
         hp: 10,
         race: Race.FlyingSquirrel,

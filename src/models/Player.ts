@@ -73,17 +73,35 @@ class Player {
 
     takeDamage(amount: number): void {
         const previousBlock = this.block;
-        const damage = Math.max(0, amount - this.block);
         const blockLost = Math.min(amount, previousBlock);
-        this.health -= damage;
+        let remainingDamage = Math.max(0, amount - this.block);
         this.block = Math.max(0, this.block - amount);
         
         const damageNumbers = useDamageNumbers();
         if (blockLost > 0) {
             damageNumbers.addPlayerNumber(blockLost, 'block-loss');
         }
-        if (damage > 0) {
-            damageNumbers.addPlayerNumber(damage, 'damage');
+        
+        // Summons take damage after block but before player
+        // Process summons in reverse order to safely remove them
+        for (let i = this.summons.length - 1; i >= 0 && remainingDamage > 0; i--) {
+            const summon = this.summons[i];
+            if (!summon) continue;
+            
+            const summonDamage = Math.min(remainingDamage, summon.hp);
+            summon.hp -= summonDamage;
+            remainingDamage -= summonDamage;
+            
+            // Remove summon if HP drops to zero
+            if (summon.hp <= 0) {
+                this.summons.splice(i, 1);
+            }
+        }
+        
+        // Player takes remaining damage
+        if (remainingDamage > 0) {
+            this.health -= remainingDamage;
+            damageNumbers.addPlayerNumber(remainingDamage, 'damage');
         }
         
         if (this.health <= 0) {
