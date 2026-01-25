@@ -88,7 +88,16 @@ html, body {
 
 .mana-pools {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
+    gap: 10px;
+    min-width: 0;
+    width: 680px;
+}
+
+.mana-pools .card-stack {
+    width: 120px !important;
+    flex-shrink: 0;
+    min-width: 120px;
 }
 
 .tableau {
