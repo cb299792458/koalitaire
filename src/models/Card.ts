@@ -70,6 +70,7 @@ class Card {
 
     // TODO: clean up this method, make animations enumerable
     animateBurn(): void {
+        const burnAnimationTime = 1200; // Faster burn animation (1.2s)
         nextTick(() => {
             setTimeout(() => {
                 this.animation = 'burn';
@@ -77,7 +78,33 @@ class Card {
 
             setTimeout(() => {
                 this.animation = '';
-            }, 50 + this.animationTime);
+            }, 50 + burnAnimationTime);
+        });
+    }
+
+    animateTableauMove(): void {
+        const tableauMoveTime = 400; // Quick animation for tableau moves (0.4s)
+        nextTick(() => {
+            setTimeout(() => {
+                this.animation = 'tableau-move';
+            }, 50);
+
+            setTimeout(() => {
+                this.animation = '';
+            }, 50 + tableauMoveTime);
+        });
+    }
+
+    animateDraw(): void {
+        const drawAnimationTime = 500; // Animation for drawing cards (0.5s)
+        nextTick(() => {
+            setTimeout(() => {
+                this.animation = 'draw';
+            }, 50);
+
+            setTimeout(() => {
+                this.animation = '';
+            }, 50 + drawAnimationTime);
         });
     }
 }

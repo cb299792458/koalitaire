@@ -78,8 +78,12 @@
         // Access allManaPoolCounts to ensure reactivity
         void allManaPoolCounts.value;
         
-        // Check if rank matches mana pool count (required for burning)
-        if (manaPool.cards.length !== rank) return -1;
+        // Check if rank is one more than mana pool count (required for burning)
+        // Card can be placed if rank === poolCount + 1
+        const poolCount = manaPool.cards.length;
+        if (poolCount !== rank - 1) {
+            return -1;
+        }
         
         // Card must be from hand or last in tableau
         const handIndex = combat.hand.cards.indexOf(card);

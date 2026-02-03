@@ -2,8 +2,8 @@
     import CardView from './SingleCard.vue';
     import Card from '../models/Card';
     import { AREAS, type Area } from '../models/Areas';
-    import { toRaw } from 'vue';
-    import { Suits } from '../models/Card';
+    import { toRaw, computed } from 'vue';
+    import { Suits, Suit } from '../models/Card';
     
     const props = defineProps<{ 
         cards: Card[], 
@@ -111,6 +111,37 @@
         }
         return {};
     }
+    
+    const suitIconMap: Record<string, string> = {
+        [Suit.Wood]: '/icons/tree-svgrepo-com.svg',
+        [Suit.Fire]: '/icons/fire-svgrepo-com.svg',
+        [Suit.Earth]: '/icons/rock-svgrepo-com.svg',
+        [Suit.Metal]: '/icons/metal-bar-svgrepo-com.svg',
+        [Suit.Water]: '/icons/water-drop-svgrepo-com.svg',
+    };
+    
+    const manaPoolSuit = computed(() => {
+        if (props.name === AREAS.ManaPools && props.arrayIndex !== undefined) {
+            return Suits[props.arrayIndex];
+        }
+        return null;
+    });
+    
+    const manaPoolIcon = computed(() => {
+        const suit = manaPoolSuit.value;
+        return suit ? suitIconMap[suit] || '' : '';
+    });
+    
+    const manaPoolSuitClass = computed(() => {
+        const suit = manaPoolSuit.value;
+        if (!suit) return '';
+        if (suit === Suit.Wood) return 'suit-wood';
+        if (suit === Suit.Fire) return 'suit-fire';
+        if (suit === Suit.Water) return 'suit-water';
+        if (suit === Suit.Earth) return 'suit-earth';
+        if (suit === Suit.Metal) return 'suit-metal';
+        return '';
+    });
 </script>
 
 <template>
@@ -125,7 +156,12 @@
                 :style="dummyPosition()"
                 @click.stop="handleEmptyClick"
             >
-                {{ customLabel || (name === AREAS.ManaPools ? Suits[arrayIndex ?? 0] : name) }}
+                <template v-if="name === AREAS.ManaPools && manaPoolIcon">
+                    <img :src="manaPoolIcon" :alt="manaPoolSuit || ''" class="mana-pool-icon" :class="manaPoolSuitClass" />
+                </template>
+                <template v-else>
+                    {{ customLabel || (name === AREAS.ManaPools ? Suits[arrayIndex ?? 0] : name) }}
+                </template>
             </div>
             <CardView v-for="(card, index) in cards"
                 :key="index" 
@@ -145,7 +181,12 @@
                 v-if="!cards.length"
                 @click.stop="handleEmptyClick"
             >
-                {{ customLabel || (name === AREAS.ManaPools ? Suits[arrayIndex ?? 0] : name) }}
+                <template v-if="name === AREAS.ManaPools && manaPoolIcon">
+                    <img :src="manaPoolIcon" :alt="manaPoolSuit || ''" class="mana-pool-icon" :class="manaPoolSuitClass" />
+                </template>
+                <template v-else>
+                    {{ customLabel || (name === AREAS.ManaPools ? Suits[arrayIndex ?? 0] : name) }}
+                </template>
             </div>
             <template v-else>
                 <div v-if="customLabel" class="card-stack-label">{{ customLabel }}</div>

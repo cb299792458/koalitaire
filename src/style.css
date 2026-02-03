@@ -258,8 +258,8 @@ html, body {
 
 .card-view.burn {
     transform: scale(0.8);
-    transition: transform 2s ease, opacity 2s ease, box-shadow 0s ease;
-    animation: burn-flicker 2s ease forwards;
+    transition: transform 1.2s ease, opacity 1.2s ease, box-shadow 0s ease;
+    animation: burn-flicker 1.2s ease forwards;
     opacity: 0;
     box-shadow: 
         0 0 20px orange,
@@ -268,6 +268,36 @@ html, body {
         0 0 80px red,
         0 0 100px orange;
     z-index: 999;
+}
+
+@keyframes tableau-move-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.card-view.tableau-move {
+    animation: tableau-move-pulse 0.4s ease;
+    z-index: 1000;
+    transition: transform 0.4s ease;
+}
+
+@keyframes draw-flip {
+    0% {
+        transform: rotateY(180deg) scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: rotateY(90deg) scale(1.1);
+    }
+    100% {
+        transform: rotateY(0deg) scale(1);
+        opacity: 1;
+    }
+}
+
+.card-view.draw {
+    animation: draw-flip 0.5s ease;
+    z-index: 1000;
 }
 
 .card-view.selected {
@@ -294,6 +324,13 @@ html, body {
     align-items: center;
 }
 
+.mana-pool-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+}
+
 .card-view {
     font-size: 12px;
 }
@@ -302,6 +339,99 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+}
+
+.card-front.playing-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.card-rank-top {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: left;
+    line-height: 1;
+    align-self: flex-start;
+    justify-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 3px;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.card-rank-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.card-rank-bottom {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1;
+    transform: rotate(180deg);
+}
+
+.card-icons-center {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+    width: 100%;
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
+.card-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+/* Suit color filters - apply to rank icon, center icons, and mana pool icons */
+.card-rank-icon.suit-wood,
+.card-icon.suit-wood,
+.mana-pool-icon.suit-wood {
+    filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(90deg) brightness(70%) contrast(120%);
+}
+
+.card-rank-icon.suit-fire,
+.card-icon.suit-fire,
+.mana-pool-icon.suit-fire {
+    filter: brightness(0) saturate(100%) invert(16%) sepia(94%) saturate(7151%) hue-rotate(358deg) brightness(99%) contrast(113%);
+}
+
+.card-rank-icon.suit-water,
+.card-icon.suit-water,
+.mana-pool-icon.suit-water {
+    filter: brightness(0) saturate(100%) invert(48%) sepia(99%) saturate(2476%) hue-rotate(182deg) brightness(95%) contrast(86%);
+}
+
+.card-rank-icon.suit-metal,
+.card-icon.suit-metal,
+.mana-pool-icon.suit-metal {
+    filter: brightness(0) saturate(0%) invert(50%) grayscale(100%);
+}
+
+.card-rank-icon.suit-earth,
+.card-icon.suit-earth,
+.mana-pool-icon.suit-earth {
+    filter: brightness(0) saturate(100%) invert(30%) sepia(100%) saturate(1200%) hue-rotate(30deg) brightness(70%) contrast(110%);
 }
 
 .card-top {

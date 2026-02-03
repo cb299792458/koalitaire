@@ -42,10 +42,12 @@ class ManaPool {
 
     /**
      * Check if there's enough mana for burning a card of a given rank
-     * A card can be burned if the mana pool has a number of cards equal to the card's rank
+     * A card can be burned if the mana pool has a number of cards equal to (rank - 1)
+     * This means cards can be placed if their rank is one more than the cards in the pile
      */
     hasEnoughManaForBurn(rank: number): boolean {
-        return this.getManaCount() === rank;
+        const count = this.getManaCount();
+        return count === rank - 1;
     }
 }
 

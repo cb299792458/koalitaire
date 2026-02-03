@@ -91,7 +91,7 @@ export class Combat {
         // Reset player state
         if (this.player) {
             this.player.block = 0;
-            this.player.manaCrystals = 3;
+            this.player.manaCrystals = 0;
         }
         
         this.startTurn();
@@ -102,7 +102,7 @@ export class Combat {
     // ==================== Turn Management ====================
 
     startTurn(): void {
-        this.drawCards(3);
+        this.drawCards(5);
 
         if (!this.player) return;
         this.player.block = 0;
@@ -183,7 +183,7 @@ export class Combat {
 
     // ==================== Card Drawing & Deck Management ====================
 
-    drawCards(count: number = 3, keepHand: boolean = false): void {
+    drawCards(count: number = 5, keepHand: boolean = false): void {
         // Move all cards from hand to compost
         if (!keepHand) {
             this.compost.addCards([...this.hand.cards]);
@@ -198,11 +198,20 @@ export class Combat {
 
         // Draw cards and reveal them
         const drawnCards = this.deck.drawMultiple(count);
-        for (const card of drawnCards) {
-            card.revealed = true;
-            this.hand.addCard(card);
+        for (let i = 0; i < drawnCards.length; i++) {
+            const card = drawnCards[i];
+            if (!card) continue;
+            // Stagger animations slightly for visual effect
+            setTimeout(() => {
+                card.revealed = true;
+                this.hand.addCard(card);
+                this.notify();
+                // Animate after card is added to DOM
+                setTimeout(() => {
+                    card.animateDraw();
+                }, 10);
+            }, i * 100); // 100ms delay between each card
         }
-        this.notify();
     }
 
     shuffleDeck(): void {
@@ -346,7 +355,7 @@ export class Combat {
         selectedCard.animateBurn();
         setTimeout(() => {
             this.moveCardToArea(selectedCard, AREAS.ManaPools);
-        }, selectedCard.animationTime);
+        }, 1200); // Match burn animation time (1.2s)
 
         this.setSelectedCard(null);
     }
@@ -520,8 +529,14 @@ export class Combat {
         const handIndex = this.hand.cards.indexOf(selectedCard);
         if (handIndex !== -1) {
             // Move from hand
-            this.hand.cards.splice(handIndex, 1);
-            clickedColumn.add(selectedCard);
+            selectedCard.animateTableauMove();
+            setTimeout(() => {
+                this.hand.cards.splice(handIndex, 1);
+                clickedColumn.add(selectedCard);
+                this.setSelectedCard(null);
+                this.notify();
+            }, 450); // Match animation time (400ms + 50ms delay)
+            return; // Early return since we're handling notify in setTimeout
         } else {
             // Move from tableau
             const isEmptyColumn = clickedColumn.size() === 0;
@@ -541,19 +556,22 @@ export class Combat {
             }
 
             // Move card and all below it
-            const cardsToMove = selectedCardColumn.cards.slice(selectedCardJndex);
-            clickedColumn.cards.push(...cardsToMove);
-            selectedCardColumn.cards.splice(selectedCardJndex, cardsToMove.length);
+            selectedCard.animateTableauMove();
+            setTimeout(() => {
+                const cardsToMove = selectedCardColumn.cards.slice(selectedCardJndex);
+                clickedColumn.cards.push(...cardsToMove);
+                selectedCardColumn.cards.splice(selectedCardJndex, cardsToMove.length);
 
-            // Reveal the last card in the column if it exists
-            if (selectedCardColumn.cards.length > 0) {
-                const lastCard = selectedCardColumn.cards[selectedCardColumn.cards.length - 1];
-                if (lastCard) lastCard.revealed = true;
-            }
+                // Reveal the last card in the column if it exists
+                if (selectedCardColumn.cards.length > 0) {
+                    const lastCard = selectedCardColumn.cards[selectedCardColumn.cards.length - 1];
+                    if (lastCard) lastCard.revealed = true;
+                }
+                this.setSelectedCard(null);
+                this.notify();
+            }, 450); // Match animation time (400ms + 50ms delay)
+            return; // Early return since we're handling notify in setTimeout
         }
-
-        this.setSelectedCard(null);
-        this.notify();
     }
 
     // ==================== Card Movement ====================
