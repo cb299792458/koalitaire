@@ -10,6 +10,7 @@
     import EnemyInfo from './EnemyInfo.vue';
     import makeScenario from '../game/makeScenario';
     import type Player from '../models/Player';
+    import ManaPool from '../models/ManaPool';
 
     const scenario = makeScenario();
 
@@ -212,7 +213,7 @@
                                     <CardStack
                                         v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
                                         :key="index"
-                                        :cards="(manaPool as any).cards"
+                                        :cards="(manaPool as ManaPool).cards"
                                         :name="AREAS.ManaPools"
                                         :arrayIndex="index"
                                         :highlighted="highlightedManaPoolIndex === index"
