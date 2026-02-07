@@ -1,7 +1,7 @@
 import { ref, triggerRef, toRaw } from 'vue';
 
 // Models
-import Card, { Suits } from '../models/Card';
+import Card, { Suits, SpellCard } from '../models/Card';
 import Player from '../models/Player';
 import Enemy from '../models/Enemy';
 import DrawPile from '../models/DrawPile';
@@ -70,13 +70,21 @@ export class Combat {
         if (!this.player) {
             this.deck.clear();
         } else {
-            const deckCards = this.player.deck.map((card) => new Card(
-                card.rank,
-                card.suit,
-                card.name,
-                card.description,
-                card.effect,
-            ));
+            const deckCards = this.player.deck.map((card) => {
+                // Preserve SpellCard instances
+                if (card.isSpell) {
+                    const spellCard = card as SpellCard;
+                    return new SpellCard(
+                        spellCard.rank,
+                        spellCard.suit,
+                        spellCard.name,
+                        spellCard.description,
+                        spellCard.effect
+                    );
+                } else {
+                    return new Card(card.rank, card.suit);
+                }
+            });
             this.deck.initialize(deckCards);
         }
 
@@ -343,6 +351,9 @@ export class Combat {
                 break;
 
             case AREAS.Trash:
+                openModal('trash', { trash: this.trash.cards });
+                break;
+
             default:
                 break;
         }
@@ -381,20 +392,26 @@ export class Combat {
                     }
                 }
                 
-                // Move all cards in mana pool to compost
-                const cardsToCompost = [...manaPool.cards];
-                for (const card of cardsToCompost) {
+                // Move only the top X cards from mana pool to compost, where X is the spell's rank
+                const cardsToDiscard = manaPool.cards.slice(-selectedCard.rank);
+                for (const card of cardsToDiscard) {
                     this.moveCardToArea(card, AREAS.Compost);
                 }
             }
-            
-            selectedCard.effect(this);
-            this.moveCardToArea(selectedCard, AREAS.Compost);
-            
-            // Check if enemy died from card effect
-            if (this.checkEnemyDeath()) {
-                return;
-            }
+        
+        // Trigger spell card effect if it's a spell card
+        if (selectedCard.isSpell) {
+            const spellCard = selectedCard as SpellCard;
+            spellCard.effect(this);
+        }
+        
+        // Move the card to compost
+        this.moveCardToArea(selectedCard, AREAS.Compost);
+        
+        // Check if enemy died from card effect
+        if (this.checkEnemyDeath()) {
+            return;
+        }
             
             this.notify();
         }, selectedCard.animationTime);
@@ -404,6 +421,9 @@ export class Combat {
 
     private canCastSelectedCard(): boolean {
         if (!this.selectedCard || !this.selectedCard.revealed || !this.player) return false;
+        
+        // Only spell cards can be cast
+        if (!this.selectedCard.isSpell) return false;
         
         const { rank, suit } = this.selectedCard;
         const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);
@@ -449,9 +469,15 @@ export class Combat {
      * Check if the selected card can be burned (moved to mana pool)
      * A card can be burned if it's from the hand or the last card in a tableau column,
      * and the mana pool has enough cards matching the card's rank
+     * Spell cards cannot be burned
      */
     canBurnSelectedCard(): boolean {
         if (!this.selectedCard || !this.selectedCard.revealed) return false;
+        
+        // Spell cards cannot be burned
+        if (this.selectedCard.isSpell) {
+            return false;
+        }
         
         const { rank, suit } = this.selectedCard;
         const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(this.selectedCard);

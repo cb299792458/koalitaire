@@ -1,4 +1,4 @@
-import Card from "./Card";
+import Card, { SpellCard, type SpellCardParams } from "./Card";
 import Summon from "./Summon";
 
 import koaPortrait from "/player_portraits/koa.png";
@@ -127,13 +127,21 @@ class Player {
             arcane: this.arcane,
             health: this.maxHealth,
             gold: this.gold,
-            makeDeck: () => this.deck.map(card => new Card(
-                card.rank,
-                card.suit,
-                card.name,
-                card.description,
-                card.effect
-            ))
+            makeDeck: () => this.deck.map(card => {
+                // Preserve SpellCard instances
+                if (card.isSpell) {
+                    const spellCard = card as SpellCard;
+                    return new SpellCard(
+                        spellCard.rank,
+                        spellCard.suit,
+                        spellCard.name,
+                        spellCard.description,
+                        spellCard.effect
+                    );
+                } else {
+                    return new Card(card.rank, card.suit);
+                }
+            })
         });
         playerCopy.level = this.level;
         playerCopy.health = this.health;
@@ -158,8 +166,21 @@ export const koaParams: PlayerParams = {
 
     makeDeck: () => {
         const deck: Card[] = [];
-        for (const { rank, suit, name, description, effect } of koaDeck) {
-            deck.push(new Card(rank, suit, name, description, effect));
+        for (const cardParams of koaDeck) {
+            // Check if it's a SpellCard
+            if ('effect' in cardParams) {
+                const spellParams = cardParams as SpellCardParams;
+                deck.push(new SpellCard(
+                    spellParams.rank,
+                    spellParams.suit,
+                    spellParams.name,
+                    spellParams.description,
+                    spellParams.effect
+                ));
+            } else {
+                // Mana card
+                deck.push(new Card(cardParams.rank, cardParams.suit));
+            }
         }
         return deck;
     }

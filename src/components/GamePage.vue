@@ -33,6 +33,7 @@
     
     const deck = combat.deck;
     const compost = combat.compost;
+    const trash = combat.trash;
     const hand = combat.hand;
     const tableau = computed(() => combat.tableau.getCardsArrays());
     const manaPools = combat.manaPools;
@@ -67,10 +68,22 @@
         return cost === 0 ? 'burn' : 'cast';
     });
     
+    const showCastSpellText = computed(() => {
+        const card = selectedCard.value;
+        if (!card || !card.revealed) return false;
+        // Show "Cast Spell" if card is castable
+        return combat.isSelectedCardPlayable();
+    });
+    
     // Get the suit index for the selected card's mana pool highlighting
     const highlightedManaPoolIndex = computed(() => {
         const card = selectedCard.value;
         if (!card || !card.revealed) return -1;
+        
+        // Spell cards cannot be burned
+        if (card.isSpell) {
+            return -1;
+        }
         
         const { rank, suit } = card;
         const manaPool = combat.manaPools[suit];
@@ -187,25 +200,37 @@
             
                         <div class="combat-middle">
                             <div class="cards-top">
-                                <div class="deck-wrapper">
-                                    <CardStack
-                                        :cards="deck.cards"
-                                        :name="AREAS.Deck"
-                                        layout="pile"
-                                        @click="onClick"
-                                    />
-                                </div>
-                                <div class="compost-wrapper">
-                                    <div v-if="manaCrystalsCost !== null" class="mana-crystals-cost">
-                                        -{{ manaCrystalsCost }} mana crystals
+                                <div class="cards-top-left">
+                                    <div class="deck-wrapper">
+                                        <CardStack
+                                            :cards="deck.cards"
+                                            :name="AREAS.Deck"
+                                            layout="pile"
+                                            @click="onClick"
+                                        />
+                                    </div>
+                                    <div class="compost-wrapper">
+                                        <div v-if="manaCrystalsCost !== null" class="mana-crystals-cost">
+                                            -{{ manaCrystalsCost }} mana crystals
+                                        </div>
+                                        <div v-if="showCastSpellText" class="cast-spell-text">
+                                            Cast Spell
+                                        </div>
+                                        <CardStack
+                                            :cards="compost.cards"
+                                            :name="AREAS.Compost"
+                                            :highlighted="isCompostHighlighted"
+                                            :highlightType="compostHighlightType"
+                                            :alwaysShowDummy="true"
+                                            customLabel="Compost"
+                                            @click="onClick"
+                                        />
                                     </div>
                                     <CardStack
-                                        :cards="compost.cards"
-                                        :name="AREAS.Compost"
-                                        :highlighted="isCompostHighlighted"
-                                        :highlightType="compostHighlightType"
+                                        :cards="trash.cards"
+                                        :name="AREAS.Trash"
                                         :alwaysShowDummy="true"
-                                        customLabel="discard"
+                                        customLabel="Trash (WIP)"
                                         @click="onClick"
                                     />
                                 </div>

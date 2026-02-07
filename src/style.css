@@ -72,6 +72,14 @@ html, body {
     width: 100%;
 }
 
+.cards-top-left {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 40%;
+}
+
 .deck-wrapper {
     position: relative;
     display: flex;
@@ -81,23 +89,11 @@ html, body {
     height: 200px;
 }
 
-.deck-wrapper > .card-stack {
-    width: 120px !important;
-    margin: 0;
-}
-
 .mana-pools {
     display: flex;
     justify-content: center;
     gap: 10px;
-    min-width: 0;
-    width: 680px;
-}
-
-.mana-pools .card-stack {
-    width: 120px !important;
-    flex-shrink: 0;
-    min-width: 120px;
+    width: 60%;
 }
 
 .tableau {
@@ -170,20 +166,20 @@ html, body {
 .mana-crystals-cost {
     position: absolute;
     top: 10px;
+}
+
+.cast-spell-text {
+    position: absolute;
+    bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 2px solid #00aaff;
-    border-radius: 6px;
-    color: #00aaff;
+    font-size: 18px;
     font-weight: bold;
-    font-size: 14px;
-    text-align: center;
-    white-space: nowrap;
-    z-index: 1000;
+    color: #4a90e2;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
     pointer-events: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    white-space: nowrap;
 }
 
 .card-stack.vertical {
@@ -207,6 +203,8 @@ html, body {
     border-radius: 10px;
     border: 1px solid black;
     cursor: pointer;
+    overflow: hidden;
+    box-sizing: border-box;
 
     opacity: 1;
 }
@@ -339,6 +337,32 @@ html, body {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.spell-card-front {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    padding: 2px;
+    padding-bottom: 0;
+    box-sizing: border-box;
+}
+
+.spell-card-top {
+    flex-shrink: 0;
+}
+
+.spell-card-description {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    margin: 0;
+    color: #555;
 }
 
 .card-front.playing-card {
@@ -348,7 +372,7 @@ html, body {
     min-height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 8px;
+    padding: 2px;
     box-sizing: border-box;
 }
 
@@ -398,9 +422,16 @@ html, body {
 }
 
 .card-icon {
+    flex: 0 0 calc(33.333% - 4px);
+    max-width: calc(33.333% - 4px);
+}
+
+.card-icon {
     width: 24px;
     height: 24px;
     object-fit: contain;
+    flex: 0 0 calc(33.333% - 4px);
+    max-width: calc(33.333% - 4px);
 }
 
 /* Suit color filters - apply to rank icon, center icons, and mana pool icons */
@@ -439,6 +470,42 @@ html, body {
     justify-content: space-between;
     align-items: center;
     margin: 5px;
+    width: calc(100% - 10px);
+    box-sizing: border-box;
+}
+
+.spell-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: calc(100% - 6px);
+    max-width: calc(100% - 6px);
+    gap: 4px;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin: 0 3px;
+}
+
+.spell-card-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.spell-card-rank {
+    font-weight: bold;
+}
+
+.spell-card-name {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: calc(100% - 60px);
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .card-description {

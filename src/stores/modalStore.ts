@@ -1,11 +1,12 @@
 import { markRaw, reactive } from 'vue'
 import TestModal from '../components/TestModal.vue'
 import CompostModal from '../components/CompostModal.vue'
+import TrashModal from '../components/TrashModal.vue'
 import StartModal from '../components/StartModal.vue'
 import MessageModal from '../components/MessageModal.vue'
 import EnemyDefeatedModal from '../components/EnemyDefeatedModal.vue'
 
-export type ModalName = 'test' | 'compost' | 'start' | 'message' | 'enemyDefeated'
+export type ModalName = 'test' | 'compost' | 'trash' | 'start' | 'message' | 'enemyDefeated'
 
 interface ModalState {
     currentModal: {
@@ -19,6 +20,7 @@ interface ModalState {
 const modals: Record<ModalName, any> = {
     test: markRaw(TestModal),
     compost: markRaw(CompostModal),
+    trash: markRaw(TrashModal),
     start: markRaw(StartModal),
     message: markRaw(MessageModal),
     enemyDefeated: markRaw(EnemyDefeatedModal),

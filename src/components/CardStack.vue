@@ -160,7 +160,7 @@
                     <img :src="manaPoolIcon" :alt="manaPoolSuit || ''" class="mana-pool-icon" :class="manaPoolSuitClass" />
                 </template>
                 <template v-else>
-                    {{ customLabel || (name === AREAS.ManaPools ? Suits[arrayIndex ?? 0] : name) }}
+                    {{ customLabel || name }}
                 </template>
             </div>
             <CardView v-for="(card, index) in cards"
@@ -185,7 +185,7 @@
                     <img :src="manaPoolIcon" :alt="manaPoolSuit || ''" class="mana-pool-icon" :class="manaPoolSuitClass" />
                 </template>
                 <template v-else>
-                    {{ customLabel || (name === AREAS.ManaPools ? Suits[arrayIndex ?? 0] : name) }}
+                    {{ customLabel || name }}
                 </template>
             </div>
             <template v-else>

@@ -2,22 +2,24 @@ import { nextTick } from "vue";
 import type { Combat } from "../composables/useCombat";
 
 export const Suit = {
-    Wood: "🪵",
-    Fire : "🔥",
-    Earth: "🪨",
-    Metal: "🪙",
-    Water: "💧",
+    Wood: "wood",
+    Fire : "fire",
+    Earth: "earth",
+    Metal: "metal",
+    Water: "water",
 } as const;
 export type Suit = typeof Suit[keyof typeof Suit];
 export const Suits: Suit[] = Object.values(Suit);
-export interface BaseCardParams {
+
+export interface CardParams {
+    rank: number;
+    suit: Suit;
+}
+
+export interface SpellCardParams extends CardParams {
     name: string;
     description: string;
     effect: (combat: Combat) => void;
-}
-export interface CardParams extends BaseCardParams {
-    rank: number;
-    suit: Suit;
 }
 
 class Card {
@@ -25,20 +27,12 @@ class Card {
     suit: Suit;
     revealed: boolean = false;
     animation: string = '';
-    name: string;
-    description: string;
-    effect: (combat: Combat) => void;
     animationTime: number = 1000; // Default animation time in milliseconds
+    isSpell: boolean = false;
 
-    constructor(
-        rank: number, suit: Suit, name: string, description: string, 
-        effect: (combat: Combat) => void
-    ) {
+    constructor(rank: number, suit: Suit) {
         this.rank = rank;
         this.suit = suit;
-        this.name = name;
-        this.description = description;
-        this.effect = effect;
     }
 
     animate(): void {
@@ -106,6 +100,21 @@ class Card {
                 this.animation = '';
             }, 50 + drawAnimationTime);
         });
+    }
+}
+
+export class SpellCard extends Card {
+    isSpell: boolean = true;
+    name: string;
+    description: string;
+    effect: (combat: Combat) => void;
+
+    constructor(rank: number, suit: Suit, name: string, description: string, effect: (combat: Combat) => void) {
+        super(rank, suit);
+        this.isSpell = true;
+        this.name = name;
+        this.description = description;
+        this.effect = effect;
     }
 }
 

@@ -139,12 +139,8 @@ export const platypusParams: EnemyParams = {
     makeDeck: () => {
         const deck: EnemyAction[] = [];
         const cards: Partial<Record<keyof typeof enemyActions, number>> = {
-            "doNothing": 3,
+            "doNothing": 2,
             "weakAttack": 3,
-            "strongAttack": 1,
-            "block": 3,
-            "buff": 1,
-            "heal": 1,
             "haste": 1,
         }
         for (const [key, count] of Object.entries(cards)) {
@@ -169,10 +165,7 @@ export const dwambatParams: EnemyParams = {
         const cards: Partial<Record<keyof typeof enemyActions, number>> = {
             "doNothing": 2,
             "weakAttack": 4,
-            "strongAttack": 2,
-            "block": 2,
-            "buff": 1,
-            "heal": 1,
+            "block": 3,
             "haste": 1,
         }
         for (const [key, count] of Object.entries(cards)) {
@@ -198,9 +191,7 @@ export const gnokkaParams: EnemyParams = {
             "doNothing": 2,
             "weakAttack": 3,
             "strongAttack": 3,
-            "block": 3,
             "buff": 2,
-            "heal": 2,
             "haste": 1,
         }
         for (const [key, count] of Object.entries(cards)) {
@@ -223,7 +214,6 @@ export const squirrelfParams: EnemyParams = {
     makeDeck: () => {
         const deck: EnemyAction[] = [];
         const cards: Partial<Record<keyof typeof enemyActions, number>> = {
-            "doNothing": 1,
             "weakAttack": 3,
             "strongAttack": 4,
             "block": 3,
