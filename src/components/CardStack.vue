@@ -145,7 +145,7 @@
 </script>
 
 <template>
-    <div :class="['card-stack', layout || 'pile']">
+    <div :class="['card-stack', layout || 'pile', { 'mana-pool-stack': name === AREAS.ManaPools }]">
         <template v-if="alwaysShowDummy">
             <div
                 class="card-stack-empty"

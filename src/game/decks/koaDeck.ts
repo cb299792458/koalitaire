@@ -33,7 +33,7 @@ const fireball = {
     description: 'Deals 8 magic damage to the enemy.',
     effect: (combat: Combat) => {
         const { enemy } = combat;
-        enemy.takeDamage(5);
+        enemy.takeDamage(8);
     },
 }
 
@@ -44,7 +44,7 @@ const shield = {
     description: 'Gain 4 block.',
     effect: (combat: Combat) => {
         const { player } = combat;
-        player.gainBlock(5);
+        player.gainBlock(4);
     },
 }
 
@@ -65,7 +65,7 @@ const study = {
     name: 'Study',
     description: 'Draw 3 cards.',
     effect: (combat: Combat) => {
-        combat.drawCards(2, true);
+        combat.drawCards(3, true);
     },
 }
 

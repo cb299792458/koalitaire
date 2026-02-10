@@ -244,6 +244,11 @@ export class Combat {
     }
 
     private isCardSelection(clickedCard: Card | null): boolean {
+        // Prevent selection of cards in mana pools
+        if (clickedCard && this.isCardInManaPool(clickedCard)) {
+            return false;
+        }
+
         // Select card if none selected
         if (!this.selectedCard && clickedCard?.revealed) {
             this.setSelectedCard(clickedCard);
@@ -617,6 +622,15 @@ export class Combat {
         }
 
         return { handIndex, tableauIndex, tableauJndex };
+    }
+
+    private isCardInManaPool(card: Card | null): boolean {
+        if (!card) return false;
+        
+        const manaPool = this.manaPools[card.suit];
+        if (!manaPool) return false;
+        
+        return manaPool.cards.includes(card);
     }
 
     private moveCardToArea(card: Card, area: Area): void {
