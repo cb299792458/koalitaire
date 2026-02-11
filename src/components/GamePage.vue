@@ -43,6 +43,11 @@
     const allManaPoolCounts = computed(() => {
         return Object.values(combat.manaPools).map(pool => pool.cards.length);
     });
+
+    const canMoveToManaPools = computed(() => combat.getCardsMovableToManaPools().length > 0);
+
+    const deckCount = computed(() => combat.deck.cards.length);
+    const reshuffles = computed(() => combat.reshuffles);
     
     const isCompostHighlighted = computed(() => {
         // Use the reactive selectedCard computed
@@ -155,6 +160,10 @@
         );
     }
 
+    function onMoveToManaClick() {
+        combat.moveAllPossibleToManaPools();
+    }
+
     onMounted(() => {
         openModal(
             'start',
@@ -201,13 +210,14 @@
                         <div class="combat-middle">
                             <div class="cards-top">
                                 <div class="cards-top-left">
-                                    <div class="deck-wrapper">
+                                    <div class="deck-wrapper" :title="`${deckCount} cards left`">
                                         <CardStack
                                             :cards="deck.cards"
                                             :name="AREAS.Deck"
                                             layout="pile"
                                             @click="onClick"
                                         />
+                                        <div class="deck-reshuffles">Reshuffles: {{ reshuffles }}</div>
                                     </div>
                                     <div class="compost-wrapper">
                                         <div v-if="manaCrystalsCost !== null" class="mana-crystals-cost">
@@ -234,18 +244,26 @@
                                         @click="onClick"
                                     />
                                 </div>
-                                <div class="mana-pools">
-                                    <CardStack
-                                        v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
-                                        :key="index"
-                                        :cards="(manaPool as ManaPool).cards"
-                                        :name="AREAS.ManaPools"
-                                        :arrayIndex="index"
-                                        :highlighted="highlightedManaPoolIndex === index"
-                                        highlightType="burn"
-                                        @mousedown.prevent
-                                        @click="onClick"
-                                    />
+                                <div class="mana-pools-area">
+                                    <div class="mana-pools">
+                                        <CardStack
+                                            v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
+                                            :key="index"
+                                            :cards="(manaPool as ManaPool).cards"
+                                            :name="AREAS.ManaPools"
+                                            :arrayIndex="index"
+                                            :highlighted="highlightedManaPoolIndex === index"
+                                            highlightType="burn"
+                                            @mousedown.prevent
+                                            @click="onClick"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="move-to-mana-button"
+                                        :disabled="!canMoveToManaPools"
+                                        @click="onMoveToManaClick"
+                                    >Auto Mana</button>
                                 </div>
                             </div>
             

@@ -1,6 +1,9 @@
 html, body {
     background-color: #444444;
     overflow: hidden;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
 }
 
 .game-page {
@@ -83,17 +86,47 @@ html, body {
 .deck-wrapper {
     position: relative;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: flex-start;
     align-items: center;
     min-width: 120px;
     height: 200px;
+}
+
+.deck-reshuffles {
+    margin-top: 8px;
+    font-size: 14px;
+    color: black;
+}
+
+.mana-pools-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 60%;
 }
 
 .mana-pools {
     display: flex;
     justify-content: center;
     gap: 10px;
-    width: 60%;
+    width: 100%;
+}
+
+.move-to-mana-button {
+    padding: 16px 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #888;
+    background: #f0f0f0;
+    cursor: pointer;
+    height: fit-content;
+}
+
+.move-to-mana-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .tableau {

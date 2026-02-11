@@ -5,8 +5,9 @@ import TrashModal from '../components/TrashModal.vue'
 import StartModal from '../components/StartModal.vue'
 import MessageModal from '../components/MessageModal.vue'
 import EnemyDefeatedModal from '../components/EnemyDefeatedModal.vue'
+import ConfirmModal from '../components/ConfirmModal.vue'
 
-export type ModalName = 'test' | 'compost' | 'trash' | 'start' | 'message' | 'enemyDefeated'
+export type ModalName = 'test' | 'compost' | 'trash' | 'start' | 'message' | 'enemyDefeated' | 'confirmNoReshuffles'
 
 interface ModalState {
     currentModal: {
@@ -24,6 +25,7 @@ const modals: Record<ModalName, any> = {
     start: markRaw(StartModal),
     message: markRaw(MessageModal),
     enemyDefeated: markRaw(EnemyDefeatedModal),
+    confirmNoReshuffles: markRaw(ConfirmModal),
 }
 
 // Reactive state for the current modal

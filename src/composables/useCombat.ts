@@ -13,7 +13,7 @@ import ManaPool from '../models/ManaPool';
 
 // Types & Constants
 import { AREAS, type Area } from '../models/Areas';
-import { openModal } from '../stores/modalStore';
+import { openModal, closeModal } from '../stores/modalStore';
 
 const TABLEAU_SIZE = 6;
 
@@ -31,6 +31,7 @@ export class Combat {
     tableau: Tableau;
     manaPools: Record<string, ManaPool>;
     isProcessingTurn: boolean;
+    reshuffles: number;
     
     // Observer pattern
     listeners: Set<() => void>;
@@ -51,6 +52,7 @@ export class Combat {
         this.hand = new Hand();
         this.tableau = new Tableau(TABLEAU_SIZE);
         this.isProcessingTurn = false;
+        this.reshuffles = 2;
         
         this.manaPools = Object.fromEntries(
             Suits.map(suit => [suit, new ManaPool(suit)])
@@ -92,6 +94,7 @@ export class Combat {
         this.trash.clear();
         Object.values(this.manaPools).forEach(pool => pool.clear());
         this.hand.clear();
+        this.reshuffles = 2;
 
         this.initializeTableau();
         this.shuffleDeck();
@@ -128,6 +131,20 @@ export class Combat {
         
         this.isProcessingTurn = true;
         this.notify();
+
+        // If deck is empty and no reshuffles left, show confirmation before proceeding
+        if (this.deck.isEmpty() && this.reshuffles === 0) {
+            openModal('confirmNoReshuffles', {
+                message: 'Are you sure? You have no reshuffles left, this will empty your mana pool and redeal the entire deck.',
+                onConfirm: () => {
+                    closeModal();
+                    this.executeRedealAndFinishTurn();
+                },
+            });
+            this.isProcessingTurn = false;
+            this.notify();
+            return;
+        }
         
         try {
             // Player summons run at the end of the player turn
@@ -150,6 +167,13 @@ export class Combat {
             if (this.enemy.health <= 0) {
                 this.defeatEnemy();
                 return;
+            }
+
+            // If deck is empty when ending turn, use a reshuffle: recycle compost into deck and decrement
+            if (this.deck.isEmpty() && this.reshuffles > 0) {
+                this.compost.recycleInto(this.deck);
+                this.deck.shuffle();
+                this.reshuffles -= 1;
             }
 
             this.startTurn();
@@ -190,6 +214,59 @@ export class Combat {
         }
     }
 
+    /**
+     * Called when player confirms "no reshuffles" popup: gather all cards into deck,
+     * shuffle, reset tableau and redeal, set reshuffles to 2, then run the rest of end turn.
+     */
+    async executeRedealAndFinishTurn(): Promise<void> {
+        if (!this.player || !this.enemy) return;
+        this.isProcessingTurn = true;
+        this.notify();
+        try {
+            // Move hand to compost
+            this.compost.addCards([...this.hand.cards]);
+            this.hand.clear();
+            // Move tableau to compost
+            for (const column of this.tableau.getColumns()) {
+                this.compost.addCards([...column.cards]);
+                column.cards = [];
+            }
+            // Move mana pools to compost
+            for (const pool of Object.values(this.manaPools)) {
+                this.compost.addCards([...pool.cards]);
+                pool.clear();
+            }
+            // Recycle compost into deck, shuffle, reset tableau and redeal
+            this.compost.recycleInto(this.deck);
+            this.deck.shuffle();
+            this.tableau.clear();
+            this.dealTableau();
+            this.reshuffles = 2;
+            this.notify();
+
+            // Run the rest of end turn: summons, enemy actions, then start new turn
+            for (const summon of this.player.summons) {
+                summon.effect(this);
+                this.notify();
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            if (this.enemy.health <= 0) {
+                this.defeatEnemy();
+                return;
+            }
+            this.enemy.block = 0;
+            await this.enemy.executeActions(this.player, this);
+            if (this.enemy.health <= 0) {
+                this.defeatEnemy();
+                return;
+            }
+            this.startTurn();
+        } finally {
+            this.isProcessingTurn = false;
+            this.notify();
+        }
+    }
+
     // ==================== Card Drawing & Deck Management ====================
 
     drawCards(count: number = 5, keepHand: boolean = false): void {
@@ -197,12 +274,6 @@ export class Combat {
         if (!keepHand) {
             this.compost.addCards([...this.hand.cards]);
             this.hand.clear();
-        }
-
-        // If deck is empty, recycle compost into the deck
-        if (this.deck.isEmpty()) {
-            this.compost.recycleInto(this.deck);
-            this.deck.shuffle();
         }
 
         // Draw cards and reveal them
@@ -494,6 +565,56 @@ export class Combat {
         const manaPool = this.manaPools[suit];
         if (!manaPool) return false;
         return manaPool.hasEnoughManaForBurn(rank);
+    }
+
+    /**
+     * Check if a card can be burned (moved to its matching mana pool).
+     * Same rules as canBurnSelectedCard but for an arbitrary card.
+     */
+    private canBurnCard(card: Card): boolean {
+        if (!card.revealed) return false;
+        if (card.isSpell) return false;
+
+        const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(card);
+        if (handIndex === -1) {
+            const tableauColumn = this.tableau.getColumn(tableauIndex);
+            if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return false;
+        }
+
+        const manaPool = this.manaPools[card.suit];
+        if (!manaPool) return false;
+        return manaPool.hasEnoughManaForBurn(card.rank);
+    }
+
+    /**
+     * Returns all cards that can be moved to any pile in manaPools.
+     * Checks the bottom card in each tableau column and each card in the player's hand.
+     */
+    getCardsMovableToManaPools(): Card[] {
+        const candidates: Card[] = [];
+
+        for (const column of this.tableau.getColumns()) {
+            if (column.cards.length > 0) {
+                const bottomCard = column.cards[column.cards.length - 1];
+                if (bottomCard) candidates.push(bottomCard);
+            }
+        }
+
+        candidates.push(...this.hand.cards);
+
+        return candidates.filter(card => this.canBurnCard(card));
+    }
+
+    /**
+     * Repeatedly moves cards from tableau bottoms and hand to their matching mana pools
+     * until no more cards can be moved.
+     */
+    moveAllPossibleToManaPools(): void {
+        while (true) {
+            const movable = this.getCardsMovableToManaPools();
+            if (movable.length === 0) break;
+            this.moveCardToArea(movable[0]!, AREAS.ManaPools);
+        }
     }
 
     /**
