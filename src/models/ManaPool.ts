@@ -10,6 +10,10 @@ class ManaPool {
         this.cards = [];
     }
 
+    clear(): void {
+        this.cards = [];
+    }
+
     /**
      * Add a card to the mana pool
      */

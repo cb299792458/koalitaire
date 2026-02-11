@@ -90,6 +90,7 @@ export class Combat {
 
         this.compost.clear();
         this.trash.clear();
+        Object.values(this.manaPools).forEach(pool => pool.clear());
         this.hand.clear();
 
         this.initializeTableau();
@@ -244,11 +245,6 @@ export class Combat {
     }
 
     private isCardSelection(clickedCard: Card | null): boolean {
-        // Prevent selection of cards in mana pools
-        if (clickedCard && this.isCardInManaPool(clickedCard)) {
-            return false;
-        }
-
         // Select card if none selected
         if (!this.selectedCard && clickedCard?.revealed) {
             this.setSelectedCard(clickedCard);
@@ -330,6 +326,7 @@ export class Combat {
                 break;
 
             case AREAS.ManaPools: {
+                if (!this.selectedCard) break;
                 const clickedPoolSuit = clickIndex !== undefined ? Suits[clickIndex] : undefined;
                 const canBurn = this.selectedCard
                     && this.canBurnSelectedCard()
@@ -622,15 +619,6 @@ export class Combat {
         }
 
         return { handIndex, tableauIndex, tableauJndex };
-    }
-
-    private isCardInManaPool(card: Card | null): boolean {
-        if (!card) return false;
-        
-        const manaPool = this.manaPools[card.suit];
-        if (!manaPool) return false;
-        
-        return manaPool.cards.includes(card);
     }
 
     private moveCardToArea(card: Card, area: Area): void {
