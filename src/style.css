@@ -74,6 +74,7 @@ html, body {
     align-items: flex-start;
     gap: 24px;
     width: 100%;
+    margin-top: 6px;
 }
 
 .cards-top-left {

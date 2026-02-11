@@ -132,6 +132,12 @@ export class Combat {
         this.isProcessingTurn = true;
         this.notify();
 
+        // Discard hand into compost at start of end turn
+        const handCards = [...this.hand.cards];
+        for (const card of handCards) {
+            this.moveCardToArea(card, AREAS.Compost);
+        }
+
         // If deck is empty and no reshuffles left, show confirmation before proceeding
         if (this.deck.isEmpty() && this.reshuffles === 0) {
             openModal('confirmNoReshuffles', {
