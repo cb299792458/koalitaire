@@ -235,24 +235,22 @@
                                             :name="AREAS.Compost"
                                             :highlighted="isCompostHighlighted"
                                             :highlightType="compostHighlightType"
-                                            :alwaysShowDummy="true"
                                             customLabel="Compost"
                                             @click="onClick"
                                         />
                                         <div class="compost-count">{{ compostCount }} cards</div>
                                     </div>
-                                    <div v-if="hasTrashCards" class="trash-wrapper">
+                                    <div class="trash-wrapper" :class="{ 'trash-wrapper--empty': !hasTrashCards }">
                                         <CardStack
                                             :cards="trash.cards"
                                             :name="AREAS.Trash"
-                                            :alwaysShowDummy="true"
                                             customLabel="Trash (WIP)"
                                             @click="onClick"
                                         />
                                         <div class="trash-count">{{ trashCount }} cards</div>
                                     </div>
                                 </div>
-                                <div class="mana-pools-area">
+                                <div class="cards-top-right">
                                     <div class="mana-pools">
                                         <CardStack
                                             v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
@@ -260,18 +258,21 @@
                                             :cards="(manaPool as ManaPool).cards"
                                             :name="AREAS.ManaPools"
                                             :arrayIndex="index"
+                                            :selectedCard="selectedCard"
                                             :highlighted="highlightedManaPoolIndex === index"
                                             highlightType="burn"
                                             @mousedown.prevent
                                             @click="onClick"
                                         />
                                     </div>
-                                    <button
-                                        type="button"
-                                        class="move-to-mana-button"
-                                        :disabled="!canMoveToManaPools"
-                                        @click="onMoveToManaClick"
-                                    >Auto Mana</button>
+                                    <div class="mana-pools-buttons">
+                                        <button
+                                            type="button"
+                                            class="move-to-mana-button"
+                                            :disabled="!canMoveToManaPools"
+                                            @click="onMoveToManaClick"
+                                        >Auto Mana</button>
+                                    </div>
                                 </div>
                             </div>
             

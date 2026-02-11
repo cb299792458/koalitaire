@@ -397,17 +397,31 @@ export class Combat {
                 break;
 
             case AREAS.ManaPools: {
-                if (!this.selectedCard) break;
-                const clickedPoolSuit = clickIndex !== undefined ? Suits[clickIndex] : undefined;
-                const canBurn = this.selectedCard
-                    && this.canBurnSelectedCard()
-                    && clickedPoolSuit !== undefined
-                    && this.selectedCard.suit === clickedPoolSuit;
-                if (canBurn) {
-                    this.burnCard();
-                } else {
-                    if (this.isCardSelection(clickedCard)) break;
+                if (this.selectedCard) {
+                    const clickedPoolSuit = clickIndex !== undefined ? Suits[clickIndex] : undefined;
+                    const canBurn = this.canBurnSelectedCard()
+                        && clickedPoolSuit !== undefined
+                        && this.selectedCard.suit === clickedPoolSuit;
+                    if (canBurn) {
+                        this.burnCard();
+                        break;
+                    }
                 }
+                // Allow selecting the top card of a mana pool (so it can be moved to tableau)
+                if (clickedCard && this.isTopCardOfManaPool(clickedCard)) {
+                    const selected = toRaw(this.selectedCard);
+                    if (!selected) {
+                        this.setSelectedCard(clickedCard);
+                    } else if (selected === clickedCard) {
+                        this.setSelectedCard(null);
+                    } else {
+                        this.setSelectedCard(clickedCard);
+                    }
+                    this.notify();
+                    break;
+                }
+                // Clicked empty area or a non-top card: treat as selection (e.g. deselect)
+                if (this.isCardSelection(clickedCard)) break;
                 break;
             }
                 
@@ -674,7 +688,7 @@ export class Combat {
             if (selectedCard.rank !== clickedCard.rank - 1) return;
         }
 
-        // Move card from hand or tableau
+        // Move card from hand, mana pool, or tableau
         const handIndex = this.hand.cards.indexOf(selectedCard);
         if (handIndex !== -1) {
             // Move from hand
@@ -685,8 +699,22 @@ export class Combat {
                 this.setSelectedCard(null);
                 this.notify();
             }, 450); // Match animation time (400ms + 50ms delay)
-            return; // Early return since we're handling notify in setTimeout
-        } else {
+            return;
+        }
+        if (this.isTopCardOfManaPool(selectedCard)) {
+            // Move top card from mana pool to tableau
+            const pool = this.manaPools[selectedCard.suit];
+            if (!pool) return;
+            selectedCard.animateTableauMove();
+            setTimeout(() => {
+                pool.removeCard(selectedCard);
+                clickedColumn.add(selectedCard);
+                this.setSelectedCard(null);
+                this.notify();
+            }, 450);
+            return;
+        }
+        {
             // Move from tableau
             const isEmptyColumn = clickedColumn.size() === 0;
             if (!isEmptyColumn && clickJndex !== clickedColumn.size() - 1) return;
@@ -724,6 +752,13 @@ export class Combat {
     }
 
     // ==================== Card Movement ====================
+
+    /** True if the card is the top (last) card in its mana pool. */
+    private isTopCardOfManaPool(card: Card): boolean {
+        const pool = this.manaPools[card.suit];
+        if (!pool || pool.cards.length === 0) return false;
+        return pool.cards[pool.cards.length - 1] === card;
+    }
 
     private getCardIndices(card: Card | null): { handIndex: number; tableauIndex: number; tableauJndex: number } {
         if (!card) return { handIndex: -1, tableauIndex: -1, tableauJndex: -1 };

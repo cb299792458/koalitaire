@@ -12,7 +12,7 @@
         '0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K',
     ]
 
-    const animation = computed(() => card.animation);
+    const animation = computed(() => card?.animation);
     
     const isSpell = computed(() => card.isSpell);
     const spellCard = computed(() => isSpell.value ? card as SpellCard : null);
@@ -40,7 +40,7 @@
 <template>
     <div class="card-view" :class="{ 
         selected: selectedCard === card,
-        [card.animation]: !!animation,
+        [card?.animation]: !!animation,
     }">
         <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
         <div v-else-if="isSpell && spellCard" class="card-front spell-card-front">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import CardView from './SingleCard.vue';
+    import DummyCard from './DummyCard.vue';
     import Card from '../models/Card';
     import { AREAS, type Area } from '../models/Areas';
     import { toRaw, computed } from 'vue';
@@ -14,7 +15,6 @@
         highlighted?: boolean
         highlightType?: 'burn' | 'cast'
         customLabel?: string
-        alwaysShowDummy?: boolean
     }>();
 
     const SELECTED_CARD_Z_INDEX = 1000;
@@ -65,6 +65,7 @@
                     left: `-${index * 0.25}px`,
                     zIndex: props.cards.length + index,
                 };
+                break;
         }
         if (isSelected) {
             return { ...base, zIndex: SELECTED_CARD_Z_INDEX };
@@ -97,19 +98,6 @@
             arrayIndex: props.arrayIndex,
             cardIndex: -1,
         });
-    }
-
-    function dummyPosition() {
-        if (props.layout === 'pile' || !props.layout) {
-            // Position dummy at the bottom of the pile (behind all cards)
-            return {
-                position: 'absolute' as const,
-                top: '0px',
-                left: '0px',
-                zIndex: 0,
-            };
-        }
-        return {};
     }
     
     const suitIconMap: Record<string, string> = {
@@ -146,56 +134,40 @@
 
 <template>
     <div :class="['card-stack', layout || 'pile', { 'mana-pool-stack': name === AREAS.ManaPools }]">
-        <template v-if="alwaysShowDummy">
-            <div
-                class="card-stack-empty"
-                :class="{ 
-                    'castable-highlight': highlighted && highlightType === 'cast',
-                    'burnable-highlight': highlighted && highlightType === 'burn'
-                }"
-                :style="dummyPosition()"
-                @click.stop="handleEmptyClick"
-            >
-                <template v-if="name === AREAS.ManaPools && manaPoolIcon">
-                    <img :src="manaPoolIcon" :alt="manaPoolSuit || ''" class="mana-pool-icon" :class="manaPoolSuitClass" />
-                </template>
-                <template v-else>
-                    {{ customLabel || name }}
-                </template>
-            </div>
-            <CardView v-for="(card, index) in cards"
-                :key="index" 
-                :card="card"
-                :style="!card.animation || card.animation === 'burn' ? cardPosition(index, card) : {}"
-                :selectedCard="selectedCard"
-                @click.stop="handleClick(index)"
+        <template v-if="!cards.length">
+            <DummyCard
+                :label="customLabel || name"
+                :mana-pool-icon="name === AREAS.ManaPools ? manaPoolIcon : undefined"
+                :mana-pool-icon-alt="name === AREAS.ManaPools && manaPoolSuit ? String(manaPoolSuit) : undefined"
+                :mana-pool-suit-class="name === AREAS.ManaPools ? manaPoolSuitClass : undefined"
+                :highlighted="highlighted"
+                :highlight-type="highlightType"
+                @click="handleEmptyClick"
             />
         </template>
         <template v-else>
-            <div
-                class="card-stack-empty"
-                :class="{ 
-                    'castable-highlight': highlighted && !cards.length && highlightType === 'cast',
-                    'burnable-highlight': highlighted && !cards.length && highlightType === 'burn'
-                }"
-                v-if="!cards.length"
-                @click.stop="handleEmptyClick"
-            >
-                <template v-if="name === AREAS.ManaPools && manaPoolIcon">
-                    <img :src="manaPoolIcon" :alt="manaPoolSuit || ''" class="mana-pool-icon" :class="manaPoolSuitClass" />
-                </template>
-                <template v-else>
-                    {{ customLabel || name }}
-                </template>
+            <div v-if="name === AREAS.ManaPools && (layout === 'pile' || !layout)" class="mana-pool-pile-slot">
+                <CardView
+                    v-for="(card, index) in cards"
+                    :key="index"
+                    :card="card"
+                    :class="{
+                        'castable-highlight': highlighted && index === cards.length - 1 && highlightType === 'cast',
+                        'burnable-highlight': highlighted && index === cards.length - 1 && highlightType === 'burn'
+                    }"
+                    :style="!card.animation || card.animation === 'burn' ? cardPosition(index, card) : {}"
+                    :selectedCard="selectedCard"
+                    @click.stop="handleClick(index)"
+                />
             </div>
             <template v-else>
-                <div v-if="customLabel" class="card-stack-label">{{ customLabel }}</div>
-                <CardView v-for="(card, index) in cards"
-                    :key="index" 
+                <CardView
+                    v-for="(card, index) in cards"
+                    :key="index"
                     :card="card"
-                    :class="{ 
-                        'castable-highlight': highlighted && ((layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1) && highlightType === 'cast',
-                        'burnable-highlight': highlighted && ((layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1) && highlightType === 'burn'
+                    :class="{
+                        'castable-highlight': highlighted && (layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1 && highlightType === 'cast',
+                        'burnable-highlight': highlighted && (layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1 && highlightType === 'burn'
                     }"
                     :style="!card.animation || card.animation === 'burn' ? cardPosition(index, card) : {}"
                     :selectedCard="selectedCard"
