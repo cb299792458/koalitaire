@@ -155,7 +155,7 @@
                         'castable-highlight': highlighted && index === cards.length - 1 && highlightType === 'cast',
                         'burnable-highlight': highlighted && index === cards.length - 1 && highlightType === 'burn'
                     }"
-                    :style="!card.animation || card.animation === 'burn' ? cardPosition(index, card) : {}"
+                    :style="!card.animation || card.animation === 'burn' || card.animation === 'move-to-mana' ? cardPosition(index, card) : {}"
                     :selectedCard="selectedCard"
                     @click.stop="handleClick(index)"
                 />
@@ -169,7 +169,7 @@
                         'castable-highlight': highlighted && (layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1 && highlightType === 'cast',
                         'burnable-highlight': highlighted && (layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1 && highlightType === 'burn'
                     }"
-                    :style="!card.animation || card.animation === 'burn' ? cardPosition(index, card) : {}"
+                    :style="!card.animation || card.animation === 'burn' || card.animation === 'move-to-mana' ? cardPosition(index, card) : {}"
                     :selectedCard="selectedCard"
                     @click.stop="handleClick(index)"
                 />

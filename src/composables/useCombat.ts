@@ -621,14 +621,26 @@ export class Combat {
 
     /**
      * Repeatedly moves cards from tableau bottoms and hand to their matching mana pools
-     * until no more cards can be moved.
+     * until no more cards can be moved. Each card is animated with a short delay between moves.
      */
     moveAllPossibleToManaPools(): void {
-        while (true) {
-            const movable = this.getCardsMovableToManaPools();
-            if (movable.length === 0) break;
-            this.moveCardToArea(movable[0]!, AREAS.ManaPools);
-        }
+        this.scheduleNextMoveToMana();
+    }
+
+    private static readonly MOVE_TO_MANA_ANIMATION_MS = 400;
+    private static readonly MOVE_TO_MANA_GAP_MS = 120;
+
+    private scheduleNextMoveToMana(): void {
+        const movable = this.getCardsMovableToManaPools();
+        if (movable.length === 0) return;
+        const card = movable[0]!;
+        card.animateMoveToMana();
+        this.notify();
+        setTimeout(() => {
+            this.moveCardToArea(card, AREAS.ManaPools);
+            this.notify();
+            setTimeout(() => this.scheduleNextMoveToMana(), Combat.MOVE_TO_MANA_GAP_MS);
+        }, Combat.MOVE_TO_MANA_ANIMATION_MS);
     }
 
     /**

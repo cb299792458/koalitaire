@@ -364,6 +364,17 @@ html, body {
     transition: transform 0.4s ease;
 }
 
+@keyframes move-to-mana-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 transparent; }
+    50% { transform: scale(1.08); box-shadow: 0 0 12px rgba(0, 170, 255, 0.6); }
+}
+
+.card-view.move-to-mana {
+    animation: move-to-mana-pulse 0.35s ease;
+    z-index: 1000;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
 @keyframes draw-flip {
     0% {
         transform: rotateY(180deg) scale(0.8);
@@ -496,27 +507,70 @@ html, body {
 
 .card-icons-center {
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    align-content: center;
+    gap: 6px;
     width: 100%;
     flex-grow: 1;
     flex-shrink: 0;
 }
 
-.card-icon {
-    flex: 0 0 calc(33.333% - 4px);
-    max-width: calc(33.333% - 4px);
+/* 2–3 icons: a bit more spacing in the vertical line */
+.card-icons-center.rank-2,
+.card-icons-center.rank-3 {
+    gap: 14px;
+}
+
+/* 4 icons: 2x2 box */
+.card-icons-center.rank-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    place-items: center;
+}
+
+/* 5 icons: X shape in 3x3, slightly tighter, centered vertically */
+.card-icons-center.rank-5 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.card-icons-center.rank-5 .card-icons-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 10px;
+    place-items: center;
+    width: 100px;
+    height: 100px;
+}
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(1) { grid-column: 1; grid-row: 1; }
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(2) { grid-column: 3; grid-row: 1; }
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(3) { grid-column: 2; grid-row: 2; }
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(4) { grid-column: 1; grid-row: 3; }
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(5) { grid-column: 3; grid-row: 3; }
+
+/* 6 icons: 2x3, centered vertically */
+.card-icons-center.rank-6 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.card-icons-center.rank-6 .card-icons-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 10px;
+    place-items: center;
+    width: 72px;
+    height: 108px;
 }
 
 .card-icon {
     width: 24px;
     height: 24px;
     object-fit: contain;
-    flex: 0 0 calc(33.333% - 4px);
-    max-width: calc(33.333% - 4px);
 }
 
 /* Suit color filters - apply to rank icon, center icons, and mana pool icons */

@@ -101,6 +101,19 @@ class Card {
             }, 50 + drawAnimationTime);
         });
     }
+
+    animateMoveToMana(): void {
+        const moveToManaTime = 350;
+        nextTick(() => {
+            setTimeout(() => {
+                this.animation = 'move-to-mana';
+            }, 50);
+
+            setTimeout(() => {
+                this.animation = '';
+            }, 50 + moveToManaTime);
+        });
+    }
 }
 
 export class SpellCard extends Card {

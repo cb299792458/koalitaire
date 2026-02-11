@@ -61,15 +61,27 @@
                 </div>
                 <span class="spell-card-name"></span>
             </div>
-            <div class="card-icons-center">
-                <img 
-                    v-for="index in card.rank" 
-                    :key="index"
-                    :src="suitIcon" 
-                    :alt="card.suit"
-                    class="card-icon"
-                    :class="suitClass"
-                />
+            <div class="card-icons-center" :class="'rank-' + card.rank">
+                <div v-if="card.rank === 5 || card.rank === 6" class="card-icons-inner">
+                    <img
+                        v-for="index in card.rank"
+                        :key="index"
+                        :src="suitIcon"
+                        :alt="card.suit"
+                        class="card-icon"
+                        :class="suitClass"
+                    />
+                </div>
+                <template v-else>
+                    <img
+                        v-for="index in card.rank"
+                        :key="index"
+                        :src="suitIcon"
+                        :alt="card.suit"
+                        class="card-icon"
+                        :class="suitClass"
+                    />
+                </template>
             </div>
         </div>
     </div>
