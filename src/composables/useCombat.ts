@@ -15,7 +15,7 @@ import ManaPool from '../models/ManaPool';
 import { AREAS, type Area } from '../models/Areas';
 import { openModal, closeModal } from '../stores/modalStore';
 
-const TABLEAU_SIZE = 6;
+const TABLEAU_SIZE = 7;
 
 export class Combat {
     // Game entities

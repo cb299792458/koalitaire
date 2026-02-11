@@ -48,6 +48,9 @@
 
     const deckCount = computed(() => combat.deck.cards.length);
     const reshuffles = computed(() => combat.reshuffles);
+    const compostCount = computed(() => combat.compost.cards.length);
+    const hasTrashCards = computed(() => combat.trash.cards.length > 0);
+    const trashCount = computed(() => combat.trash.cards.length);
     
     const isCompostHighlighted = computed(() => {
         // Use the reactive selectedCard computed
@@ -210,13 +213,14 @@
                         <div class="combat-middle">
                             <div class="cards-top">
                                 <div class="cards-top-left">
-                                    <div class="deck-wrapper" :title="`${deckCount} cards left`">
+                                    <div class="deck-wrapper">
                                         <CardStack
                                             :cards="deck.cards"
                                             :name="AREAS.Deck"
                                             layout="pile"
                                             @click="onClick"
                                         />
+                                        <div class="deck-count">{{ deckCount }} cards</div>
                                         <div class="deck-reshuffles">Reshuffles: {{ reshuffles }}</div>
                                     </div>
                                     <div class="compost-wrapper">
@@ -235,14 +239,18 @@
                                             customLabel="Compost"
                                             @click="onClick"
                                         />
+                                        <div class="compost-count">{{ compostCount }} cards</div>
                                     </div>
-                                    <CardStack
-                                        :cards="trash.cards"
-                                        :name="AREAS.Trash"
-                                        :alwaysShowDummy="true"
-                                        customLabel="Trash (WIP)"
-                                        @click="onClick"
-                                    />
+                                    <div v-if="hasTrashCards" class="trash-wrapper">
+                                        <CardStack
+                                            :cards="trash.cards"
+                                            :name="AREAS.Trash"
+                                            :alwaysShowDummy="true"
+                                            customLabel="Trash (WIP)"
+                                            @click="onClick"
+                                        />
+                                        <div class="trash-count">{{ trashCount }} cards</div>
+                                    </div>
                                 </div>
                                 <div class="mana-pools-area">
                                     <div class="mana-pools">

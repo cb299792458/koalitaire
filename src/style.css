@@ -78,8 +78,9 @@ html, body {
 .cards-top-left {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: flex-start;
+    gap: 12px;
     width: 40%;
 }
 
@@ -90,13 +91,46 @@ html, body {
     justify-content: flex-start;
     align-items: center;
     min-width: 120px;
-    height: 200px;
+    padding-left: 10px;
+}
+
+.deck-wrapper > .card-stack {
+    flex-shrink: 0;
+    margin: 6px;
+}
+
+.deck-wrapper > .card-stack.pile .card-view,
+.deck-wrapper > .card-stack.pile .card-stack-empty {
+    margin: 0;
+}
+
+.deck-count,
+.deck-reshuffles {
+    font-size: 14px;
+    color: black;
+}
+
+.deck-count {
+    margin-top: 0;
 }
 
 .deck-reshuffles {
-    margin-top: 8px;
+    margin-top: 0;
+}
+
+.compost-count,
+.trash-count {
+    margin-top: 0;
     font-size: 14px;
     color: black;
+}
+
+.trash-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
 }
 
 .mana-pools-area {
@@ -157,8 +191,9 @@ html, body {
 
 .card-stack.pile {
     position: relative;
-    height: 200px;
     width: 100%;
+    height: auto;
+    min-height: 168px; /* one card height (120px * 7/5) */
 }
 
 
@@ -179,21 +214,29 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     flex-shrink: 0;
     min-width: 120px;
-    margin-left: 10px;
-    padding-right: 20px;
+    padding-right: 8px;
 }
 
 .compost-wrapper > .card-stack {
     flex-shrink: 0;
     width: 120px !important;
+    margin: 6px;
+}
+
+.compost-wrapper > .card-stack.pile .card-view,
+.compost-wrapper > .card-stack.pile .card-stack-empty {
     margin: 0;
 }
 
 .compost-wrapper > .card-stack.pile {
     width: 120px !important;
+}
+
+.compost-wrapper > .compost-count {
+    flex-shrink: 0;
 }
 
 .mana-crystals-cost {
