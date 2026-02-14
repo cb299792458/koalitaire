@@ -108,7 +108,7 @@ export function useTown(): {
             if (p.health < 1) p.health = 1;
             p.gold += BLOODBANK_GOLD_REWARD;
         },
-        getStatUpgradeCost: (storeId: StatStoreId, useCount: number) => getStatUpgradeCost(useCount),
+        getStatUpgradeCost: (_storeId: StatStoreId, useCount: number) => getStatUpgradeCost(useCount),
         statUpgradeCounts: statUpgradeCountsRef,
         upgradeStatAtStore(storeId: StatStoreId) {
             const p = playerRef.value;
@@ -119,7 +119,7 @@ export function useTown(): {
             if (p.gold < cost) return;
             const key = STAT_TO_PLAYER_KEY[storeId];
             const current = (p[key] as number) ?? 0;
-            (p as Record<string, number>)[key] = current + 1;
+            (p as unknown as Record<string, number>)[key] = current + 1;
             p.gold -= cost;
             counts[storeId] = useCount + 1;
             statUpgradeCountsRef.value = counts;

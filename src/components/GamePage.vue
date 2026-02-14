@@ -177,9 +177,9 @@
         combat.moveAllPossibleToManaPools();
     }
 
-    function onDrawCard() {
-        combat.drawCards(1, true);
-    }
+    // function onDrawCard() {
+    //     combat.drawCards(1, true);
+    // }
 
     onMounted(() => {
         town.onLeaveTown(() => {

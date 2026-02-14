@@ -260,7 +260,7 @@
                             </template>
                         </div>
                         <button type="button" class="leave-town-button" @click="leave">
-                            Leave
+                            Leave Town
                         </button>
                     </div>
                 </div>
