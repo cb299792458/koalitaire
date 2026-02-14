@@ -58,6 +58,38 @@ html, body {
     align-items: center;
 }
 
+/* Town layout: same as combat so town screen matches combat layout */
+.town-top {
+    display: flex;
+    flex-direction: row;
+    height: 860px;
+}
+
+.town-right,
+.town-left {
+    background-color: lightblue;
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.town-middle {
+    background-color: lightgreen;
+    width: 1400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.town-bottom {
+    background-color: pink;
+    height: 220px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
 #end-turn-button {
     width: 200px;
     height: 100px;
@@ -102,6 +134,25 @@ html, body {
 
 .deck-wrapper > .card-stack.pile .card-view {
     margin: 0;
+}
+
+.draw-card-button {
+    margin-top: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    background-color: #e8e8e8;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.draw-card-button:hover:not(:disabled) {
+    background-color: #ddd;
+}
+
+.draw-card-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .trash-wrapper {

@@ -8,11 +8,14 @@
     import { openModal, closeModal } from '../stores/modalStore';
     import PlayerInfo from './PlayerInfo.vue';
     import EnemyInfo from './EnemyInfo.vue';
-    import makeScenario from '../game/makeScenario';
+    import makeScenario, { type ScenarioEntry } from '../game/makeScenario';
     import type Player from '../models/Player';
     import ManaPool from '../models/ManaPool';
+    import { useTown } from '../composables/useTown';
+    import { hasChosenCharacterRef } from '../composables/useCombat';
 
     const scenario = makeScenario();
+    const town = useTown();
 
     const combat = useCombat(); // useCombat always returns a Combat instance
     
@@ -23,8 +26,9 @@
     
     combat.onEnemyDefeatedContinue = () => {
         closeModal();
-        if (!player.value) return;
-        startCombatForPlayer(player.value);
+        if (!combat.player) return;
+        combat.player.level += 1;
+        startCombatForPlayer(combat.player);
     };
         
     // Create computed refs for player and enemy for template reactivity  
@@ -138,9 +142,15 @@
     });
     
     function startCombatForPlayer(newPlayer: Player) {
-        if (!scenario[newPlayer.level]) return;
-        const levelEnemy = scenario[newPlayer.level]!.enemy;
-        combat.start(newPlayer, levelEnemy);
+        const entry = scenario[newPlayer.level] as ScenarioEntry | undefined;
+        if (!entry) return;
+        if ('town' in entry && entry.town) {
+            town.enterTown(newPlayer);
+            return;
+        }
+        if ('enemy' in entry && entry.enemy) {
+            combat.start(newPlayer, entry.enemy);
+        }
     }
     
     watch(() => player.value?.level, () => {
@@ -167,14 +177,26 @@
         combat.moveAllPossibleToManaPools();
     }
 
+    function onDrawCard() {
+        combat.drawCards(1, true);
+    }
+
     onMounted(() => {
-        openModal(
-            'start',
-            { onSelect: (newPlayer: Player) => {
-                startCombatForPlayer(newPlayer);
-            }},
-            true, // keepOpen
-        );
+        town.onLeaveTown(() => {
+            if (!combat.player) return;
+            combat.player.level += 1;
+            startCombatForPlayer(combat.player);
+        });
+        if (!hasChosenCharacterRef.value) {
+            openModal(
+                'start',
+                { onSelect: (newPlayer: Player) => {
+                    hasChosenCharacterRef.value = true;
+                    startCombatForPlayer(newPlayer);
+                }},
+                true, // keepOpen
+            );
+        }
     })
 
     const scale = ref(0.8);
@@ -222,6 +244,12 @@
                                         />
                                         <div class="deck-count">{{ deckCount }} cards</div>
                                         <div class="deck-reshuffles">Reshuffles: {{ reshuffles }}</div>
+                                        <!-- <button
+                                            type="button"
+                                            class="draw-card-button"
+                                            :disabled="deckCount === 0"
+                                            @click="onDrawCard"
+                                        >Draw a card</button> -->
                                     </div>
                                     <div class="compost-wrapper">
                                         <div v-if="manaCrystalsCost !== null" class="mana-crystals-cost">

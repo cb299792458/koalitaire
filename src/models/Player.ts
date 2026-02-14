@@ -19,6 +19,7 @@ export interface PlayerParams {
 
     health: number;
     gold: number;
+    bytecoins?: number;
 
     makeDeck: () => Card[];
 }
@@ -39,12 +40,13 @@ class Player {
     manaCrystals: number = 0;
     block: number = 0;
     gold: number;
+    bytecoins: number = 0;
 
     deck: Card[];
     summons: Summon[];
 
     constructor(params: PlayerParams) {
-        const { name, portrait, appeal, attack, armor, agility, arcane, health, gold, makeDeck } = params;
+        const { name, portrait, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
         this.name = name;
         this.portrait = portrait;
 
@@ -57,6 +59,7 @@ class Player {
         this.maxHealth = health;
         this.health = health;
         this.gold = gold;
+        this.bytecoins = bytecoins;
 
         this.deck = makeDeck();
         this.summons = [];
@@ -117,6 +120,7 @@ class Player {
     }
 
     copy(): Player {
+        // Copies all stats (appeal, attack, armor, agility, arcane) and gold so town upgrades apply in next combat.
         const playerCopy = new Player({
             name: this.name,
             portrait: this.portrait,
@@ -127,6 +131,7 @@ class Player {
             arcane: this.arcane,
             health: this.maxHealth,
             gold: this.gold,
+            bytecoins: this.bytecoins,
             makeDeck: () => this.deck.map(card => {
                 // Preserve SpellCard instances
                 if (card.isSpell) {
@@ -147,6 +152,7 @@ class Player {
         playerCopy.health = this.health;
         playerCopy.manaCrystals = this.manaCrystals;
         playerCopy.block = this.block;
+        playerCopy.bytecoins = this.bytecoins;
         return playerCopy;
     }
 }
@@ -163,6 +169,7 @@ export const koaParams: PlayerParams = {
 
     health: 100,
     gold: 150,
+    bytecoins: 0,
 
     makeDeck: () => {
         const deck: Card[] = [];
@@ -198,6 +205,7 @@ export const nextCharacterParams: PlayerParams = {
 
     health: 0,
     gold: 0,
+    bytecoins: 0,
 
     makeDeck: () => [] // Placeholder for next character's deck
 };

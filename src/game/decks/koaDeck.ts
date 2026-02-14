@@ -19,10 +19,11 @@ const shot = {
     rank: 3,
     suit: Suit.Wood,
     name: 'Shot',
-    description: 'Deals 5 ranged damage to the enemy.',
+    description: 'Deals 5 damage plus bonus from Agility.',
     effect: (combat: Combat) => {
-        const { enemy } = combat;
-        enemy.takeDamage(5);
+        const { enemy, player } = combat;
+        const damage = 5 + (player?.agility ?? 0);
+        enemy.takeDamage(damage);
     },
 }
 
@@ -30,10 +31,11 @@ const fireball = {
     rank: 5,
     suit: Suit.Fire,
     name: 'Fireball',
-    description: 'Deals 8 magic damage to the enemy.',
+    description: 'Deals 8 damage plus bonus from Arcane.',
     effect: (combat: Combat) => {
-        const { enemy } = combat;
-        enemy.takeDamage(8);
+        const { enemy, player } = combat;
+        const damage = 8 + (player?.arcane ?? 0);
+        enemy.takeDamage(damage);
     },
 }
 
@@ -41,10 +43,11 @@ const shield = {
     rank: 2,
     suit: Suit.Earth,
     name: 'Shield',
-    description: 'Gain 4 block.',
+    description: 'Gain 4 block plus bonus from Armor.',
     effect: (combat: Combat) => {
         const { player } = combat;
-        player.gainBlock(4);
+        const block = 4 + (player?.armor ?? 0);
+        player.gainBlock(block);
     },
 }
 
@@ -52,10 +55,11 @@ const slash = {
     rank: 1,
     suit: Suit.Metal,
     name: 'Slash',
-    description: 'Deals 3 melee damage to the enemy.',
+    description: 'Deals 3 damage plus bonus from Attack.',
     effect: (combat: Combat) => {
-        const { enemy } = combat;
-        enemy.takeDamage(3);
+        const { enemy, player } = combat;
+        const damage = 3 + (player?.attack ?? 0);
+        enemy.takeDamage(damage);
     },
 }
 

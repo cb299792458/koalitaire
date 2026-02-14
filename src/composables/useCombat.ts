@@ -202,10 +202,7 @@ export class Combat {
     private defeatEnemy(): void {
         if (!this.player) return;
         
-        // Advance player level
-        this.player.level += 1;
-        
-        // Open enemy defeated modal with continue callback
+        // Open enemy defeated modal first; level is advanced when user clicks Continue
         openModal('enemyDefeated', { 
             onContinue: () => {
                 if (this.onEnemyDefeatedContinue) {
@@ -214,7 +211,6 @@ export class Combat {
             }
         }, true);
         
-        // Notify that enemy was defeated
         if (this.onEnemyDefeated) {
             this.onEnemyDefeated();
         }
@@ -852,6 +848,9 @@ export class Combat {
 
 const combatRef = ref<Combat | null>(null);
 
+/** Persists across GamePage mount/unmount so we only show the start modal once. */
+export const hasChosenCharacterRef = ref(false);
+
 export function useCombat(): Combat {
     if (!combatRef.value) {
         const defaultPlayer = new Player({
@@ -864,6 +863,7 @@ export function useCombat(): Combat {
             arcane: 0,
             health: 0,
             gold: 0,
+            bytecoins: 0,
             makeDeck: () => []
         });
         const defaultEnemy = new Enemy('', '', 0, () => []);

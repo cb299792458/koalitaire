@@ -5,9 +5,13 @@
     import SummonDisplay from './SummonDisplay.vue';
     import useDamageNumbers from '../composables/useDamageNumbers';
 
-    const props = defineProps<{
-        player: Player | null;
-    }>();
+    const props = withDefaults(
+        defineProps<{
+            player: Player | null;
+            showBytecoins?: boolean;
+        }>(),
+        { showBytecoins: false }
+    );
 
     const { playerNumbers } = useDamageNumbers();
 
@@ -44,7 +48,8 @@
         <p>Agility: {{ props.player.agility }}</p>
         <p>Arcane: {{ props.player.arcane }}</p>
         
-        <p>Gold: {{ props.player.gold }}</p>
+        <p>{{ props.player.gold }} 🍃</p>
+        <p v-if="props.showBytecoins">Bytecoins: {{ props.player.bytecoins }}</p>
         <p>Deck Size: {{ props.player.deck.length }}</p>
         
         <div class="summons-list" v-if="props.player.summons.length">
