@@ -100,6 +100,7 @@
         const p = unref(player);
         const used = unref(innUsedThisVisit);
         if (!p || used) return false;
+        if (p.gold < town.getRestCost()) return false;
         return p.health < p.maxHealth;
     };
 
@@ -210,7 +211,7 @@
                                     :disabled="!canRestAtInn()"
                                     @click="restAtInn"
                                 >
-                                    {{ innUsedThisVisit ? 'Already rested' : 'Rest (heal 75% of missing health)' }}
+                                    {{ innUsedThisVisit ? 'Already rested' : `Rest (${town.getRestCost()} 🍃 — heal 75% of missing health)` }}
                                 </button>
                             </template>
                             <template v-else-if="currentLocation === 'bloodbank'">

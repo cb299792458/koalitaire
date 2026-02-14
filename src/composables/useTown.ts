@@ -32,6 +32,8 @@ function getBloodbankHpCost(maxHealth: number): number {
 
 const BLOODBANK_GOLD_REWARD = 100;
 
+const REST_COST = 50;
+
 const STAT_UPGRADE_BASE_COST = 10;
 /** Gold cost for next stat upgrade: 10, 20, 30, ... */
 function getStatUpgradeCost(useCount: number): number {
@@ -53,6 +55,7 @@ export function useTown(): {
     leaveTown: () => void;
     onLeaveTown: (fn: () => void) => void;
     restAtInn: () => void;
+    getRestCost: () => number;
     getBloodbankHpCost: (maxHealth: number) => number;
     getBloodbankGoldReward: () => number;
     sellBloodAtBloodbank: () => void;
@@ -91,12 +94,15 @@ export function useTown(): {
         restAtInn() {
             const p = playerRef.value;
             if (!p || innUsedThisVisitRef.value) return;
+            if (p.gold < REST_COST) return;
             const missing = p.maxHealth - p.health;
             if (missing <= 0) return;
+            p.gold -= REST_COST;
             const healAmount = Math.ceil(missing * 0.75);
             p.gainHealth(healAmount);
             innUsedThisVisitRef.value = true;
         },
+        getRestCost: () => REST_COST,
         getBloodbankHpCost,
         getBloodbankGoldReward: () => BLOODBANK_GOLD_REWARD,
         sellBloodAtBloodbank() {
