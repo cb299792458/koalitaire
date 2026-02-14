@@ -31,6 +31,7 @@ function getBloodbankHpCost(maxHealth: number): number {
 }
 
 const BLOODBANK_GOLD_REWARD = 100;
+const BLOODBANK_MAX_PER_VISIT = 3;
 
 const REST_COST = 50;
 
@@ -58,6 +59,7 @@ export function useTown(): {
     getRestCost: () => number;
     getBloodbankHpCost: (maxHealth: number) => number;
     getBloodbankGoldReward: () => number;
+    getBloodbankMaxPerVisit: () => number;
     sellBloodAtBloodbank: () => void;
     getStatUpgradeCost: (storeId: StatStoreId, useCount: number) => number;
     upgradeStatAtStore: (storeId: StatStoreId) => void;
@@ -105,14 +107,17 @@ export function useTown(): {
         getRestCost: () => REST_COST,
         getBloodbankHpCost,
         getBloodbankGoldReward: () => BLOODBANK_GOLD_REWARD,
+        getBloodbankMaxPerVisit: () => BLOODBANK_MAX_PER_VISIT,
         sellBloodAtBloodbank() {
             const p = playerRef.value;
             if (!p) return;
+            if (bloodbankUseCountRef.value >= BLOODBANK_MAX_PER_VISIT) return;
             const cost = getBloodbankHpCost(p.maxHealth);
             if (p.health <= cost) return; // need to keep at least 1 HP
             p.health -= cost;
             if (p.health < 1) p.health = 1;
             p.gold += BLOODBANK_GOLD_REWARD;
+            bloodbankUseCountRef.value += 1;
         },
         getStatUpgradeCost: (_storeId: StatStoreId, useCount: number) => getStatUpgradeCost(useCount),
         statUpgradeCounts: statUpgradeCountsRef,

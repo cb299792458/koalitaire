@@ -111,9 +111,12 @@
     const bloodbankHpCost = () => town.getBloodbankHpCost(unref(player)?.maxHealth ?? 0);
     const bloodbankGoldReward = () => town.getBloodbankGoldReward();
 
+    const bloodbankAtLimit = () => unref(town.bloodbankUseCount) >= town.getBloodbankMaxPerVisit();
+
     const canSellBlood = () => {
         const p = unref(player);
         if (!p) return false;
+        if (bloodbankAtLimit()) return false;
         return p.health > bloodbankHpCost();
     };
 
@@ -221,7 +224,8 @@
                                     :disabled="!canSellBlood()"
                                     @click="sellBlood"
                                 >
-                                    Sell blood (−{{ bloodbankHpCost() }} HP, +{{ bloodbankGoldReward() }} 🍃)
+                                    <template v-if="bloodbankAtLimit()">Already donated {{ town.getBloodbankMaxPerVisit() }} times this visit</template>
+                                    <template v-else>Sell blood (−{{ bloodbankHpCost() }} HP, +{{ bloodbankGoldReward() }} 🍃)</template>
                                 </button>
                             </template>
                             <template v-else-if="currentLocation === 'store'">
