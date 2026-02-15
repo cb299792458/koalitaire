@@ -809,6 +809,11 @@ html, body {
     font-size: 11px;
 }
 
+.summon-power {
+    color: #555;
+    font-size: 11px;
+}
+
 .summon-tooltip {
     visibility: hidden;
     opacity: 0;

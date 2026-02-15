@@ -31,14 +31,14 @@ class Enemy {
     armor: number;
     summons: Summon[];
 
-    constructor(name: string, portrait: string, health: number, makeDeck: () => EnemyAction[]) {
-        this.name = name;
-        this.portrait = portrait;
-        this.health = health;
-        this.maxHealth = health;
+    constructor(enemyParams: EnemyParams) {
+        this.name = enemyParams.name;
+        this.portrait = enemyParams.portrait;
+        this.health = enemyParams.health;
+        this.maxHealth = enemyParams.health;
         this.block = 0;
 
-        this.deck = makeDeck();
+        this.deck = enemyParams.makeDeck();
         this.actions = 1;
         this.impendingActions = [];
 
@@ -109,24 +109,21 @@ class Enemy {
         damageNumbers.addEnemyNumber(amount, 'block-gain');
     }
 
-    copy(): Enemy {
-        const enemyCopy = new Enemy(
-            this.name,
-            this.portrait,
-            this.maxHealth,
-            () => this.deck.map(action => new EnemyAction(
-                action.name,
-                action.description,
-                action.effect
-            ))
-        );
-        enemyCopy.actions = this.actions;
-        enemyCopy.health = this.health;
-        enemyCopy.block = this.block;
-        enemyCopy.attack = this.attack;
-        enemyCopy.armor = this.armor;
-        return enemyCopy;
-    }
+    // copy(): Enemy {
+    //     const enemyCopy = new Enemy(
+    //         {
+    //             name: this.name,
+    //             portrait: this.portrait,
+    //             health: this.maxHealth,
+    //             makeDeck: () => this.deck.map(action => new EnemyAction(
+    //                 action.name,
+    //                 action.description,
+    //                 action.effect
+    //             ))
+    //         }
+    //     );
+    //     return enemyCopy;
+    // }
 }
 
 export default Enemy;

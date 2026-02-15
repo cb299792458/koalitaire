@@ -8,12 +8,12 @@ export type ScenarioEntry =
 export default function makeScenario(): ScenarioEntry[] {
     return [
         null,
-        { enemy: new Enemy(platypusParams.name, platypusParams.portrait, platypusParams.health, platypusParams.makeDeck) },
+        { enemy: new Enemy(platypusParams) },
         { town: true },
-        { enemy: new Enemy(dwambatParams.name, dwambatParams.portrait, dwambatParams.health, dwambatParams.makeDeck) },
-        { enemy: new Enemy(gnokkaParams.name, gnokkaParams.portrait, gnokkaParams.health, gnokkaParams.makeDeck) },
+        { enemy: new Enemy(dwambatParams) },
+        { enemy: new Enemy(gnokkaParams) },
         { town: true },
-        { enemy: new Enemy(squirrelfParams.name, squirrelfParams.portrait, squirrelfParams.health, squirrelfParams.makeDeck) },
-        { enemy: new Enemy(dingorcParams.name, dingorcParams.portrait, dingorcParams.health, dingorcParams.makeDeck) },
+        { enemy: new Enemy(squirrelfParams) },
+        { enemy: new Enemy(dingorcParams) },
     ]
 }

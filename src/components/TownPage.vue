@@ -229,7 +229,24 @@
                                 </button>
                             </template>
                             <template v-else-if="currentLocation === 'store'">
-                                <p class="town-placeholder-msg">Buying cards coming soon.</p>
+                                <div class="town-store-cards">
+                                    <div
+                                        v-for="card in town.getStoreCards()"
+                                        :key="card.name"
+                                        class="town-store-card"
+                                    >
+                                        <span class="town-store-card-name">{{ card.name }}</span>
+                                        <span class="town-store-card-desc">{{ card.description }}</span>
+                                        <button
+                                            type="button"
+                                            class="town-choice-button"
+                                            :disabled="!town.canBuyStoreCard(card.name)"
+                                            @click="town.buyStoreCard(card)"
+                                        >
+                                            {{ town.isStoreCardPurchased(card.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 🍃)` }}
+                                        </button>
+                                    </div>
+                                </div>
                             </template>
                             <template v-else-if="currentLocation === 'stockMarket'">
                                 <span class="town-stock-price">1 bytecoin = {{ bytecoinPrice() }} 🍃</span>
@@ -340,6 +357,34 @@
         align-items: center;
         justify-content: center;
         gap: 12px;
+    }
+
+    .town-store-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .town-store-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 12px;
+        background-color: rgba(0,0,0,0.1);
+        border-radius: 8px;
+        min-width: 180px;
+    }
+
+    .town-store-card-name {
+        font-weight: bold;
+        color: black;
+    }
+
+    .town-store-card-desc {
+        font-size: 0.9rem;
+        color: #333;
     }
 
     .town-placeholder-msg {

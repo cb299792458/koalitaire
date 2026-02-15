@@ -66,7 +66,7 @@ export class Combat {
      */
     start(player: Player, enemy: Enemy): void {
         this.player = player.copy();
-        this.enemy = enemy.copy();
+        this.enemy = enemy;
         
         // Reset game state
         if (!this.player) {
@@ -248,6 +248,7 @@ export class Combat {
 
             // Run the rest of end turn: summons, enemy actions, then start new turn
             for (const summon of this.player.summons) {
+                this.enemy.takeDamage(summon.power);
                 summon.effect(this);
                 this.notify();
                 await new Promise(resolve => setTimeout(resolve, 500));
@@ -866,7 +867,12 @@ export function useCombat(): Combat {
             bytecoins: 0,
             makeDeck: () => []
         });
-        const defaultEnemy = new Enemy('', '', 0, () => []);
+        const defaultEnemy = new Enemy({
+            name: '',
+            portrait: '',
+            health: 0,
+            makeDeck: () => []
+        });
         
         const combat = new Combat(defaultPlayer, defaultEnemy);
 

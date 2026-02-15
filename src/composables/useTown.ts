@@ -1,5 +1,8 @@
 import { ref, type Ref } from 'vue';
 import type Player from '../models/Player';
+import { SpellCard } from '../models/Card';
+import type { SpellCardParams } from '../models/Card';
+import { generalCards } from '../game/cards/generalCards';
 
 export const STAT_STORE_IDS = ['attackStore', 'armorStore', 'arcaneStore', 'agilityStore', 'appealStore'] as const;
 export type StatStoreId = typeof STAT_STORE_IDS[number];
@@ -23,7 +26,11 @@ const statUpgradeCountsRef = ref<Record<StatStoreId, number>>({
     agilityStore: 0,
     appealStore: 0,
 });
+/** Card names purchased at the store this visit (one of each per visit). */
+const storePurchasedCardNamesRef = ref<Set<string>>(new Set());
 let onLeaveTownCallback: (() => void) | undefined;
+
+const STORE_CARD_PRICE = 10;
 
 /** HP cost per bloodbank donation: 25% of max HP, rounded down. */
 function getBloodbankHpCost(maxHealth: number): number {
@@ -66,6 +73,11 @@ export function useTown(): {
     getBytecoinPrice: (level: number) => number;
     buyBytecoin: () => void;
     sellBytecoin: () => void;
+    getStoreCards: () => SpellCardParams[];
+    getStoreCardPrice: () => number;
+    isStoreCardPurchased: (cardName: string) => boolean;
+    canBuyStoreCard: (cardName: string) => boolean;
+    buyStoreCard: (cardParams: SpellCardParams) => void;
 } {
     return {
         player: playerRef,
@@ -78,6 +90,7 @@ export function useTown(): {
             isInTownRef.value = true;
             innUsedThisVisitRef.value = false;
             bloodbankUseCountRef.value = 0;
+            storePurchasedCardNamesRef.value = new Set();
             statUpgradeCountsRef.value = {
                 attackStore: 0,
                 armorStore: 0,
@@ -150,6 +163,33 @@ export function useTown(): {
             const price = getBytecoinPrice(p.level);
             p.bytecoins -= 1;
             p.gold += price;
+        },
+        getStoreCards: () => generalCards,
+        getStoreCardPrice: () => STORE_CARD_PRICE,
+        isStoreCardPurchased(cardName: string) {
+            return storePurchasedCardNamesRef.value.has(cardName);
+        },
+        canBuyStoreCard(cardName: string) {
+            const p = playerRef.value;
+            if (!p) return false;
+            if (storePurchasedCardNamesRef.value.has(cardName)) return false;
+            return p.gold >= STORE_CARD_PRICE;
+        },
+        buyStoreCard(cardParams: SpellCardParams) {
+            const p = playerRef.value;
+            if (!p) return;
+            if (storePurchasedCardNamesRef.value.has(cardParams.name)) return;
+            if (p.gold < STORE_CARD_PRICE) return;
+            p.gold -= STORE_CARD_PRICE;
+            storePurchasedCardNamesRef.value = new Set(storePurchasedCardNamesRef.value).add(cardParams.name);
+            const card = new SpellCard(
+                cardParams.rank,
+                cardParams.suit,
+                cardParams.name,
+                cardParams.description,
+                cardParams.effect
+            );
+            p.deck.push(card);
         },
     };
 }

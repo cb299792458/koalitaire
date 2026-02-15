@@ -5,7 +5,7 @@ const shot = {
     rank: 3,
     suit: Suit.Wood,
     name: 'Shot',
-    description: 'Deals 5 damage plus bonus from Agility.',
+    description: 'Deals 5 ranged damage, plus your Agility.',
     effect: (combat: Combat) => {
         const { enemy, player } = combat;
         const damage = 5 + (player?.agility ?? 0);
@@ -17,7 +17,7 @@ const scorch = {
     rank: 5,
     suit: Suit.Fire,
     name: 'Scorch',
-    description: 'Deals 8 damage plus bonus from Arcane.',
+    description: 'Deals 8 magic damage, plus your Arcane.',
     effect: (combat: Combat) => {
         const { enemy, player } = combat;
         const damage = 8 + (player?.arcane ?? 0);
@@ -29,7 +29,7 @@ const shield = {
     rank: 2,
     suit: Suit.Earth,
     name: 'Shield',
-    description: 'Gain 4 block plus bonus from Armor.',
+    description: 'Gain 4 block, plus your Armor.',
     effect: (combat: Combat) => {
         const { player } = combat;
         const block = 4 + (player?.armor ?? 0);
@@ -41,7 +41,7 @@ const slash = {
     rank: 1,
     suit: Suit.Metal,
     name: 'Slash',
-    description: 'Deals 3 damage plus bonus from Attack.',
+    description: 'Deals 3 damage, plus your Attack.',
     effect: (combat: Combat) => {
         const { enemy, player } = combat;
         const damage = 3 + (player?.attack ?? 0);
