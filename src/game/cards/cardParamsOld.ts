@@ -1,6 +1,6 @@
-import { Suit } from "../models/Card";
-import type { Combat } from "../composables/useCombat";
-import { createSummon, summons } from "./summons";
+import { Suit } from "../../models/Card";
+import type { Combat } from "../../composables/useCombat";
+import { createSummon, summons } from "../summons";
 
 const allCards = {
     [Suit.Wood]: [
