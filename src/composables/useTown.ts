@@ -80,7 +80,7 @@ export function useTown(): {
     buyStoreCard: (cardParams: SpellCardParams) => void;
 } {
     return {
-        player: playerRef,
+        player: playerRef as Ref<Player | null>,
         isInTown: isInTownRef,
         innUsedThisVisit: innUsedThisVisitRef,
         bloodbankUseCount: bloodbankUseCountRef,
