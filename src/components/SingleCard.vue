@@ -51,6 +51,7 @@
                 </div>
                 <span class="spell-card-name">{{ spellCard.name }}</span>
             </div>
+            <p v-if="Number.isFinite(spellCard.charges)" class="spell-card-charges">{{ spellCard.charges }} {{ spellCard.charges === 1 ? 'charge' : 'charges' }}</p>
             <p class="card-description spell-card-description">{{ spellCard.description }}</p>
         </div>
         <div v-else class="card-front playing-card">

@@ -1,5 +1,6 @@
 import type { Combat } from "../../composables/useCombat";
 import { Suit } from "../../models/Card";
+import { DamageType } from "../../models/DamageType";
 
 const shot = {
     rank: 3,
@@ -9,7 +10,7 @@ const shot = {
     effect: (combat: Combat) => {
         const { enemy, player } = combat;
         const damage = 5 + (player?.agility ?? 0);
-        enemy.takeDamage(damage);
+        enemy.takeDamage(damage, [DamageType.Ranged]);
     },
 }
 
@@ -18,10 +19,11 @@ const scorch = {
     suit: Suit.Fire,
     name: 'Scorch',
     description: 'Deals 8 magic damage, plus your Arcane.',
+    charges: 1,
     effect: (combat: Combat) => {
         const { enemy, player } = combat;
         const damage = 8 + (player?.arcane ?? 0);
-        enemy.takeDamage(damage);
+        enemy.takeDamage(damage, [DamageType.Magic]);
     },
 }
 

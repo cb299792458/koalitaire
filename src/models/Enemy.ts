@@ -1,6 +1,7 @@
+import Combatant from "./Combatant";
+import type { DamageNumberType } from "./Combatant";
 import EnemyAction, { enemyActions } from "./EnemyAction";
 import type Player from "./Player";
-import Summon from "./Summon";
 import type { Combat } from "../composables/useCombat";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 import dwambatPortrait from "/player_portraits/dwambat.jpg";
@@ -16,35 +17,30 @@ interface EnemyParams {
     makeDeck: () => EnemyAction[];
 }
 
-class Enemy {
-    name: string;
-    portrait: string;
-    health: number;
-    maxHealth: number;
-    block: number;
-
+class Enemy extends Combatant {
     deck: EnemyAction[];
     actions: number;
     impendingActions: EnemyAction[];
 
     attack: number;
-    armor: number;
-    summons: Summon[];
 
     constructor(enemyParams: EnemyParams) {
-        this.name = enemyParams.name;
-        this.portrait = enemyParams.portrait;
-        this.health = enemyParams.health;
-        this.maxHealth = enemyParams.health;
-        this.block = 0;
+        super({
+            name: enemyParams.name,
+            portrait: enemyParams.portrait,
+            health: enemyParams.health,
+            armor: 0,
+        });
 
         this.deck = enemyParams.makeDeck();
         this.actions = 1;
         this.impendingActions = [];
 
         this.attack = 0;
-        this.armor = 0;
-        this.summons = [];
+    }
+
+    protected addDamageNumber(amount: number, type: DamageNumberType): void {
+        useDamageNumbers().addEnemyNumber(amount, type);
     }
 
     loadActions(actions: number): void {
@@ -74,39 +70,6 @@ class Enemy {
             combat.notify();
             await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each enemy summon
         }
-    }
-
-    gainHealth(amount: number): void {
-        this.health += amount;
-        if (this.health > this.maxHealth) {
-            this.health = this.maxHealth;
-        }
-        const damageNumbers = useDamageNumbers();
-        damageNumbers.addEnemyNumber(amount, 'heal');
-    }
-
-    takeDamage(damage: number): void {
-        const previousBlock = this.block;
-        const effectiveDamage = Math.max(0, damage - this.block);
-        const blockLost = Math.min(damage, previousBlock);
-        this.block = Math.max(0, this.block - damage);
-        this.health -= effectiveDamage;
-        
-        const damageNumbers = useDamageNumbers();
-        if (blockLost > 0) {
-            damageNumbers.addEnemyNumber(blockLost, 'block-loss');
-        }
-        if (effectiveDamage > 0) {
-            damageNumbers.addEnemyNumber(effectiveDamage, 'damage');
-        }
-        
-        if (this.health < 0) this.health = 0; // Prevent negative health
-    }
-
-    gainBlock(amount: number): void {
-        this.block += amount;
-        const damageNumbers = useDamageNumbers();
-        damageNumbers.addEnemyNumber(amount, 'block-gain');
     }
 
     // copy(): Enemy {
@@ -186,8 +149,8 @@ export const gnokkaParams: EnemyParams = {
         const deck: EnemyAction[] = [];
         const cards: Partial<Record<keyof typeof enemyActions, number>> = {
             "doNothing": 2,
-            "weakAttack": 3,
-            "strongAttack": 3,
+            "weakMagicAttack": 3,
+            "strongMagicAttack": 3,
             "buff": 2,
             "haste": 1,
         }
@@ -211,8 +174,8 @@ export const squirrelfParams: EnemyParams = {
     makeDeck: () => {
         const deck: EnemyAction[] = [];
         const cards: Partial<Record<keyof typeof enemyActions, number>> = {
-            "weakAttack": 3,
-            "strongAttack": 4,
+            "weakRangedAttack": 3,
+            "strongRangedAttack": 4,
             "block": 3,
             "buff": 2,
             "heal": 2,

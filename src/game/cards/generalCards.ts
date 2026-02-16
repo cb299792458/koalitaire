@@ -29,7 +29,7 @@ const manaBurn = {
     },
 }
 
-const koallaborator = {
+export const koallaborator = {
     rank: 1,
     suit: Suit.Metal,
     name: 'Koallaborator',

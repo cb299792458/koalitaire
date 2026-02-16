@@ -1,5 +1,6 @@
 import type Enemy from "./Enemy";
 import type Player from "./Player";
+import { DamageType } from "./DamageType";
 
 interface EnemyActionParams {
     name: string;
@@ -77,12 +78,48 @@ const haste: EnemyActionParams = {
     }
 }
 
+const weakRangedAttack: EnemyActionParams = {
+    name: "Weak Ranged Attack",
+    description: "The enemy attacks you for 5 ranged damage, plus its attack.",
+    effect: (enemy, player) => {
+        player.takeDamage(5 + enemy.attack, [DamageType.Ranged]);
+    }
+}
+
+const strongRangedAttack: EnemyActionParams = {
+    name: "Strong Ranged Attack",
+    description: "The enemy attacks you for 15 ranged damage, plus its attack.",
+    effect: (enemy, player) => {
+        player.takeDamage(15 + enemy.attack, [DamageType.Ranged]);
+    }
+}
+
+const weakMagicAttack: EnemyActionParams = {
+    name: "Weak Magic",
+    description: "The enemy hits you for 5 magic damage, plus its attack.",
+    effect: (enemy, player) => {
+        player.takeDamage(5 + enemy.attack, [DamageType.Magic]);
+    }
+}
+
+const strongMagicAttack: EnemyActionParams = {
+    name: "Strong Magic",
+    description: "The enemy hits you for 15 magic damage, plus its attack.",
+    effect: (enemy, player) => {
+        player.takeDamage(15 + enemy.attack, [DamageType.Magic]);
+    }
+}
+
 export const enemyActions: Record<string, EnemyActionParams> = {
     doNothing,
-    weakAttack,
-    strongAttack,
+    weakRangedAttack,
+    strongRangedAttack,
+    weakMagicAttack,
+    strongMagicAttack,
     block,
     buff,
     heal,
     haste,
+    weakAttack,
+    strongAttack,
 };

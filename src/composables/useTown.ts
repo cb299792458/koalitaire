@@ -187,7 +187,8 @@ export function useTown(): {
                 cardParams.suit,
                 cardParams.name,
                 cardParams.description,
-                cardParams.effect
+                cardParams.effect,
+                cardParams.charges
             );
             p.deck.push(card);
         },

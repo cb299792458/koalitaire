@@ -161,6 +161,26 @@ html, body {
     align-items: center;
     justify-content: flex-start;
     flex-shrink: 0;
+    min-width: 120px;
+}
+
+.trash-wrapper > .card-stack {
+    flex-shrink: 0;
+    width: 120px !important;
+    margin: 6px;
+}
+
+.trash-wrapper > .card-stack.pile .card-view,
+.trash-wrapper > .card-stack.pile .card-stack-empty {
+    margin: 0;
+}
+
+.trash-wrapper > .card-stack.pile {
+    width: 120px !important;
+}
+
+.trash-wrapper > .trash-count {
+    flex-shrink: 0;
 }
 
 .trash-wrapper--empty {
@@ -697,6 +717,13 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.spell-card-charges {
+    margin: 0 3px 4px;
+    font-size: 11px;
+    color: #555;
+    flex-shrink: 0;
 }
 
 .card-description {

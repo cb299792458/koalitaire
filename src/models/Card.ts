@@ -1,15 +1,15 @@
 import { nextTick } from "vue";
 import type { Combat } from "../composables/useCombat";
 
-export const Suit = {
-    Wood: "wood",
-    Fire : "fire",
-    Earth: "earth",
-    Metal: "metal",
-    Water: "water",
-} as const;
-export type Suit = typeof Suit[keyof typeof Suit];
-export const Suits: Suit[] = Object.values(Suit);
+export enum Suit {
+    Wood = "wood",
+    Fire = "fire",
+    Earth = "earth",
+    Metal = "metal",
+    Water = "water",
+}
+
+export const Suits: Suit[] = [Suit.Wood, Suit.Fire, Suit.Earth, Suit.Metal, Suit.Water];
 
 export interface CardParams {
     rank: number;
@@ -20,6 +20,8 @@ export interface SpellCardParams extends CardParams {
     name: string;
     description: string;
     effect: (combat: Combat) => void;
+    /** If set, shown on the card; decrements on use; card goes to trash when it reaches 0. */
+    charges?: number;
 }
 
 class Card {
@@ -121,13 +123,22 @@ export class SpellCard extends Card {
     name: string;
     description: string;
     effect: (combat: Combat) => void;
+    charges?: number;
 
-    constructor(rank: number, suit: Suit, name: string, description: string, effect: (combat: Combat) => void) {
+    constructor(
+        rank: number,
+        suit: Suit,
+        name: string,
+        description: string,
+        effect: (combat: Combat) => void,
+        charges?: number
+    ) {
         super(rank, suit);
         this.isSpell = true;
         this.name = name;
         this.description = description;
         this.effect = effect;
+        this.charges = charges ?? Infinity;
     }
 }
 

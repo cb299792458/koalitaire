@@ -81,7 +81,8 @@ export class Combat {
                         spellCard.suit,
                         spellCard.name,
                         spellCard.description,
-                        spellCard.effect
+                        spellCard.effect,
+                        spellCard.charges
                     );
                 } else {
                     return new Card(card.rank, card.suit);
@@ -494,9 +495,23 @@ export class Combat {
             const spellCard = selectedCard as SpellCard;
             spellCard.effect(this);
         }
-        
-        // Move the card to compost
-        this.moveCardToArea(selectedCard, AREAS.Compost);
+
+        // Move the card: if it has finite charges, decrement; when charges hits 0, trash instead of compost
+        if (selectedCard.isSpell) {
+            const spellCard = selectedCard as SpellCard;
+            if (Number.isFinite(spellCard.charges)) {
+                spellCard.charges = (spellCard.charges ?? 0) - 1;
+                if (spellCard.charges <= 0) {
+                    this.moveCardToArea(selectedCard, AREAS.Trash);
+                } else {
+                    this.moveCardToArea(selectedCard, AREAS.Compost);
+                }
+            } else {
+                this.moveCardToArea(selectedCard, AREAS.Compost);
+            }
+        } else {
+            this.moveCardToArea(selectedCard, AREAS.Compost);
+        }
         
         // Check if enemy died from card effect
         if (this.checkEnemyDeath()) {

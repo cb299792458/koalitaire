@@ -1,5 +1,6 @@
 import Card, { SpellCard, type SpellCardParams } from "./Card";
-import Summon from "./Summon";
+import Combatant from "./Combatant";
+import type { DamageNumberType } from "./Combatant";
 
 import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
@@ -24,99 +25,41 @@ export interface PlayerParams {
     makeDeck: () => Card[];
 }
 
-class Player {
-    name: string;
-    portrait: string;
+class Player extends Combatant {
     level: number = 1;
 
     appeal: number;
     attack: number;
-    armor: number;
     agility: number;
     arcane: number;
 
-    health: number;
-    maxHealth: number;
     manaCrystals: number = 0;
-    block: number = 0;
     gold: number;
     bytecoins: number = 0;
 
     deck: Card[];
-    summons: Summon[];
 
     constructor(params: PlayerParams) {
         const { name, portrait, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
-        this.name = name;
-        this.portrait = portrait;
+        super({ name, portrait, health, armor });
 
         this.appeal = appeal;
         this.attack = attack;
-        this.armor = armor;
         this.agility = agility;
         this.arcane = arcane;
 
-        this.maxHealth = health;
-        this.health = health;
         this.gold = gold;
         this.bytecoins = bytecoins;
 
         this.deck = makeDeck();
-        this.summons = [];
     }
 
-    gainHealth(amount: number): void {
-        this.health += amount;
-        if (this.health > this.maxHealth) {
-            this.health = this.maxHealth;
-        }
-        const damageNumbers = useDamageNumbers();
-        damageNumbers.addPlayerNumber(amount, 'heal');
+    protected addDamageNumber(amount: number, type: DamageNumberType): void {
+        useDamageNumbers().addPlayerNumber(amount, type);
     }
 
-    takeDamage(amount: number): void {
-        const previousBlock = this.block;
-        const blockLost = Math.min(amount, previousBlock);
-        let remainingDamage = Math.max(0, amount - this.block);
-        this.block = Math.max(0, this.block - amount);
-        
-        const damageNumbers = useDamageNumbers();
-        if (blockLost > 0) {
-            damageNumbers.addPlayerNumber(blockLost, 'block-loss');
-        }
-        
-        // Summons take damage after block but before player
-        // Process summons in reverse order to safely remove them
-        for (let i = this.summons.length - 1; i >= 0 && remainingDamage > 0; i--) {
-            const summon = this.summons[i];
-            if (!summon) continue;
-            
-            const summonDamage = Math.min(remainingDamage, summon.hp);
-            summon.hp -= summonDamage;
-            remainingDamage -= summonDamage;
-            
-            // Remove summon if HP drops to zero
-            if (summon.hp <= 0) {
-                this.summons.splice(i, 1);
-            }
-        }
-        
-        // Player takes remaining damage
-        if (remainingDamage > 0) {
-            this.health -= remainingDamage;
-            damageNumbers.addPlayerNumber(remainingDamage, 'damage');
-        }
-        
-        if (this.health <= 0) {
-            this.health = 0; // Ensure health doesn't go negative
-            openMessageModal('YOU DIED');
-        }
-    }
-
-    gainBlock(amount: number): void {
-        this.block += amount;
-        const damageNumbers = useDamageNumbers();
-        damageNumbers.addPlayerNumber(amount, 'block-gain');
+    protected onDeath(): void {
+        openMessageModal('YOU DIED');
     }
 
     copy(): Player {
@@ -141,7 +84,8 @@ class Player {
                         spellCard.suit,
                         spellCard.name,
                         spellCard.description,
-                        spellCard.effect
+                        spellCard.effect,
+                        spellCard.charges
                     );
                 } else {
                     return new Card(card.rank, card.suit);
@@ -182,7 +126,8 @@ export const koaParams: PlayerParams = {
                     spellParams.suit,
                     spellParams.name,
                     spellParams.description,
-                    spellParams.effect
+                    spellParams.effect,
+                    spellParams.charges
                 ));
             } else {
                 // Mana card

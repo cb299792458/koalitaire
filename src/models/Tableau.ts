@@ -46,11 +46,10 @@ class Tableau {
                 const card = drawPile.draw();
                 if (card) {
                     column.add(card);
-                    if (j === i - 1) {
-                        card.revealed = true;
-                    }
                 }
             }
+            const lastCard = column.cards[column.size() - 1];
+            if (lastCard) lastCard.revealed = true;
         }
     }
 

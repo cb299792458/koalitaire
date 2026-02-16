@@ -1,17 +1,14 @@
 import type { Combat } from '../composables/useCombat';
 
-const RaceValues = {
-    Koala: "koala",
-    FlyingSquirrel: "flying squirrel",
-    Salamander: "salamander",
-    Wombat: "wombat",
-    Quokka: "quokka",
-    Platypus: "platypus",
-    Dingo: "dingo",
-} as const;
-
-export type Race = typeof RaceValues[keyof typeof RaceValues];
-export const Race: typeof RaceValues = RaceValues;
+export enum Race {
+    Koala = "koala",
+    FlyingSquirrel = "flying squirrel",
+    Salamander = "salamander",
+    Wombat = "wombat",
+    Quokka = "quokka",
+    Platypus = "platypus",
+    Dingo = "dingo",
+}
 
 export interface SummonParams {
     name: string;
