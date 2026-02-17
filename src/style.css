@@ -17,8 +17,8 @@ html, body {
 }
 
 .scale-wrapper {
-    width: 1920px;   /* your design width */
-    height: 1080px;  /* your design height */
+    width: 1920px;
+    height: 1080px;
     position: relative;
 }
 
@@ -264,11 +264,16 @@ html, body {
     align-items: flex-start;
 }
 
+/* Prevent cards from stretching in horizontal hand */
+.card-stack.horizontal .card-view {
+    align-self: flex-start;
+}
+
 .card-stack.pile {
     position: relative;
     width: 100%;
     height: auto;
-    min-height: 168px; /* one card height (120px * 7/5) */
+    min-height: 168px; /* 120px * 7/5 aspect */
 }
 
 .card-stack-empty.burnable-highlight,
@@ -365,34 +370,24 @@ html, body {
     opacity: 1;
 }
 
-.card-view.fly-right {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(100vw, -50%) scale(2) rotate(180deg);
-    transition: transform 2s ease, opacity 2s ease;
-    opacity: 0;
-    z-index: 999;
-}
-
-.card-view.fly-left {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-100vw, -50%) scale(2) rotate(-180deg);
-    transition: transform 2s ease, opacity 2s ease;
-    opacity: 0;
-    z-index: 999;
-}
-
+.card-view.fly-right,
+.card-view.fly-left,
 .card-view.fly-up {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -100vh) scale(2) rotate(1800deg);
-    transition: transform 2s ease, opacity 2s ease;
-    opacity: 0;
     z-index: 999;
+    opacity: 0;
+    transition: transform 2s ease, opacity 2s ease;
+}
+.card-view.fly-right {
+    transform: translate(100vw, -50%) scale(2) rotate(180deg);
+}
+.card-view.fly-left {
+    transform: translate(-100vw, -50%) scale(2) rotate(-180deg);
+}
+.card-view.fly-up {
+    transform: translate(-50%, -100vh) scale(2) rotate(1800deg);
 }
 
 @keyframes burn-flicker {
@@ -577,13 +572,11 @@ html, body {
     flex-shrink: 0;
 }
 
-/* 2–3 icons: a bit more spacing in the vertical line */
 .card-icons-center.rank-2,
 .card-icons-center.rank-3 {
     gap: 14px;
 }
 
-/* 4 icons: 2x2 box */
 .card-icons-center.rank-4 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -591,7 +584,6 @@ html, body {
     place-items: center;
 }
 
-/* 5 icons: X shape in 3x3, slightly tighter, centered vertically */
 .card-icons-center.rank-5 {
     display: flex;
     justify-content: center;
@@ -612,7 +604,6 @@ html, body {
 .card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(4) { grid-column: 1; grid-row: 3; }
 .card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(5) { grid-column: 3; grid-row: 3; }
 
-/* 6 icons: 2x3, centered vertically */
 .card-icons-center.rank-6 {
     display: flex;
     justify-content: center;
@@ -634,7 +625,7 @@ html, body {
     object-fit: contain;
 }
 
-/* Suit color filters - apply to rank icon, center icons, and mana pool icons */
+/* Suit color filters */
 .card-rank-icon.suit-wood,
 .card-icon.suit-wood,
 .mana-pool-icon.suit-wood {
@@ -830,7 +821,7 @@ html, body {
     font-size: 11px;
 }
 
-/* Cursor-following tooltips (player portrait, enemy portrait, summons) */
+/* Cursor-following tooltips */
 .cursor-tooltip {
     position: fixed;
     padding: 6px 10px;

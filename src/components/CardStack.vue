@@ -73,15 +73,6 @@
         return base;
     }
 
-    /** For horizontal layout, the width of the visible (clickable) strip so the card below can be clicked. */
-    function clickableWidth(index: number): number | undefined {
-        if (props.layout !== 'horizontal') return undefined;
-        const numCards = props.cards.length;
-        if (numCards <= 1) return undefined;
-        const spacing = (HORIZONTAL_MAX_STACK_WIDTH - HORIZONTAL_CARD_WIDTH) / (numCards - 1);
-        return index === numCards - 1 ? HORIZONTAL_CARD_WIDTH : spacing;
-    }
-
     const emit = defineEmits<{
         (e: 'click', payload: {
             card: Card | null;
@@ -160,12 +151,11 @@
                     v-for="(card, index) in cards"
                     :key="index"
                     :card="card"
-                    :clickableWidth="clickableWidth(index)"
                     :class="{
                         'castable-highlight': highlighted && index === cards.length - 1 && highlightType === 'cast',
                         'burnable-highlight': highlighted && index === cards.length - 1 && highlightType === 'burn'
                     }"
-                    :style="!card.animation || card.animation === 'burn' || card.animation === 'move-to-mana' ? cardPosition(index, card) : {}"
+                    :style="!card.animation || card.animation === 'burn' || card.animation === 'move-to-mana' || card.animation === 'tableau-move' ? cardPosition(index, card) : {}"
                     :selectedCard="selectedCard"
                     @click.stop="handleClick(index)"
                 />
@@ -175,12 +165,11 @@
                     v-for="(card, index) in cards"
                     :key="index"
                     :card="card"
-                    :clickableWidth="clickableWidth(index)"
                     :class="{
                         'castable-highlight': highlighted && (layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1 && highlightType === 'cast',
                         'burnable-highlight': highlighted && (layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1 && highlightType === 'burn'
                     }"
-                    :style="!card.animation || card.animation === 'burn' || card.animation === 'move-to-mana' ? cardPosition(index, card) : {}"
+                    :style="!card.animation || card.animation === 'burn' || card.animation === 'move-to-mana' || card.animation === 'tableau-move' ? cardPosition(index, card) : {}"
                     :selectedCard="selectedCard"
                     @click.stop="handleClick(index)"
                 />

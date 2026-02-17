@@ -4,11 +4,9 @@
     import { Suit, type SpellCard } from '../models/Card';
     import { getKeywordExplanation } from '../game/keywords';
 
-    const { card, selectedCard, clickableWidth } = defineProps<{
+    const { card, selectedCard } = defineProps<{
         card: Card,
-        selectedCard?: Card | null,
-        /** When set (e.g. horizontal hand), only this-width strip is clickable so cards below can be clicked. */
-        clickableWidth?: number
+        selectedCard?: Card | null
     }>()
 
     const tooltipX = ref(0);
@@ -80,11 +78,14 @@
 
 <template>
     <div
-        class="card-view-wrapper"
-        :class="{ 'card-view-wrapper--hit-area': clickableWidth != null }"
-        @mousemove="clickableWidth == null ? onMouseMove($event) : undefined"
-        @mouseenter="clickableWidth == null ? onMouseEnter($event) : undefined"
-        @mouseleave="clickableWidth == null ? onMouseLeave() : undefined"
+        class="card-view"
+        :class="{
+            selected: selectedCard === card,
+            [card?.animation]: !!animation
+        }"
+        @mousemove="onMouseMove"
+        @mouseenter="onMouseEnter"
+        @mouseleave="onMouseLeave"
     >
         <Teleport to="body">
             <div
@@ -101,14 +102,6 @@
                 <div v-if="card.flavorText" class="card-tooltip-flavor">{{ card.flavorText }}</div>
             </div>
         </Teleport>
-        <div
-            class="card-view"
-            :class="{
-                selected: selectedCard === card,
-                [card?.animation]: !!animation,
-                'card-view--no-pointer': clickableWidth != null
-            }"
-        >
         <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
         <div v-else-if="isSpell && spellCard" class="card-front spell-card-front">
             <div class="card-top spell-card-top" :class="card.suit">
@@ -152,42 +145,12 @@
                 </template>
             </div>
         </div>
-        <div
-            v-if="clickableWidth != null"
-            class="card-hit-area"
-            :style="{ width: clickableWidth + 'px' }"
-            @mousemove="onMouseMove"
-            @mouseenter="onMouseEnter"
-            @mouseleave="onMouseLeave"
-        />
-        </div>
     </div>
 </template>
 
 <style scoped>
-.card-view-wrapper {
+.card-view {
     position: relative;
-    display: inline-block;
-}
-
-.card-view-wrapper--hit-area {
-    pointer-events: none;
-}
-
-.card-view-wrapper--hit-area .card-hit-area {
-    pointer-events: auto;
-}
-
-.card-view--no-pointer {
-    pointer-events: none;
-}
-
-.card-hit-area {
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    z-index: 1;
 }
 
 .card-tooltip {
