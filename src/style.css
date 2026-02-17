@@ -789,6 +789,8 @@ html, body {
     gap: 6px;
     width: 100%;
     margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .summons-list h3 {
@@ -809,6 +811,12 @@ html, body {
 
 .summon-name {
     font-weight: bold;
+}
+
+.summon-description {
+    color: #444;
+    font-size: 11px;
+    font-style: italic;
 }
 
 .summon-hp {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import Player, { koaParams, nextCharacterParams, type PlayerParams } from '../models/Player';
+    import Player, { koaParams, testCharacterParams, type PlayerParams } from '../models/Player';
 
     const props = defineProps<{
         onSelect: (player: Player) => void;
@@ -7,7 +7,7 @@
 
     const characters = [
         { name: 'Koa XIII', params: koaParams },
-        { name: 'don\'t click this', params: nextCharacterParams },
+        { name: 'DJ Testo', params: testCharacterParams },
     ]
 
     const emit = defineEmits<{

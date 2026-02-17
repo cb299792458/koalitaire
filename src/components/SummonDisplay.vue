@@ -42,8 +42,9 @@
         @mouseleave="onMouseLeave"
     >
         <span class="summon-name">{{ props.summon.name }}</span>
+        <span class="summon-description">{{ props.summon.description }}</span>
         <span class="summon-hp">{{ props.summon.hp }} / {{ props.summon.maxhp }}</span>
-        <span class="summon-power">⚔ {{ props.summon.power }}</span>
+        <span v-if="props.summon.power > 0" class="summon-power">⚔ {{ props.summon.power }}</span>
         <Teleport to="body">
             <div
                 class="cursor-tooltip"

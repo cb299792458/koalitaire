@@ -15,8 +15,6 @@ import ManaPool from '../models/ManaPool';
 import { AREAS, type Area } from '../models/Areas';
 import { openModal, closeModal } from '../stores/modalStore';
 
-const TABLEAU_SIZE = 7;
-
 export class Combat {
     // Game entities
     player: Player;
@@ -50,7 +48,7 @@ export class Combat {
         this.compost = new CompostPile();
         this.trash = new TrashPile();
         this.hand = new Hand();
-        this.tableau = new Tableau(TABLEAU_SIZE);
+        this.tableau = new Tableau(this.player.columnCount);
         this.isProcessingTurn = false;
         this.reshuffles = 2;
         
@@ -106,7 +104,7 @@ export class Combat {
         // Reset player state
         if (this.player) {
             this.player.block = 0;
-            this.player.manaCrystals = 0;
+            this.player.manaCrystals = this.player.startingManaCrystals;
         }
         
         this.startTurn();
@@ -117,7 +115,7 @@ export class Combat {
     // ==================== Turn Management ====================
 
     startTurn(): void {
-        this.drawCards(5);
+        this.drawCards(this.player?.handSize ?? 5);
 
         if (!this.player) return;
         this.player.block = 0;
@@ -131,7 +129,7 @@ export class Combat {
     async endTurn(): Promise<void> {
         if (!this.player || !this.enemy) return;
         if (this.isProcessingTurn) return; // Prevent multiple simultaneous end turns
-        
+
         this.isProcessingTurn = true;
         this.notify();
 
@@ -154,42 +152,46 @@ export class Combat {
             this.notify();
             return;
         }
-        
+
         try {
-            // Player summons run at the end of the player turn
-            for (const summon of this.player.summons) {
-                summon.effect(this);
-                this.notify();
-                await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each summon
-            }
-            
-            // Check if enemy is dead after player summons
-            if (this.enemy.health <= 0) {
-                this.defeatEnemy();
-                return;
-            }
-            
-            this.enemy.block = 0;
-            await this.enemy.executeActions(this.player, this);
-            
-            // Check if enemy is dead after enemy actions
-            if (this.enemy.health <= 0) {
-                this.defeatEnemy();
-                return;
-            }
-
-            // If deck is empty when ending turn, use a reshuffle: recycle compost into deck and decrement
-            if (this.deck.isEmpty() && this.reshuffles > 0) {
-                this.compost.recycleInto(this.deck);
-                this.deck.shuffle();
-                this.reshuffles -= 1;
-            }
-
-            this.startTurn();
+            await this.runRestOfTurn();
         } finally {
             this.isProcessingTurn = false;
             this.notify();
         }
+    }
+
+    /**
+     * Summons, enemy actions, reshuffle if needed, then start new turn.
+     */
+    private async runRestOfTurn(): Promise<void> {
+        if (!this.player || !this.enemy) return;
+
+        for (const summon of this.player.summons) {
+            this.enemy.takeDamage(summon.power);
+            summon.effect(this);
+            this.notify();
+            await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each summon
+        }
+        if (this.enemy.health <= 0) {
+            this.defeatEnemy();
+            return;
+        }
+
+        this.enemy.block = 0;
+        await this.enemy.executeActions(this.player, this);
+        if (this.enemy.health <= 0) {
+            this.defeatEnemy();
+            return;
+        }
+
+        if (this.deck.isEmpty() && this.reshuffles > 0) {
+            this.compost.recycleInto(this.deck);
+            this.deck.shuffle();
+            this.reshuffles -= 1;
+        }
+
+        this.startTurn();
     }
     
     checkEnemyDeath(): boolean {
@@ -225,23 +227,20 @@ export class Combat {
      */
     async executeRedealAndFinishTurn(): Promise<void> {
         if (!this.player || !this.enemy) return;
+
         this.isProcessingTurn = true;
         this.notify();
         try {
-            // Move hand to compost
             this.compost.addCards([...this.hand.cards]);
             this.hand.clear();
-            // Move tableau to compost
             for (const column of this.tableau.getColumns()) {
                 this.compost.addCards([...column.cards]);
                 column.cards = [];
             }
-            // Move mana pools to compost
             for (const pool of Object.values(this.manaPools)) {
                 this.compost.addCards([...pool.cards]);
                 pool.clear();
             }
-            // Recycle compost into deck, shuffle, reset tableau and redeal
             this.compost.recycleInto(this.deck);
             this.deck.shuffle();
             this.tableau.clear();
@@ -249,24 +248,7 @@ export class Combat {
             this.reshuffles = 2;
             this.notify();
 
-            // Run the rest of end turn: summons, enemy actions, then start new turn
-            for (const summon of this.player.summons) {
-                this.enemy.takeDamage(summon.power);
-                summon.effect(this);
-                this.notify();
-                await new Promise(resolve => setTimeout(resolve, 500));
-            }
-            if (this.enemy.health <= 0) {
-                this.defeatEnemy();
-                return;
-            }
-            this.enemy.block = 0;
-            await this.enemy.executeActions(this.player, this);
-            if (this.enemy.health <= 0) {
-                this.defeatEnemy();
-                return;
-            }
-            this.startTurn();
+            await this.runRestOfTurn();
         } finally {
             this.isProcessingTurn = false;
             this.notify();
@@ -309,7 +291,7 @@ export class Combat {
     // ==================== Tableau Management ====================
 
     initializeTableau(): void {
-        this.tableau = new Tableau(TABLEAU_SIZE);
+        this.tableau = new Tableau(this.player.columnCount);
     }
 
     dealTableau(): void {

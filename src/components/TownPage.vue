@@ -2,6 +2,8 @@
     import { onMounted, onBeforeUnmount, ref, unref, computed } from 'vue';
     import { useTown, type StatStoreId } from '../composables/useTown';
     import PlayerInfo from './PlayerInfo.vue';
+    import SingleCard from './SingleCard.vue';
+    import { SpellCard } from '../models/Card';
 
     const town = useTown();
     const player = town.player;
@@ -158,6 +160,23 @@
     const canSellBytecoin = () => (unref(player)?.bytecoins ?? 0) >= 1;
     function buyBytecoin() { town.buyBytecoin(); }
     function sellBytecoin() { town.sellBytecoin(); }
+
+    const storeDisplayCards = computed(() =>
+        town.getStoreCards().map((params) => {
+            const card = new SpellCard(
+                params.rank,
+                params.suit,
+                params.name,
+                params.description,
+                params.effect,
+                params.charges,
+                params.keywords,
+                params.flavorText
+            );
+            card.revealed = true;
+            return { params, displayCard: card };
+        })
+    );
 </script>
 
 <template>
@@ -231,19 +250,20 @@
                             <template v-else-if="currentLocation === 'store'">
                                 <div class="town-store-cards">
                                     <div
-                                        v-for="card in town.getStoreCards()"
-                                        :key="card.name"
+                                        v-for="{ params, displayCard } in storeDisplayCards"
+                                        :key="params.name"
                                         class="town-store-card"
                                     >
-                                        <span class="town-store-card-name">{{ card.name }}</span>
-                                        <span class="town-store-card-desc">{{ card.description }}</span>
+                                        <div class="town-store-card-display">
+                                            <SingleCard :card="displayCard" />
+                                        </div>
                                         <button
                                             type="button"
                                             class="town-choice-button"
-                                            :disabled="!town.canBuyStoreCard(card.name)"
-                                            @click="town.buyStoreCard(card)"
+                                            :disabled="!town.canBuyStoreCard(params.name)"
+                                            @click="town.buyStoreCard(params)"
                                         >
-                                            {{ town.isStoreCardPurchased(card.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 🍃)` }}
+                                            {{ town.isStoreCardPurchased(params.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 🍃)` }}
                                         </button>
                                     </div>
                                 </div>
@@ -370,21 +390,16 @@
     .town-store-card {
         display: flex;
         flex-direction: column;
-        gap: 6px;
+        gap: 8px;
         padding: 12px;
         background-color: rgba(0,0,0,0.1);
         border-radius: 8px;
-        min-width: 180px;
+        align-items: center;
     }
 
-    .town-store-card-name {
-        font-weight: bold;
-        color: black;
-    }
-
-    .town-store-card-desc {
-        font-size: 0.9rem;
-        color: #333;
+    .town-store-card-display {
+        transform: scale(0.6);
+        transform-origin: top center;
     }
 
     .town-placeholder-msg {

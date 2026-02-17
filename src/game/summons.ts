@@ -29,7 +29,7 @@ export function createSummon(template: SummonTemplate): Summon {
 export const summons: Record<string, SummonTemplate> = {
     collaborator: {
         name: "Collaborator",
-        description: "Sympathetic to Koa's cause.",
+        description: "Does nothing.",
         maxhp: 1,
         power: 0,
         race: Race.Koala,
@@ -37,6 +37,28 @@ export const summons: Record<string, SummonTemplate> = {
             combat.enemy?.takeDamage(0);
         },
         tooltip: "A koala guard, fiercely loyal to Prince Koa, but not particularly fierce in any other regard.",
+    },
+    warKoala: {
+        name: "Loyal War Koala",
+        description: "Deals damage equal to the number of koala summons each turn.",
+        maxhp: 5,
+        power: 0,
+        race: Race.Koala,
+        effect: (combat: Combat) => {
+            combat.enemy?.takeDamage(combat.player?.summons.filter(summon => summon.race === Race.Koala).length ?? 0);
+        },
+        tooltip: "Koalas together strong.",
+    },
+    wallKoala: {
+        name: "Royal Wall Koala",
+        description: "Grants block equal to the number of koala summons each turn.",
+        maxhp: 5,
+        power: 0,
+        race: Race.Koala,
+        effect: (combat: Combat) => {
+            combat.player?.gainBlock(combat.player?.summons.filter(summon => summon.race === Race.Koala).length ?? 0);
+        },
+        tooltip: "Koalas together strong.",
     },
     
     // Fire summons
@@ -49,6 +71,14 @@ export const summons: Record<string, SummonTemplate> = {
         effect: (combat: Combat) => {
             combat.enemy?.takeDamage(2);
         },
+    },
+    charLizard: {
+        name: "Char Lizard",
+        description: "A powerful fire-breathing salamander.",
+        maxhp: 20,
+        power: 4,
+        race: Race.Salamander,
+        tooltip: "Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.",
     },
     
     // Earth summons
@@ -85,6 +115,14 @@ export const summons: Record<string, SummonTemplate> = {
         effect: (combat: Combat) => {
             combat.player?.gainHealth(3);
         },
+    },
+    attackaQuacka: {
+        name: "Attacker Quacker",
+        description: "An aggressive platypus with a lot of energy and power, but on the highway to hell.",
+        maxhp: 1,
+        power: 5,
+        race: Race.Quokka,
+        tooltip: "For those about to block (we salute you)",
     },
     
     // Special summons

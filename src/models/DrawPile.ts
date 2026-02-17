@@ -28,11 +28,12 @@ class DrawPile extends CardGroup {
     }
 
     /**
-     * Draw multiple cards from the top
+     * Draw multiple cards from the top. Use Infinity to draw the whole deck.
      */
     drawMultiple(count: number): Card[] {
         const drawn: Card[] = [];
-        for (let i = 0; i < count; i++) {
+        const limit = count === Infinity ? Number.MAX_SAFE_INTEGER : count;
+        for (let i = 0; i < limit; i++) {
             const card = this.draw();
             if (card) {
                 drawn.push(card);

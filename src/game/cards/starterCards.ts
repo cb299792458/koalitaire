@@ -29,7 +29,7 @@ const scorch = {
         const damage = 8 + (player?.arcane ?? 0);
         enemy.takeDamage(damage, [DamageType.Magic]);
     },
-    flavorText: "Fire indeed hot! -The Professy",
+    flavorText: "Ow! Fire hot! -Leela, Fire indeed hot! -The Professy",
 }
 
 const shield = {
@@ -43,7 +43,7 @@ const shield = {
         const block = 4 + (player?.armor ?? 0);
         player.gainBlock(block);
     },
-    flavorText: "Tha block is also hot! -Lil Wayne",
+    flavorText: "Tha block is hot (as well)! -Weezy",
 }
 
 const slash = {

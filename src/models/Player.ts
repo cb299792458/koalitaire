@@ -7,12 +7,20 @@ import platypusPortrait from "/enemy_portraits/platypus.png";
 import { openMessageModal } from "../stores/modalStore";
 import koaDeck from "../game/decks/koaDeck";
 import useDamageNumbers from "../composables/useDamageNumbers";
+import { generalCards } from "../game/cards/generalCards";
 
 export interface PlayerParams {
     name: string;
     portrait: string;
     /** Tooltip text on portrait hover. Defaults to name if not set. */
     tooltip?: string;
+
+    /** Number of cards to draw at the start of each turn. Use Infinity to draw the whole deck. Defaults to 5. */
+    handSize?: number;
+    /** Number of tableau columns. Defaults to 6. */
+    columnCount?: number;
+    /** Mana crystals at the start of combat. Defaults to 0. */
+    startingManaCrystals?: number;
 
     appeal: number;
     attack: number;
@@ -30,6 +38,10 @@ export interface PlayerParams {
 class Player extends Combatant {
     level: number = 1;
 
+    handSize: number;
+    columnCount: number;
+    startingManaCrystals: number;
+
     appeal: number;
     attack: number;
     agility: number;
@@ -42,9 +54,12 @@ class Player extends Combatant {
     deck: Card[];
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
+        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaCrystals = 0, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
         super({ name, portrait, health, armor, tooltip });
 
+        this.handSize = handSize;
+        this.columnCount = columnCount;
+        this.startingManaCrystals = startingManaCrystals;
         this.appeal = appeal;
         this.attack = attack;
         this.agility = agility;
@@ -70,6 +85,9 @@ class Player extends Combatant {
             name: this.name,
             portrait: this.portrait,
             tooltip: this.tooltip,
+            handSize: this.handSize,
+            columnCount: this.columnCount,
+            startingManaCrystals: this.startingManaCrystals,
             appeal: this.appeal,
             attack: this.attack,
             armor: this.armor,
@@ -99,7 +117,7 @@ class Player extends Combatant {
         });
         playerCopy.level = this.level;
         playerCopy.health = this.health;
-        playerCopy.manaCrystals = this.manaCrystals;
+        playerCopy.manaCrystals = this.startingManaCrystals;
         playerCopy.block = this.block;
         playerCopy.bytecoins = this.bytecoins;
         return playerCopy;
@@ -109,7 +127,10 @@ class Player extends Combatant {
 export const koaParams: PlayerParams = {
     name: "Koa XIII",
     portrait: koaPortrait,
-    tooltip: "Crown Prince Koa XIII of the Koala Kingdom",
+    tooltip: "Crown Prince Koa XIII of Koala Lumpur",
+
+    handSize: 5,
+    columnCount: 7,
 
     appeal: 5,
     attack: 3,
@@ -146,9 +167,13 @@ export const koaParams: PlayerParams = {
     }
 };
 
-export const nextCharacterParams: PlayerParams = {
-    name: "Next Character",
+export const testCharacterParams: PlayerParams = {
+    name: "DJ Testo",
     portrait: platypusPortrait,
+
+    handSize: Infinity,
+    columnCount: 1,
+    startingManaCrystals: 1000,
 
     appeal: 0,
     attack: 0,
@@ -156,11 +181,31 @@ export const nextCharacterParams: PlayerParams = {
     agility: 0,
     arcane: 0,
 
-    health: 0,
-    gold: 0,
+    health: 1000,
+    gold: 1000000,
     bytecoins: 0,
 
-    makeDeck: () => [] // Placeholder for next character's deck
+    makeDeck: () => {
+        const deck: Card[] = [];
+        for (const cardParams of generalCards) {
+            // Check if it's a SpellCard
+            const spellParams = cardParams as SpellCardParams;
+            deck.push(new SpellCard(
+                spellParams.rank,
+                spellParams.suit,
+                spellParams.name,
+                spellParams.description,
+                spellParams.effect,
+                spellParams.charges,
+                spellParams.keywords,
+                spellParams.flavorText
+            ));
+        }
+        // for (const cardParams of manaCards) {
+        //     deck.push(new Card(cardParams.rank, cardParams.suit));
+        // }
+        return deck;
+    }
 };
 
 export default Player;
