@@ -177,10 +177,6 @@
         combat.moveAllPossibleToManaPools();
     }
 
-    // function onDrawCard() {
-    //     combat.drawCards(1, true);
-    // }
-
     onMounted(() => {
         town.onLeaveTown(() => {
             if (!combat.player) return;
@@ -244,12 +240,6 @@
                                         />
                                         <div class="deck-count">{{ deckCount }} cards</div>
                                         <div class="deck-reshuffles">Reshuffles: {{ reshuffles }}</div>
-                                        <!-- <button
-                                            type="button"
-                                            class="draw-card-button"
-                                            :disabled="deckCount === 0"
-                                            @click="onDrawCard"
-                                        >Draw a card</button> -->
                                     </div>
                                     <div class="compost-wrapper">
                                         <div v-if="manaCrystalsCost !== null" class="mana-crystals-cost">
@@ -337,12 +327,14 @@
                                 @click="onClick"
                             />
                         </div>
-                        <button 
-                            @click="combat.endTurn" 
-                            id="end-turn-button"
-                            :disabled="combat.isProcessingTurn"
-                            v-if="!combat.isProcessingTurn"
-                        >End Turn</button>
+                        <div class="combat-bottom-buttons">
+                            <button 
+                                @click="combat.endTurn" 
+                                id="end-turn-button"
+                                :disabled="combat.isProcessingTurn"
+                                v-if="!combat.isProcessingTurn"
+                            >End Turn</button>
+                        </div>
                     </div>
                 </div>
             </div>

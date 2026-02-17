@@ -11,6 +11,8 @@ import useDamageNumbers from "../composables/useDamageNumbers";
 export interface PlayerParams {
     name: string;
     portrait: string;
+    /** Tooltip text on portrait hover. Defaults to name if not set. */
+    tooltip?: string;
 
     appeal: number;
     attack: number;
@@ -40,8 +42,8 @@ class Player extends Combatant {
     deck: Card[];
 
     constructor(params: PlayerParams) {
-        const { name, portrait, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
-        super({ name, portrait, health, armor });
+        const { name, portrait, tooltip, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
+        super({ name, portrait, health, armor, tooltip });
 
         this.appeal = appeal;
         this.attack = attack;
@@ -67,6 +69,7 @@ class Player extends Combatant {
         const playerCopy = new Player({
             name: this.name,
             portrait: this.portrait,
+            tooltip: this.tooltip,
             appeal: this.appeal,
             attack: this.attack,
             armor: this.armor,
@@ -85,7 +88,9 @@ class Player extends Combatant {
                         spellCard.name,
                         spellCard.description,
                         spellCard.effect,
-                        spellCard.charges
+                        spellCard.charges,
+                        spellCard.keywords,
+                        spellCard.flavorText
                     );
                 } else {
                     return new Card(card.rank, card.suit);
@@ -104,6 +109,7 @@ class Player extends Combatant {
 export const koaParams: PlayerParams = {
     name: "Koa XIII",
     portrait: koaPortrait,
+    tooltip: "Crown Prince Koa XIII of the Koala Kingdom",
 
     appeal: 5,
     attack: 3,
@@ -127,7 +133,9 @@ export const koaParams: PlayerParams = {
                     spellParams.name,
                     spellParams.description,
                     spellParams.effect,
-                    spellParams.charges
+                    spellParams.charges,
+                    spellParams.keywords,
+                    spellParams.flavorText
                 ));
             } else {
                 // Mana card

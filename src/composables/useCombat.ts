@@ -82,7 +82,9 @@ export class Combat {
                         spellCard.name,
                         spellCard.description,
                         spellCard.effect,
-                        spellCard.charges
+                        spellCard.charges,
+                        spellCard.keywords,
+                        spellCard.flavorText
                     );
                 } else {
                     return new Card(card.rank, card.suit);
@@ -280,21 +282,23 @@ export class Combat {
             this.hand.clear();
         }
 
-        // Draw cards and reveal them
+        // Draw cards and add to hand synchronously so hand state is correct before any timeouts run.
+        // (Stale timeouts from a previous combat would otherwise add old cards to the new hand.)
         const drawnCards = this.deck.drawMultiple(count);
+        for (const card of drawnCards) {
+            if (!card) continue;
+            card.revealed = true;
+            this.hand.addCard(card);
+        }
+        this.notify();
+
+        // Stagger draw animations only (no state changes in timeouts)
         for (let i = 0; i < drawnCards.length; i++) {
             const card = drawnCards[i];
             if (!card) continue;
-            // Stagger animations slightly for visual effect
             setTimeout(() => {
-                card.revealed = true;
-                this.hand.addCard(card);
-                this.notify();
-                // Animate after card is added to DOM
-                setTimeout(() => {
-                    card.animateDraw();
-                }, 10);
-            }, i * 100); // 100ms delay between each card
+                card.animateDraw();
+            }, i * 100);
         }
     }
 

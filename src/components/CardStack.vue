@@ -19,6 +19,9 @@
 
     const SELECTED_CARD_Z_INDEX = 1000;
 
+    const HORIZONTAL_CARD_WIDTH = 100;
+    const HORIZONTAL_MAX_STACK_WIDTH = 740;
+
     function cardPosition(index: number, card: Card) {
         const isSelected = props.selectedCard === card;
         let base: { position: string; top: string; left: string; zIndex: number };
@@ -34,21 +37,18 @@
                 };
                 break;
             case 'horizontal':
-                // TODO: fix for different screen sizes
-                const cardWidth = 100;
-                const maxStackWidth = 740;
                 const numCards = props.cards.length;
                 if (numCards <= 1) {
                     base = {
                         position: 'absolute',
                         top: '0px',
-                        left: `${(maxStackWidth - cardWidth) / 2}px`,
+                        left: `${(HORIZONTAL_MAX_STACK_WIDTH - HORIZONTAL_CARD_WIDTH) / 2}px`,
                         zIndex: index + 1,
                     };
                 } else {
-                    spacing = (maxStackWidth - cardWidth) / (numCards - 1);
-                    const stackWidth = spacing * (numCards - 1) + cardWidth;
-                    const left = (maxStackWidth - stackWidth) / 2 + index * spacing;
+                    spacing = (HORIZONTAL_MAX_STACK_WIDTH - HORIZONTAL_CARD_WIDTH) / (numCards - 1);
+                    const stackWidth = spacing * (numCards - 1) + HORIZONTAL_CARD_WIDTH;
+                    const left = (HORIZONTAL_MAX_STACK_WIDTH - stackWidth) / 2 + index * spacing;
                     base = {
                         position: 'absolute',
                         top: '0px',
@@ -71,6 +71,15 @@
             return { ...base, zIndex: SELECTED_CARD_Z_INDEX };
         }
         return base;
+    }
+
+    /** For horizontal layout, the width of the visible (clickable) strip so the card below can be clicked. */
+    function clickableWidth(index: number): number | undefined {
+        if (props.layout !== 'horizontal') return undefined;
+        const numCards = props.cards.length;
+        if (numCards <= 1) return undefined;
+        const spacing = (HORIZONTAL_MAX_STACK_WIDTH - HORIZONTAL_CARD_WIDTH) / (numCards - 1);
+        return index === numCards - 1 ? HORIZONTAL_CARD_WIDTH : spacing;
     }
 
     const emit = defineEmits<{
@@ -151,6 +160,7 @@
                     v-for="(card, index) in cards"
                     :key="index"
                     :card="card"
+                    :clickableWidth="clickableWidth(index)"
                     :class="{
                         'castable-highlight': highlighted && index === cards.length - 1 && highlightType === 'cast',
                         'burnable-highlight': highlighted && index === cards.length - 1 && highlightType === 'burn'
@@ -165,6 +175,7 @@
                     v-for="(card, index) in cards"
                     :key="index"
                     :card="card"
+                    :clickableWidth="clickableWidth(index)"
                     :class="{
                         'castable-highlight': highlighted && (layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1 && highlightType === 'cast',
                         'burnable-highlight': highlighted && (layout === 'vertical' || !layout || layout === 'pile') && index === cards.length - 1 && highlightType === 'burn'

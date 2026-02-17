@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { computed } from 'vue';
+    import { computed, ref } from 'vue';
     import type Player from '../models/Player';
     import FloatingNumber from './FloatingNumber.vue';
     import SummonDisplay from './SummonDisplay.vue';
@@ -12,6 +12,33 @@
         }>(),
         { showBytecoins: false }
     );
+
+    const CURSOR_OFFSET = 12;
+    const tooltipX = ref(0);
+    const tooltipY = ref(0);
+    const showTooltip = ref(false);
+    let showDelay: ReturnType<typeof setTimeout> | null = null;
+
+    function onPortraitMouseMove(e: MouseEvent) {
+        tooltipX.value = e.clientX + CURSOR_OFFSET;
+        tooltipY.value = e.clientY + CURSOR_OFFSET;
+    }
+
+    function onPortraitMouseEnter(e: MouseEvent) {
+        onPortraitMouseMove(e);
+        showDelay = setTimeout(() => {
+            showTooltip.value = true;
+            showDelay = null;
+        }, 800);
+    }
+
+    function onPortraitMouseLeave() {
+        if (showDelay !== null) {
+            clearTimeout(showDelay);
+            showDelay = null;
+        }
+        showTooltip.value = false;
+    }
 
     const { playerNumbers } = useDamageNumbers();
 
@@ -37,7 +64,23 @@
             :number="number"
         />
         <h2>{{ props.player.name }}</h2>
-        <img :src="props.player.portrait" alt="Player Portrait" width="100%"/>
+        <div
+            class="portrait-tooltip-wrapper"
+            @mousemove="onPortraitMouseMove"
+            @mouseenter="onPortraitMouseEnter"
+            @mouseleave="onPortraitMouseLeave"
+        >
+            <img :src="props.player.portrait" alt="Player Portrait" width="100%"/>
+            <Teleport to="body">
+                <div
+                    class="cursor-tooltip"
+                    :class="{ 'cursor-tooltip--visible': showTooltip }"
+                    :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }"
+                >
+                    {{ props.player.tooltip }}
+                </div>
+            </Teleport>
+        </div>
         <p>Health: {{ props.player.health }} / {{ props.player.maxHealth }}</p>
         <p>Block: {{ props.player.block }}</p>
         <p>Mana Crystals: {{ props.player.manaCrystals }}</p>

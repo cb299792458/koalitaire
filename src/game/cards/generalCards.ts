@@ -2,12 +2,14 @@ import type { Combat } from "../../composables/useCombat";
 import { Suit } from "../../models/Card";
 import type ManaPool from "../../models/ManaPool";
 import { createSummon, summons } from "../summons";
+import { Keyword } from "../keywords";
 
 const parry = {
     rank: 1,
     suit: Suit.Wood,
     name: 'Parry the Platypus',
     description: 'Gain 2 block, plus your Agility.',
+    keywords: [Keyword.Block],
     effect: (combat: Combat) => {
         const { player } = combat;
         combat.player.gainBlock(2 + (player?.agility ?? 0));
@@ -19,6 +21,7 @@ const manaBurn = {
     suit: Suit.Fire,
     name: 'Mana Burn',
     description: 'Deals 1 magic damage for each card in your mana pool.',
+    keywords: [Keyword.Magic],
     effect: (combat: Combat) => {
         const { manaPools, enemy } = combat;
         enemy.takeDamage(
@@ -34,6 +37,7 @@ export const koallaborator = {
     suit: Suit.Metal,
     name: 'Koallaborator',
     description: 'Summons a collaborator to protect you.',
+    keywords: [Keyword.Summon],
     effect: (combat: Combat) => {
         const { player } = combat;
         const collaborator = summons.collaborator;
@@ -48,6 +52,7 @@ const shieldBash = {
     suit: Suit.Earth,
     name: 'Shield Bash',
     description: 'Deals damage equal to your block.',
+    keywords: [Keyword.Block],
     effect: (combat: Combat) => {
         const { player, enemy } = combat;
         enemy.takeDamage(player.block);
@@ -59,6 +64,7 @@ const bill = {
     suit: Suit.Water,
     name: 'Bill',
     description: 'Draw 2 cards',
+    keywords: [Keyword.Draw],
     effect: (combat: Combat) => {
         combat.drawCards(2, true);
     },

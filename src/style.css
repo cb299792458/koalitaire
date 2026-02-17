@@ -58,6 +58,14 @@ html, body {
     align-items: center;
 }
 
+.combat-bottom-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-right: 10px;
+}
+
 /* Town layout: same as combat so town screen matches combat layout */
 .town-top {
     display: flex;
@@ -134,25 +142,6 @@ html, body {
 
 .deck-wrapper > .card-stack.pile .card-view {
     margin: 0;
-}
-
-.draw-card-button {
-    margin-top: 6px;
-    padding: 6px 12px;
-    font-size: 12px;
-    background-color: #e8e8e8;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-.draw-card-button:hover:not(:disabled) {
-    background-color: #ddd;
-}
-
-.draw-card-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
 }
 
 .trash-wrapper {
@@ -841,29 +830,27 @@ html, body {
     font-size: 11px;
 }
 
-.summon-tooltip {
-    visibility: hidden;
-    opacity: 0;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    bottom: 100%;
-    margin-bottom: 6px;
-    padding: 8px 10px;
+/* Cursor-following tooltips (player portrait, enemy portrait, summons) */
+.cursor-tooltip {
+    position: fixed;
+    padding: 6px 10px;
     max-width: 220px;
-    background: #2d2d2d;
-    color: #eee;
-    font-size: 11px;
-    font-weight: normal;
+    background: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    font-size: 12px;
     line-height: 1.3;
     border-radius: 6px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
+    z-index: 2000;
     pointer-events: none;
-    transition: opacity 0.15s ease, visibility 0.15s ease;
+    opacity: 0;
+    transition: opacity 0.15s ease 0.3s;
 }
 
-.summon-display:hover .summon-tooltip {
-    visibility: visible;
+.cursor-tooltip--visible {
     opacity: 1;
+}
+
+.portrait-tooltip-wrapper {
+    position: relative;
 }

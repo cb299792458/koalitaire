@@ -43,7 +43,7 @@
         { id: 'attackStore', label: 'Arsenal FU', welcomeMessage: "Ello gov'nor, how's your mother! Arsenal For You at your service — 'ave a butcher's and see wot tickles yer fancy!"},
         { id: 'armorStore', label: 'Block Booster', welcomeMessage: "Looking to armor up? Make it a Block Booster knight." },
         { id: 'arcaneStore', label: 'Waverly Place Library', welcomeMessage: "Name's Bobst. Wanna see this rabbit do a Harold Holt? No worries mate, she'll be apples." },
-        { id: 'agilityStore', label: 'The Arcade Pyre', welcomeMessage: "Sleeping is giving in, hop on any of our game cabinets and your reflexes will wake up." },
+        { id: 'agilityStore', label: 'The Arcade Pyre', welcomeMessage: "Come on in and play games all night long to improve your reflexes. Sleeping is giving in, have a white monster and wake up." },
         { id: 'appealStore', label: 'Nobody Beats the Rizz', welcomeMessage: "Don't be a dag, I'll teach you how to rizz up any sheila before smoko." },
     ] as const;
 

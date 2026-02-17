@@ -4,6 +4,8 @@ import Summon, { Race } from '../models/Summon';
 export interface SummonTemplate {
     name: string;
     description: string;
+    /** Tooltip on hover. Defaults to description if not set. */
+    tooltip?: string;
     maxhp: number;
     power: number;
     race: Race;
@@ -15,6 +17,7 @@ export function createSummon(template: SummonTemplate): Summon {
     return new Summon({
         name: template.name,
         description: template.description,
+        tooltip: template.tooltip,
         maxhp: template.maxhp,
         power: template.power,
         race: template.race,
@@ -24,18 +27,6 @@ export function createSummon(template: SummonTemplate): Summon {
 
 // Summon definitions
 export const summons: Record<string, SummonTemplate> = {
-    // Wood summons
-    // koala: {
-    //     name: "Koala Guard",
-    //     description: "Grants 1 mana crystal each turn.",
-    //     maxhp: 5,
-    //     hp: 5,
-    //     race: Race.Koala,
-    //     effect: (combat: Combat) => {
-    //         const { player } = combat;
-    //         player.manaCrystals += 1;
-    //     },
-    // },
     collaborator: {
         name: "Collaborator",
         description: "Sympathetic to Koa's cause.",
@@ -45,6 +36,7 @@ export const summons: Record<string, SummonTemplate> = {
         effect: (combat: Combat) => {
             combat.enemy?.takeDamage(0);
         },
+        tooltip: "A koala guard, fiercely loyal to Prince Koa, but not particularly fierce in any other regard.",
     },
     
     // Fire summons

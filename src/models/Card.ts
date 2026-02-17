@@ -22,6 +22,10 @@ export interface SpellCardParams extends CardParams {
     effect: (combat: Combat) => void;
     /** If set, shown on the card; decrements on use; card goes to trash when it reaches 0. */
     charges?: number;
+    /** Keyword ids shown in tooltip with explanations. */
+    keywords?: string[];
+    /** Optional flavor text shown in italics at the bottom of the tooltip. */
+    flavorText?: string;
 }
 
 class Card {
@@ -31,6 +35,10 @@ class Card {
     animation: string = '';
     animationTime: number = 1000; // Default animation time in milliseconds
     isSpell: boolean = false;
+    /** Keyword ids for tooltip explanations. Defaults to empty array. */
+    keywords: string[] = [];
+    /** Optional flavor text in tooltip (italics, after keywords). */
+    flavorText?: string;
 
     constructor(rank: number, suit: Suit) {
         this.rank = rank;
@@ -131,7 +139,9 @@ export class SpellCard extends Card {
         name: string,
         description: string,
         effect: (combat: Combat) => void,
-        charges?: number
+        charges?: number,
+        keywords?: string[],
+        flavorText?: string
     ) {
         super(rank, suit);
         this.isSpell = true;
@@ -139,6 +149,8 @@ export class SpellCard extends Card {
         this.description = description;
         this.effect = effect;
         this.charges = charges ?? Infinity;
+        this.keywords = keywords ?? [];
+        this.flavorText = flavorText;
     }
 }
 

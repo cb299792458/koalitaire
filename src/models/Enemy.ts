@@ -13,6 +13,8 @@ import useDamageNumbers from "../composables/useDamageNumbers";
 interface EnemyParams {
     name: string;
     portrait: string;
+    /** Tooltip text on portrait hover. Defaults to name if not set. */
+    tooltip?: string;
     health: number;
     makeDeck: () => EnemyAction[];
 }
@@ -30,6 +32,7 @@ class Enemy extends Combatant {
             portrait: enemyParams.portrait,
             health: enemyParams.health,
             armor: 0,
+            tooltip: enemyParams.tooltip,
         });
 
         this.deck = enemyParams.makeDeck();
@@ -71,22 +74,6 @@ class Enemy extends Combatant {
             await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each enemy summon
         }
     }
-
-    // copy(): Enemy {
-    //     const enemyCopy = new Enemy(
-    //         {
-    //             name: this.name,
-    //             portrait: this.portrait,
-    //             health: this.maxHealth,
-    //             makeDeck: () => this.deck.map(action => new EnemyAction(
-    //                 action.name,
-    //                 action.description,
-    //                 action.effect
-    //             ))
-    //         }
-    //     );
-    //     return enemyCopy;
-    // }
 }
 
 export default Enemy;
@@ -95,6 +82,7 @@ export const platypusParams: EnemyParams = {
     name: "Platypus",
     portrait: platypusPortrait,
     health: 10,
+    tooltip: "A really weird looking animal.",
 
     makeDeck: () => {
         const deck: EnemyAction[] = [];

@@ -10,15 +10,18 @@ export type DamageNumberType = 'damage' | 'block-loss' | 'block-gain' | 'heal';
 export default abstract class Combatant {
     name: string;
     portrait: string;
+    /** Tooltip text shown on hover. Defaults to name if not set. */
+    tooltip: string;
     health: number;
     maxHealth: number;
     block: number = 0;
     armor: number;
     summons: Summon[] = [];
 
-    constructor(params: { name: string; portrait: string; health: number; armor: number }) {
+    constructor(params: { name: string; portrait: string; health: number; armor: number; tooltip?: string }) {
         this.name = params.name;
         this.portrait = params.portrait;
+        this.tooltip = params.tooltip ?? params.name;
         this.health = params.health;
         this.maxHealth = params.health;
         this.armor = params.armor;
