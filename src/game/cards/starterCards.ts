@@ -15,6 +15,7 @@ const shot = {
         enemy.takeDamage(damage, [DamageType.Ranged]);
     },
     flavorText: "Less QQ, more Pew Pew.",
+    charges: 3,
 }
 
 const scorch = {
@@ -29,7 +30,7 @@ const scorch = {
         const damage = 8 + (player?.arcane ?? 0);
         enemy.takeDamage(damage, [DamageType.Magic]);
     },
-    flavorText: "Ow! Fire hot! -Leela, Fire indeed hot! -The Professy",
+    flavorText: "Ow! Fire hot! -Leela; Fire indeed hot! -The Professy",
 }
 
 const shield = {

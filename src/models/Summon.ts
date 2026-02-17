@@ -8,6 +8,7 @@ export enum Race {
     Quokka = "quokka",
     Platypus = "platypus",
     Dingo = "dingo",
+    Rat = "rat",
 }
 
 export interface SummonParams {

@@ -1,6 +1,7 @@
 import type Enemy from "./Enemy";
 import type Player from "./Player";
 import { DamageType } from "./DamageType";
+import { createSummon, summons } from "../game/summons";
 
 interface EnemyActionParams {
     name: string;
@@ -78,6 +79,17 @@ const haste: EnemyActionParams = {
     }
 }
 
+const summonRat: EnemyActionParams = {
+    name: "Summon Rat",
+    description: "The enemy summons a 1/1 rat.",
+    effect: (enemy) => {
+        const rat = summons.rat;
+        if (rat) {
+            enemy.summons.push(createSummon(rat));
+        }
+    }
+}
+
 const weakRangedAttack: EnemyActionParams = {
     name: "Weak Ranged Attack",
     description: "The enemy attacks you for 5 ranged damage, plus its attack.",
@@ -112,6 +124,7 @@ const strongMagicAttack: EnemyActionParams = {
 
 export const enemyActions: Record<string, EnemyActionParams> = {
     doNothing,
+    summonRat,
     weakRangedAttack,
     strongRangedAttack,
     weakMagicAttack,

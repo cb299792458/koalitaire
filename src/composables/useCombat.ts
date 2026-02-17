@@ -1,7 +1,7 @@
 import { ref, triggerRef, toRaw } from 'vue';
 
 // Models
-import Card, { Suits, SpellCard } from '../models/Card';
+import Card, { Suit, Suits, SpellCard } from '../models/Card';
 import Player from '../models/Player';
 import Enemy from '../models/Enemy';
 import DrawPile from '../models/DrawPile';
@@ -460,16 +460,17 @@ export class Combat {
             
             // Calculate and remove manaCrystals needed
             const manaPool = this.manaPools[selectedCard.suit];
-            if (manaPool) {
+            if (selectedCard.suit === Suit.Koala) {
+                if (selectedCard.rank > 0) {
+                    this.player.manaCrystals -= selectedCard.rank;
+                    if (this.player.manaCrystals < 0) this.player.manaCrystals = 0;
+                }
+            } else if (manaPool) {
                 const manaCrystalsNeeded = selectedCard.rank - manaPool.cards.length;
                 if (manaCrystalsNeeded > 0) {
                     this.player.manaCrystals -= manaCrystalsNeeded;
-                    if (this.player.manaCrystals < 0) {
-                        this.player.manaCrystals = 0;
-                    }
+                    if (this.player.manaCrystals < 0) this.player.manaCrystals = 0;
                 }
-                
-                // Move only the top X cards from mana pool to compost, where X is the spell's rank
                 const cardsToDiscard = manaPool.cards.slice(-selectedCard.rank);
                 for (const card of cardsToDiscard) {
                     this.moveCardToArea(card, AREAS.Compost);
@@ -525,10 +526,14 @@ export class Combat {
             if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return false;
         }
 
-        // Check if player has enough manaCrystals
+        // Koala (debug) suit: cost is rank, no mana pool needed
+        if (suit === Suit.Koala) {
+            return rank <= this.player.manaCrystals;
+        }
+
         const manaPool = this.manaPools[suit];
         if (!manaPool) return false;
-        
+
         const manaCrystalsNeeded = rank - manaPool.cards.length;
         return manaCrystalsNeeded <= this.player.manaCrystals;
     }
@@ -549,9 +554,13 @@ export class Combat {
             if (!tableauColumn || tableauJndex !== tableauColumn.size() - 1) return -1;
         }
 
+        if (suit === Suit.Koala) {
+            return rank > 0 ? rank : 0;
+        }
+
         const manaPool = this.manaPools[suit];
         if (!manaPool) return -1;
-        
+
         const manaCrystalsNeeded = rank - manaPool.cards.length;
         return manaCrystalsNeeded > 0 ? manaCrystalsNeeded : 0;
     }

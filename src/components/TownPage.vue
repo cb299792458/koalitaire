@@ -96,6 +96,8 @@
 
     function onPlaceClick(placeId: typeof townPlaces[number]['id']) {
         currentLocation.value = placeId;
+        if (placeId === 'store') town.refreshStoreCards();
+        if (placeId === 'trader') town.refreshTraderOffers();
     }
 
     const canRestAtInn = () => {
@@ -162,7 +164,7 @@
     function sellBytecoin() { town.sellBytecoin(); }
 
     const storeDisplayCards = computed(() =>
-        town.getStoreCards().map((params) => {
+        town.storeCards.value.map((params) => {
             const card = new SpellCard(
                 params.rank,
                 params.suit,
@@ -175,6 +177,24 @@
             );
             card.revealed = true;
             return { params, displayCard: card };
+        })
+    );
+
+    const traderGeneralDisplayCards = computed(() =>
+        town.traderOffers.value.map((offer) => {
+            const params = offer.generalCard;
+            const card = new SpellCard(
+                params.rank,
+                params.suit,
+                params.name,
+                params.description,
+                params.effect,
+                params.charges,
+                params.keywords,
+                params.flavorText
+            );
+            card.revealed = true;
+            return card;
         })
     );
 </script>
@@ -256,15 +276,15 @@
                                     >
                                         <div class="town-store-card-display">
                                             <SingleCard :card="displayCard" />
+                                            <button
+                                                type="button"
+                                                class="town-store-buy-button"
+                                                :disabled="!town.canBuyStoreCard(params.name)"
+                                                @click="town.buyStoreCard(params)"
+                                            >
+                                                {{ town.isStoreCardPurchased(params.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 🍃)` }}
+                                            </button>
                                         </div>
-                                        <button
-                                            type="button"
-                                            class="town-choice-button"
-                                            :disabled="!town.canBuyStoreCard(params.name)"
-                                            @click="town.buyStoreCard(params)"
-                                        >
-                                            {{ town.isStoreCardPurchased(params.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 🍃)` }}
-                                        </button>
                                     </div>
                                 </div>
                             </template>
@@ -288,7 +308,33 @@
                                 </button>
                             </template>
                             <template v-else-if="currentLocation === 'trader'">
-                                <p class="town-placeholder-msg">Work in progress.</p>
+                                <div class="town-trader-slots">
+                                    <div
+                                        v-for="(offer, idx) in town.traderOffers.value"
+                                        :key="idx"
+                                        class="town-trader-slot"
+                                    >
+                                        <div class="town-trader-cards">
+                                            <div class="town-trader-card-display">
+                                                <SingleCard :card="offer.playerCard" />
+                                                <span class="town-trader-label">Your card</span>
+                                            </div>
+                                            <span class="town-trader-arrow">⇄</span>
+                                            <div class="town-trader-card-display">
+                                                <SingleCard v-if="traderGeneralDisplayCards[idx]" :card="traderGeneralDisplayCards[idx]!" />
+                                                <span class="town-trader-label">Trade for</span>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            class="town-choice-button town-trader-button"
+                                            @click="town.doTrade(idx)"
+                                        >
+                                            Trade
+                                        </button>
+                                    </div>
+                                    <p v-if="town.traderOffers.value.length === 0" class="town-placeholder-msg">No spell cards in your deck to trade.</p>
+                                </div>
                             </template>
                             <template v-else-if="currentLocation && isStatStore(currentLocation)">
                                 <button
@@ -388,18 +434,48 @@
     }
 
     .town-store-card {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
         padding: 12px;
         background-color: rgba(0,0,0,0.1);
         border-radius: 8px;
-        align-items: center;
     }
 
     .town-store-card-display {
-        transform: scale(0.6);
+        position: relative;
+        transform: scale(0.9);
         transform-origin: top center;
+    }
+
+    .town-store-buy-button {
+        position: absolute;
+        bottom: 50%;
+        left: 50%;
+        transform: translate(-50%, 50%);
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        background-color: #4a7c59;
+        color: #f0e6d3;
+        border: 2px solid #3d6b4a;
+        border-radius: 6px;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        z-index: 10;
+    }
+
+    .town-store-card-display:hover .town-store-buy-button {
+        opacity: 1;
+    }
+
+    .town-store-buy-button:hover:not(:disabled) {
+        background-color: #5a9c69;
+    }
+
+    .town-store-buy-button:disabled {
+        cursor: not-allowed;
+    }
+
+    .town-store-card-display:hover .town-store-buy-button:disabled {
+        opacity: 0.6;
     }
 
     .town-placeholder-msg {
@@ -407,6 +483,54 @@
         color: black;
         font-size: 1.1rem;
         font-style: italic;
+    }
+
+    .town-trader-slots {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .town-trader-slot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+
+    .town-trader-cards {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .town-trader-card-display {
+        position: relative;
+        transform: scale(0.85);
+        transform-origin: top center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .town-trader-label {
+        font-size: 0.85rem;
+        color: black;
+    }
+
+    .town-trader-arrow {
+        font-size: 1.5rem;
+        color: black;
+    }
+
+    .town-trader-button {
+        margin-top: -8px;
     }
 
     .town-stock-price {

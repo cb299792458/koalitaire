@@ -28,7 +28,30 @@ const statUpgradeCountsRef = ref<Record<StatStoreId, number>>({
 });
 /** Card names purchased at the store this visit (one of each per visit). */
 const storePurchasedCardNamesRef = ref<Set<string>>(new Set());
+/** Five random cards offered at the store this visit. */
+const storeCardsRef = ref<SpellCardParams[]>([]);
+
+export interface TraderOffer {
+    playerCard: SpellCard;
+    generalCard: SpellCardParams;
+}
+const traderOffersRef = ref<TraderOffer[]>([]);
+
 let onLeaveTownCallback: (() => void) | undefined;
+
+function shuffle<T>(array: T[]): T[] {
+    const out = [...array];
+    for (let i = out.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [out[i], out[j]] = [out[j]!, out[i]!];
+    }
+    return out;
+}
+
+function pickRandom<T>(array: T[], count: number): T[] {
+    const shuffled = shuffle([...array]);
+    return shuffled.slice(0, Math.min(count, array.length));
+}
 
 const STORE_CARD_PRICE = 10;
 
@@ -73,8 +96,12 @@ export function useTown(): {
     getBytecoinPrice: (level: number) => number;
     buyBytecoin: () => void;
     sellBytecoin: () => void;
-    getStoreCards: () => SpellCardParams[];
+    storeCards: Ref<SpellCardParams[]>;
+    refreshStoreCards: () => void;
     getStoreCardPrice: () => number;
+    traderOffers: Ref<TraderOffer[]>;
+    refreshTraderOffers: () => void;
+    doTrade: (slotIndex: number) => void;
     isStoreCardPurchased: (cardName: string) => boolean;
     canBuyStoreCard: (cardName: string) => boolean;
     buyStoreCard: (cardParams: SpellCardParams) => void;
@@ -91,6 +118,7 @@ export function useTown(): {
             innUsedThisVisitRef.value = false;
             bloodbankUseCountRef.value = 0;
             storePurchasedCardNamesRef.value = new Set();
+            storeCardsRef.value = [];
             statUpgradeCountsRef.value = {
                 attackStore: 0,
                 armorStore: 0,
@@ -164,7 +192,10 @@ export function useTown(): {
             p.bytecoins -= 1;
             p.gold += price;
         },
-        getStoreCards: () => generalCards,
+        storeCards: storeCardsRef,
+        refreshStoreCards() {
+            storeCardsRef.value = shuffle([...generalCards]).slice(0, 5);
+        },
         getStoreCardPrice: () => STORE_CARD_PRICE,
         isStoreCardPurchased(cardName: string) {
             return storePurchasedCardNamesRef.value.has(cardName);
@@ -193,6 +224,52 @@ export function useTown(): {
                 cardParams.flavorText
             );
             p.deck.push(card);
+        },
+        traderOffers: traderOffersRef,
+        refreshTraderOffers() {
+            const p = playerRef.value;
+            if (!p) {
+                traderOffersRef.value = [];
+                return;
+            }
+            const spellCards = p.deck.filter((c): c is SpellCard => c.isSpell);
+            const playerCards = pickRandom(spellCards, 3);
+            const generalCardsPicked = pickRandom([...generalCards], 3);
+            const offers: TraderOffer[] = [];
+            for (let i = 0; i < 3; i++) {
+                const pc = playerCards[i];
+                const gc = generalCardsPicked[i];
+                if (pc && gc) {
+                    pc.revealed = true;
+                    offers.push({ playerCard: pc, generalCard: gc });
+                }
+            }
+            traderOffersRef.value = offers;
+        },
+        doTrade(slotIndex: number) {
+            const p = playerRef.value;
+            const offers = [...traderOffersRef.value];
+            const offer = offers[slotIndex];
+            if (!p || !offer) return;
+
+            const { playerCard, generalCard } = offer;
+            const deckIndex = p.deck.indexOf(playerCard);
+            if (deckIndex === -1) return;
+
+            p.deck.splice(deckIndex, 1);
+            p.deck.push(new SpellCard(
+                generalCard.rank,
+                generalCard.suit,
+                generalCard.name,
+                generalCard.description,
+                generalCard.effect,
+                generalCard.charges,
+                generalCard.keywords,
+                generalCard.flavorText
+            ));
+
+            offers.splice(slotIndex, 1);
+            traderOffersRef.value = offers;
         },
     };
 }

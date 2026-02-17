@@ -50,6 +50,7 @@
         [Suit.Earth]: '/icons/rock-svgrepo-com.svg',
         [Suit.Metal]: '/icons/metal-bar-svgrepo-com.svg',
         [Suit.Water]: '/icons/water-drop-svgrepo-com.svg',
+        [Suit.Koala]: '/icons/koala.svg',
     };
     
     const suitIcon = computed(() => suitIconMap[card.suit] || '');
@@ -60,6 +61,7 @@
         if (card.suit === Suit.Water) return 'suit-water';
         if (card.suit === Suit.Earth) return 'suit-earth';
         if (card.suit === Suit.Metal) return 'suit-metal';
+        if (card.suit === Suit.Koala) return 'suit-koala';
         return '';
     });
 

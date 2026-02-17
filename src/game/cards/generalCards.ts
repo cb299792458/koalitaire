@@ -17,6 +17,17 @@ const parry = {
     },
 }
 
+const barkRitual = {
+    rank: 1,
+    suit: Suit.Wood,
+    name: 'Bark Ritual',
+    description: 'Add 3 mana crystals.',
+    keywords: [Keyword.ManaCrystal],
+    effect: (combat: Combat) => {
+        combat.player.manaCrystals += 3;
+    },
+}
+
 const manaBurn = {
     rank: 3,
     suit: Suit.Fire,
@@ -209,6 +220,7 @@ const summonAttackaQuacka = {
 
 export const generalCards = [
     parry,
+    barkRitual,
     manaBurn,
     summonKoallaborator,
     shieldBash,

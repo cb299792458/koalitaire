@@ -40,6 +40,7 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 0;
 }
 
 .combat-middle {
@@ -80,6 +81,7 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 0;
 }
 
 .town-middle {
@@ -656,6 +658,11 @@ html, body {
     filter: brightness(0) saturate(100%) invert(30%) sepia(100%) saturate(1200%) hue-rotate(30deg) brightness(70%) contrast(110%);
 }
 
+.card-rank-icon.suit-koala,
+.card-icon.suit-koala {
+    filter: brightness(0) saturate(100%) invert(20%) sepia(40%) saturate(800%) hue-rotate(25deg) brightness(60%) contrast(100%);
+}
+
 .card-top {
     display: flex;
     justify-content: space-between;
@@ -747,11 +754,21 @@ html, body {
     overflow: auto;
     position: relative;
     transition: background-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
 }
 
 .player-info {
     position: relative;
     transition: background-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
 }
 
 .enemy-info.flash-red,
@@ -789,7 +806,8 @@ html, body {
     gap: 6px;
     width: 100%;
     margin-top: 8px;
-    max-height: 200px;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }
 

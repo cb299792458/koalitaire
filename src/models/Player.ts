@@ -8,6 +8,7 @@ import { openMessageModal } from "../stores/modalStore";
 import koaDeck from "../game/decks/koaDeck";
 import useDamageNumbers from "../composables/useDamageNumbers";
 import { generalCards } from "../game/cards/generalCards";
+import { debugCards } from "../game/cards/debugCards";
 
 export interface PlayerParams {
     name: string;
@@ -188,7 +189,6 @@ export const testCharacterParams: PlayerParams = {
     makeDeck: () => {
         const deck: Card[] = [];
         for (const cardParams of generalCards) {
-            // Check if it's a SpellCard
             const spellParams = cardParams as SpellCardParams;
             deck.push(new SpellCard(
                 spellParams.rank,
@@ -201,9 +201,19 @@ export const testCharacterParams: PlayerParams = {
                 spellParams.flavorText
             ));
         }
-        // for (const cardParams of manaCards) {
-        //     deck.push(new Card(cardParams.rank, cardParams.suit));
-        // }
+        for (const cardParams of debugCards) {
+            const spellParams = cardParams as SpellCardParams;
+            deck.push(new SpellCard(
+                spellParams.rank,
+                spellParams.suit,
+                spellParams.name,
+                spellParams.description,
+                spellParams.effect,
+                spellParams.charges,
+                spellParams.keywords,
+                spellParams.flavorText
+            ));
+        }
         return deck;
     }
 };

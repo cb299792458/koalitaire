@@ -7,6 +7,8 @@ export enum Suit {
     Earth = "earth",
     Metal = "metal",
     Water = "water",
+    /** Debug-only suit, not used in normal gameplay. */
+    Koala = "koala",
 }
 
 export const Suits: Suit[] = [Suit.Wood, Suit.Fire, Suit.Earth, Suit.Metal, Suit.Water];
@@ -60,6 +62,7 @@ class Card {
                         this.animation = 'fly-left';
                         break;
                     case Suit.Water:
+                    case Suit.Koala:
                     default:
                         this.animation = 'fly-up';
                 }

@@ -125,6 +125,15 @@ export const summons: Record<string, SummonTemplate> = {
         tooltip: "For those about to block (we salute you)",
     },
     
+    rat: {
+        name: "Rat",
+        description: "A rude little rat that likes to bite.",
+        maxhp: 1,
+        power: 1,
+        race: Race.Rat,
+        tooltip: "A rude little rat that likes to bite.",
+    },
+
     // Special summons
     forestGuardian: {
         name: "Forest Guardian",

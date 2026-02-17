@@ -114,6 +114,7 @@ export const dwambatParams: EnemyParams = {
             "doNothing": 2,
             "weakAttack": 4,
             "block": 3,
+            "summonRat": 2,
             "haste": 1,
         }
         for (const [key, count] of Object.entries(cards)) {
@@ -140,6 +141,7 @@ export const gnokkaParams: EnemyParams = {
             "weakMagicAttack": 3,
             "strongMagicAttack": 3,
             "buff": 2,
+            "summonRat": 2,
             "haste": 1,
         }
         for (const [key, count] of Object.entries(cards)) {
@@ -167,6 +169,7 @@ export const squirrelfParams: EnemyParams = {
             "block": 3,
             "buff": 2,
             "heal": 2,
+            "summonRat": 2,
             "haste": 2,
         }
         for (const [key, count] of Object.entries(cards)) {
@@ -195,6 +198,7 @@ export const dingorcParams: EnemyParams = {
             "block": 4,
             "buff": 3,
             "heal": 3,
+            "summonRat": 2,
             "haste": 2,
         }
         for (const [key, count] of Object.entries(cards)) {
