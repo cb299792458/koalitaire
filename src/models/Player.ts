@@ -20,8 +20,8 @@ export interface PlayerParams {
     handSize?: number;
     /** Number of tableau columns. Defaults to 6. */
     columnCount?: number;
-    /** Mana crystals at the start of combat. Defaults to 0. */
-    startingManaCrystals?: number;
+    /** Mana diamonds at the start of combat. Defaults to 0. */
+    startingManaDiamonds?: number;
 
     appeal: number;
     attack: number;
@@ -41,26 +41,29 @@ class Player extends Combatant {
 
     handSize: number;
     columnCount: number;
-    startingManaCrystals: number;
+    startingManaDiamonds: number;
 
     appeal: number;
     attack: number;
     agility: number;
     arcane: number;
 
-    manaCrystals: number = 0;
+    manaDiamonds: number = 0;
     gold: number;
     bytecoins: number = 0;
 
     deck: Card[];
 
+    /** Reference to the original player when this is a combat copy; used to sync HP at combat end. */
+    originalPlayer?: Player;
+
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaCrystals = 0, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
+        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.handSize = handSize;
         this.columnCount = columnCount;
-        this.startingManaCrystals = startingManaCrystals;
+        this.startingManaDiamonds = startingManaDiamonds;
         this.appeal = appeal;
         this.attack = attack;
         this.agility = agility;
@@ -77,6 +80,9 @@ class Player extends Combatant {
     }
 
     protected onDeath(): void {
+        if (this.originalPlayer) {
+            this.originalPlayer.health = this.health;
+        }
         openMessageModal('YOU DIED');
     }
 
@@ -88,7 +94,7 @@ class Player extends Combatant {
             tooltip: this.tooltip,
             handSize: this.handSize,
             columnCount: this.columnCount,
-            startingManaCrystals: this.startingManaCrystals,
+            startingManaDiamonds: this.startingManaDiamonds,
             appeal: this.appeal,
             attack: this.attack,
             armor: this.armor,
@@ -118,7 +124,7 @@ class Player extends Combatant {
         });
         playerCopy.level = this.level;
         playerCopy.health = this.health;
-        playerCopy.manaCrystals = this.startingManaCrystals;
+        playerCopy.manaDiamonds = this.startingManaDiamonds;
         playerCopy.block = this.block;
         playerCopy.bytecoins = this.bytecoins;
         return playerCopy;
@@ -174,7 +180,7 @@ export const testCharacterParams: PlayerParams = {
 
     handSize: Infinity,
     columnCount: 1,
-    startingManaCrystals: 1000,
+    startingManaDiamonds: 1000,
 
     appeal: 0,
     attack: 0,

@@ -6,7 +6,7 @@ const allCards = {
     [Suit.Wood]: [
         {
             name: "Summon Koala",
-            description: "Summon a Koala. At the end of each turn, gain 1 mana crystal.",
+            description: "Summon a Koala. At the end of each turn, gain 1 mana diamond.",
             effect: (combat: Combat) => {
                 const { player } = combat;
                 const koala = summons.koala;
@@ -200,50 +200,50 @@ const allCards = {
         },
         {
             name: "Very Weak Channel",
-            description: "Gain 2 Mana Crystals",
+            description: "Gain 2 Mana Diamonds",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.manaCrystals += 2;
+                player.manaDiamonds += 2;
             },
         },
         {
             name: "Weak Channel",
-            description: "Gain 4 Mana Crystals",
+            description: "Gain 4 Mana Diamonds",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.manaCrystals += 4;
+                player.manaDiamonds += 4;
             },
         },
         {
             name: "Moderate Channel",
-            description: "Gain 6 Mana Crystals",
+            description: "Gain 6 Mana Diamonds",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.manaCrystals += 6;
+                player.manaDiamonds += 6;
             },
         },
         {
             name: "Strong Channel",
-            description: "Gain 9 Mana Crystals",
+            description: "Gain 9 Mana Diamonds",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.manaCrystals += 9;
+                player.manaDiamonds += 9;
             },
         },
         {
             name: "Very Strong Channel",
-            description: "Gain 13 Mana Crystals",
+            description: "Gain 13 Mana Diamonds",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.manaCrystals += 13;
+                player.manaDiamonds += 13;
             },
         },
         {
             name: "Critical Channel",
-            description: "Gain 18 Mana Crystals",
+            description: "Gain 18 Mana Diamonds",
             effect: (combat: Combat) => {
                 const { player } = combat;
-                player.manaCrystals += 18;
+                player.manaDiamonds += 18;
             },
         },
     ],

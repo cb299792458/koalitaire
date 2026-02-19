@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { computed, ref } from 'vue';
+    import { computed, ref, watch } from 'vue';
     import type Card from '../models/Card';
     import { Suit, type SpellCard } from '../models/Card';
     import { getKeywordExplanation } from '../game/keywords';
@@ -76,6 +76,55 @@
         const kw = card.keywords ?? [];
         return kw.map((id) => ({ id, text: getKeywordExplanation(id) }));
     });
+
+    const cardArtworkName = computed(() => {
+        if (isSpell.value && spellCard.value) return spellCard.value.name;
+        return '';
+    });
+
+    const artworkBasePath = computed(() => {
+        const name = String(cardArtworkName.value).replace(/\s+/g, '_');
+        return `/cards/${name}`;
+    });
+
+    const artworkBasePathWithSpaces = computed(() => {
+        const name = String(cardArtworkName.value);
+        return `/cards/${encodeURIComponent(name)}`;
+    });
+
+    const artworkSrc = ref<string | null>(null);
+    const artworkVisible = ref(false);
+
+    const artworkFallbacks = computed(() => [
+        `${artworkBasePath.value}.png`,
+        `${artworkBasePath.value}.jpg`,
+        `${artworkBasePathWithSpaces.value}.png`,
+        `${artworkBasePathWithSpaces.value}.jpg`,
+    ]);
+
+    function resetArtwork() {
+        artworkSrc.value = artworkFallbacks.value[0] ?? null;
+        artworkVisible.value = true;
+    }
+
+    function onArtworkError() {
+        const fallbacks = artworkFallbacks.value;
+        const currentIdx = fallbacks.findIndex((url) => artworkSrc.value === url);
+        if (currentIdx >= 0 && currentIdx < fallbacks.length - 1) {
+            artworkSrc.value = fallbacks[currentIdx + 1] ?? '/unknown.jpg';
+        } else {
+            artworkSrc.value = '/unknown.jpg';
+        }
+    }
+
+    function onArtworkLoad() {
+        artworkVisible.value = true;
+    }
+
+    watch(() => card, () => {
+        if (isSpell.value) resetArtwork();
+        else artworkVisible.value = false;
+    }, { immediate: true });
 </script>
 
 <template>
@@ -113,8 +162,19 @@
                 </div>
                 <span class="spell-card-name">{{ spellCard.name }}</span>
             </div>
-            <p v-if="Number.isFinite(spellCard.charges)" class="spell-card-charges">{{ spellCard.charges }} {{ spellCard.charges === 1 ? 'charge' : 'charges' }}</p>
-            <p class="card-description spell-card-description">{{ spellCard.description }}</p>
+            <div v-if="artworkVisible && artworkSrc" class="card-artwork-container">
+                <img
+                    :src="artworkSrc"
+                    :alt="spellCard.name"
+                    class="card-artwork"
+                    @error="onArtworkError"
+                    @load="onArtworkLoad"
+                />
+            </div>
+            <div class="spell-card-bottom">
+                <p class="card-description spell-card-description">{{ spellCard.description }}</p>
+                <p v-if="Number.isFinite(spellCard.charges)" class="spell-card-charges">{{ spellCard.charges }} {{ spellCard.charges === 1 ? 'charge' : 'charges' }}</p>
+            </div>
         </div>
         <div v-else class="card-front playing-card">
             <div class="card-top spell-card-top" :class="card.suit">
@@ -190,6 +250,23 @@
     margin-top: 8px;
     font-style: italic;
     color: rgba(255, 255, 255, 0.85);
+}
+
+.card-artwork-container {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: 50%;
+    margin: 2px 3px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.card-artwork {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 </style>

@@ -26,9 +26,10 @@
     
     combat.onEnemyDefeatedContinue = () => {
         closeModal();
-        if (!combat.player) return;
-        combat.player.level += 1;
-        startCombatForPlayer(combat.player);
+        const persistentPlayer = combat.originalPlayer ?? combat.player;
+        if (!persistentPlayer) return;
+        persistentPlayer.level += 1;
+        startCombatForPlayer(persistentPlayer);
     };
         
     // Create computed refs for player and enemy for template reactivity  
@@ -61,13 +62,13 @@
         const card = selectedCard.value;
         if (!card || !card.revealed) return false;
         
-        // Check if card is castable (uses manaCrystals)
+        // Check if card is castable (uses mana diamonds)
         return combat.isSelectedCardPlayable();
     });
     
-    const manaCrystalsCost = computed(() => {
-        const cost = combat.getManaCrystalsNeededForCast();
-        // Only show cost if card is castable (player has enough mana crystals)
+    const manaDiamondsCost = computed(() => {
+        const cost = combat.getManaDiamondsNeededForCast();
+        // Only show cost if card is castable (player has enough mana diamonds)
         if (cost > 0 && combat.isSelectedCardPlayable()) {
             return cost;
         }
@@ -75,7 +76,7 @@
     });
     
     const compostHighlightType = computed(() => {
-        const cost = combat.getManaCrystalsNeededForCast();
+        const cost = combat.getManaDiamondsNeededForCast();
         // If cost is 0, use burn highlight (red), otherwise use cast highlight (blue)
         return cost === 0 ? 'burn' : 'cast';
     });
@@ -179,9 +180,10 @@
 
     onMounted(() => {
         town.onLeaveTown(() => {
-            if (!combat.player) return;
-            combat.player.level += 1;
-            startCombatForPlayer(combat.player);
+            const persistentPlayer = town.player.value ?? combat.originalPlayer ?? combat.player;
+            if (!persistentPlayer) return;
+            persistentPlayer.level += 1;
+            startCombatForPlayer(persistentPlayer);
         });
         if (!hasChosenCharacterRef.value) {
             openModal(
@@ -242,8 +244,8 @@
                                         <div class="deck-reshuffles">Reshuffles: {{ reshuffles }}</div>
                                     </div>
                                     <div class="compost-wrapper">
-                                        <div v-if="manaCrystalsCost !== null" class="mana-crystals-cost">
-                                            -{{ manaCrystalsCost }} mana crystals
+                                        <div v-if="manaDiamondsCost !== null" class="mana-diamonds-cost">
+                                            -{{ manaDiamondsCost }} mana diamonds
                                         </div>
                                         <div v-if="showCastSpellText" class="cast-spell-text">
                                             Cast Spell

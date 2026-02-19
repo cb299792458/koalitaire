@@ -28,7 +28,7 @@ export function createSummon(template: SummonTemplate): Summon {
 // Summon definitions
 export const summons: Record<string, SummonTemplate> = {
     collaborator: {
-        name: "Collaborator",
+        name: "Koalaborator",
         description: "Does nothing.",
         maxhp: 1,
         power: 0,

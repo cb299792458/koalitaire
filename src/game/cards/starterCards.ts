@@ -23,7 +23,6 @@ const scorch = {
     suit: Suit.Fire,
     name: 'Scorch',
     description: 'Deals 8 magic damage, plus your Arcane.',
-    charges: 1,
     keywords: [Keyword.Magic],
     effect: (combat: Combat) => {
         const { enemy, player } = combat;

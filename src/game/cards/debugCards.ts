@@ -3,7 +3,7 @@ import { Suit } from "../../models/Card";
 import { DamageType } from "../../models/DamageType";
 
 /**
- * Zero-rank Koala suit cards for testing. Cost 0 mana crystals to cast.
+ * Zero-rank Koala suit cards for testing. Cost 0 mana diamonds to cast.
  * Koala is a debug-only suit not used in normal gameplay.
  */
 

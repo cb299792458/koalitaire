@@ -11,7 +11,7 @@ export enum Keyword {
     Backstab = 'backstab',
     Aoe = 'aoe',
     Charges = 'charges',
-    ManaCrystal = 'manaCrystal',
+    ManaDiamond = 'manaDiamond',
 }
 
 /** Tooltip explanation for each keyword. Keep tone consistent: "[Keyword]: [concise rule]." */
@@ -25,7 +25,7 @@ export const KEYWORD_EXPLANATIONS: Record<Keyword, string> = {
     [Keyword.Backstab]: 'Backstab: Deals damage to the back summon first. If there are no summons, deals double damage to the player/enemy.',
     [Keyword.Aoe]: 'Aoe: Deals damage to all summons and to the player/enemy.',
     [Keyword.Charges]: 'Charges: This spell has limited uses per combat. When the last charge is used, the card is trashed.',
-    [Keyword.ManaCrystal]: 'Mana Crystal: Can be used to pay for the difference between the card\'s rank and the number of cards in the corresponding mana pool.',
+    [Keyword.ManaDiamond]: 'Mana Diamond: Can be used to pay for the difference between the card\'s rank and the number of cards in the corresponding mana pool.',
 };
 
 export function getKeywordExplanation(keyword: string): string {

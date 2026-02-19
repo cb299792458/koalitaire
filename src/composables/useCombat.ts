@@ -19,6 +19,8 @@ export class Combat {
     // Game entities
     player: Player;
     enemy: Enemy;
+    /** The original player (persistent); combat uses a copy. HP is synced from copy to original at combat end. */
+    originalPlayer: Player | null = null;
     
     // Game state
     selectedCard: Card | null;
@@ -60,10 +62,14 @@ export class Combat {
     // ==================== Lifecycle Methods ====================
 
     /**
-     * Start a new combat by copying the given player and enemy
+     * Start a new combat by copying the given player and enemy.
+     * The copy is used during combat so stat changes are not permanent.
+     * HP changes are synced to the original at combat end.
      */
     start(player: Player, enemy: Enemy): void {
+        this.originalPlayer = player;
         this.player = player.copy();
+        this.player.originalPlayer = player;
         this.enemy = enemy;
         
         // Reset game state
@@ -104,7 +110,7 @@ export class Combat {
         // Reset player state
         if (this.player) {
             this.player.block = 0;
-            this.player.manaCrystals = this.player.startingManaCrystals;
+            this.player.manaDiamonds = this.player.startingManaDiamonds;
         }
         
         this.startTurn();
@@ -206,6 +212,11 @@ export class Combat {
     
     private defeatEnemy(): void {
         if (!this.player) return;
+
+        // Sync HP from combat copy to original so damage/healing persists
+        if (this.player.originalPlayer) {
+            this.player.originalPlayer.health = this.player.health;
+        }
         
         // Open enemy defeated modal first; level is advanced when user clicks Continue
         openModal('enemyDefeated', { 
@@ -458,18 +469,18 @@ export class Combat {
         setTimeout(() => {
             if (!this.player || !this.enemy) return;
             
-            // Calculate and remove manaCrystals needed
+            // Calculate and remove mana diamonds needed
             const manaPool = this.manaPools[selectedCard.suit];
             if (selectedCard.suit === Suit.Koala) {
                 if (selectedCard.rank > 0) {
-                    this.player.manaCrystals -= selectedCard.rank;
-                    if (this.player.manaCrystals < 0) this.player.manaCrystals = 0;
+                    this.player.manaDiamonds -= selectedCard.rank;
+                    if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
                 }
             } else if (manaPool) {
-                const manaCrystalsNeeded = selectedCard.rank - manaPool.cards.length;
-                if (manaCrystalsNeeded > 0) {
-                    this.player.manaCrystals -= manaCrystalsNeeded;
-                    if (this.player.manaCrystals < 0) this.player.manaCrystals = 0;
+                const manaDiamondsNeeded = selectedCard.rank - manaPool.cards.length;
+                if (manaDiamondsNeeded > 0) {
+                    this.player.manaDiamonds -= manaDiamondsNeeded;
+                    if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
                 }
                 const cardsToDiscard = manaPool.cards.slice(-selectedCard.rank);
                 for (const card of cardsToDiscard) {
@@ -528,21 +539,21 @@ export class Combat {
 
         // Koala (debug) suit: cost is rank, no mana pool needed
         if (suit === Suit.Koala) {
-            return rank <= this.player.manaCrystals;
+            return rank <= this.player.manaDiamonds;
         }
 
         const manaPool = this.manaPools[suit];
         if (!manaPool) return false;
 
-        const manaCrystalsNeeded = rank - manaPool.cards.length;
-        return manaCrystalsNeeded <= this.player.manaCrystals;
+        const manaDiamondsNeeded = rank - manaPool.cards.length;
+        return manaDiamondsNeeded <= this.player.manaDiamonds;
     }
 
     /**
-     * Get the number of mana crystals needed to cast the selected card
+     * Get the number of mana diamonds needed to cast the selected card
      * Returns -1 if the card cannot be cast or calculation is not applicable
      */
-    getManaCrystalsNeededForCast(): number {
+    getManaDiamondsNeededForCast(): number {
         if (!this.selectedCard || !this.selectedCard.revealed || !this.player) return -1;
         
         const { rank, suit } = this.selectedCard;
@@ -561,8 +572,8 @@ export class Combat {
         const manaPool = this.manaPools[suit];
         if (!manaPool) return -1;
 
-        const manaCrystalsNeeded = rank - manaPool.cards.length;
-        return manaCrystalsNeeded > 0 ? manaCrystalsNeeded : 0;
+        const manaDiamondsNeeded = rank - manaPool.cards.length;
+        return manaDiamondsNeeded > 0 ? manaDiamondsNeeded : 0;
     }
 
     /**
