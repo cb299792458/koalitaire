@@ -153,7 +153,7 @@
         return combat.canPlaceSelectedCardInTableau();
     });
     
-    function startCombatForPlayer(newPlayer: Player) {
+    async function startCombatForPlayer(newPlayer: Player) {
         const entry = scenario[newPlayer.level] as ScenarioEntry | undefined;
         if (!entry) return;
         if ('town' in entry && entry.town) {
@@ -167,7 +167,7 @@
         }
         if ('enemy' in entry && entry.enemy) {
             eventState.resetEventState();
-            combat.start(newPlayer, entry.enemy);
+            await combat.start(newPlayer, entry.enemy);
         }
     }
     

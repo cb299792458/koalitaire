@@ -1,6 +1,7 @@
 import { ref, type Ref } from 'vue';
 import type Player from '../models/Player';
 import type { Event, EventOption } from '../models/Event';
+import { playSound } from '../utils/sounds';
 
 const playerRef = ref<Player | null>(null);
 const currentEventRef = ref<Event | null>(null);
@@ -81,6 +82,7 @@ export function useEvent(): {
                 option.failure!.effect(p as Player);
                 resultMessageRef.value = option.failure!.message;
             } else if (hasSuccess && hasFailure) {
+                playSound('dice', 'mp3');
                 const playerRoll = rollD20();
                 const eventRoll = rollD20();
                 const statBonus = option.stat ? getPlayerStat(p as Player, option.stat) : 0;

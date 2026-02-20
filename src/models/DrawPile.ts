@@ -1,5 +1,6 @@
 import type Card from "./Card";
 import CardGroup from "./CardGroup";
+import { playSoundAndWait } from "../utils/sounds";
 
 class DrawPile extends CardGroup {
     constructor(cards: Card[] = []) {
@@ -59,9 +60,10 @@ class DrawPile extends CardGroup {
     }
 
     /**
-     * Shuffle the draw pile
+     * Shuffle the draw pile. Waits for shuffle sound to finish before resolving.
      */
-    shuffle(): void {
+    async shuffle(): Promise<void> {
+        await playSoundAndWait('shuffle');
         // Fisher-Yates shuffle
         for (let i = this.cards.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));

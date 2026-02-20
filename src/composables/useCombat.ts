@@ -14,6 +14,7 @@ import ManaPool from '../models/ManaPool';
 // Types & Constants
 import { AREAS, type Area } from '../models/Areas';
 import { openModal, closeModal } from '../stores/modalStore';
+import { playSound } from '../utils/sounds';
 
 export class Combat {
     // Game entities
@@ -32,6 +33,12 @@ export class Combat {
     manaPools: Record<string, ManaPool>;
     isProcessingTurn: boolean;
     reshuffles: number;
+    
+    /** Incremented when start() is called; delayed callbacks check this to no-op if combat changed. */
+    private combatVersion: number = 0;
+    /** Resolves when current turn processing (endTurn, etc.) finishes. */
+    private processingTurnResolve: (() => void) | null = null;
+    private processingTurnPromise: Promise<void> = Promise.resolve();
     
     // Observer pattern
     listeners: Set<() => void>;
@@ -66,17 +73,33 @@ export class Combat {
      * The copy is used during combat so stat changes are not permanent.
      * HP changes are synced to the original at combat end.
      */
-    start(player: Player, enemy: Enemy): void {
-        this.originalPlayer = player;
-        this.player = player.copy();
-        this.player.originalPlayer = player;
-        this.enemy = enemy;
+    async start(player: Player, enemy: Enemy): Promise<void> {
+        // Wait for any in-progress turn processing (shuffle, dealing, etc.) to finish
+        await this.processingTurnPromise;
         
-        // Reset game state
-        if (!this.player) {
+        this.combatVersion += 1; // Invalidate any pending delayed callbacks from previous combat
+        this.processingTurnPromise = new Promise<void>(resolve => {
+            this.processingTurnResolve = resolve;
+        });
+        
+        try {
+            this.originalPlayer = player;
+            this.player = player.copy();
+            this.player.originalPlayer = player;
+            this.enemy = enemy;
+            
+            // Clear all piles first to ensure clean slate from any previous combat
             this.deck.clear();
-        } else {
-            const deckCards = this.player.deck.map((card) => {
+            this.compost.clear();
+            this.trash.clear();
+            this.hand.clear();
+            Object.values(this.manaPools).forEach(pool => pool.clear());
+            
+            // Reset game state
+            if (!this.player) {
+                // deck already cleared
+            } else {
+                const deckCards = this.player.deck.map((card) => {
                 // Preserve SpellCard instances
                 if (card.isSpell) {
                     const spellCard = card as SpellCard;
@@ -93,29 +116,29 @@ export class Combat {
                 } else {
                     return new Card(card.rank, card.suit);
                 }
-            });
-            this.deck.initialize(deckCards);
-        }
+                });
+                this.deck.initialize(deckCards);
+            }
 
-        this.compost.clear();
-        this.trash.clear();
-        Object.values(this.manaPools).forEach(pool => pool.clear());
-        this.hand.clear();
-        this.reshuffles = 2;
+            this.reshuffles = 2;
 
-        this.initializeTableau();
-        this.shuffleDeck();
-        this.dealTableau();
-        
-        // Reset player state
-        if (this.player) {
-            this.player.block = 0;
-            this.player.manaDiamonds = this.player.startingManaDiamonds;
+            this.initializeTableau();
+            await this.shuffleDeck();
+            this.dealTableau();
+            
+            // Reset player state
+            if (this.player) {
+                this.player.block = 0;
+                this.player.manaDiamonds = this.player.startingManaDiamonds;
+            }
+            
+            this.startTurn();
+            
+            this.notify();
+        } finally {
+            this.processingTurnResolve?.();
+            this.processingTurnResolve = null;
         }
-        
-        this.startTurn();
-        
-        this.notify();
     }
 
     // ==================== Turn Management ====================
@@ -137,6 +160,9 @@ export class Combat {
         if (this.isProcessingTurn) return; // Prevent multiple simultaneous end turns
 
         this.isProcessingTurn = true;
+        this.processingTurnPromise = new Promise<void>(resolve => {
+            this.processingTurnResolve = resolve;
+        });
         this.notify();
 
         // Discard hand into compost at start of end turn
@@ -155,6 +181,8 @@ export class Combat {
                 },
             });
             this.isProcessingTurn = false;
+            this.processingTurnResolve?.();
+            this.processingTurnResolve = null;
             this.notify();
             return;
         }
@@ -163,6 +191,8 @@ export class Combat {
             await this.runRestOfTurn();
         } finally {
             this.isProcessingTurn = false;
+            this.processingTurnResolve?.();
+            this.processingTurnResolve = null;
             this.notify();
         }
     }
@@ -193,7 +223,7 @@ export class Combat {
 
         if (this.deck.isEmpty() && this.reshuffles > 0) {
             this.compost.recycleInto(this.deck);
-            this.deck.shuffle();
+            await this.deck.shuffle();
             this.reshuffles -= 1;
         }
 
@@ -240,6 +270,9 @@ export class Combat {
         if (!this.player || !this.enemy) return;
 
         this.isProcessingTurn = true;
+        this.processingTurnPromise = new Promise<void>(resolve => {
+            this.processingTurnResolve = resolve;
+        });
         this.notify();
         try {
             this.compost.addCards([...this.hand.cards]);
@@ -253,7 +286,7 @@ export class Combat {
                 pool.clear();
             }
             this.compost.recycleInto(this.deck);
-            this.deck.shuffle();
+            await this.deck.shuffle();
             this.tableau.clear();
             this.dealTableau();
             this.reshuffles = 2;
@@ -262,6 +295,8 @@ export class Combat {
             await this.runRestOfTurn();
         } finally {
             this.isProcessingTurn = false;
+            this.processingTurnResolve?.();
+            this.processingTurnResolve = null;
             this.notify();
         }
     }
@@ -289,14 +324,24 @@ export class Combat {
         for (let i = 0; i < drawnCards.length; i++) {
             const card = drawnCards[i];
             if (!card) continue;
-            setTimeout(() => {
+            this.runAfterDelay(i * 100, () => {
+                playSound('draw');
                 card.animateDraw();
-            }, i * 100);
+            });
         }
     }
 
-    shuffleDeck(): void {
-        this.deck.shuffle();
+    async shuffleDeck(): Promise<void> {
+        await this.deck.shuffle();
+    }
+
+    /** Run callback after delay; no-ops if combat has been restarted (combatVersion changed). */
+    private runAfterDelay(ms: number, fn: () => void): void {
+        const version = this.combatVersion;
+        setTimeout(() => {
+            if (this.combatVersion !== version) return;
+            fn();
+        }, ms);
     }
 
     // ==================== Tableau Management ====================
@@ -451,10 +496,11 @@ export class Combat {
         if (!this.selectedCard || !this.canBurnSelectedCard()) return;
 
         const selectedCard = this.selectedCard;
+        playSound('mana');
         selectedCard.animateBurn();
-        setTimeout(() => {
+        this.runAfterDelay(1200, () => {
             this.moveCardToArea(selectedCard, AREAS.ManaPools);
-        }, 1200); // Match burn animation time (1.2s)
+        }); // Match burn animation time (1.2s)
 
         this.setSelectedCard(null);
     }
@@ -464,9 +510,10 @@ export class Combat {
         if (!this.canCastSelectedCard()) return;
 
         const selectedCard = this.selectedCard;
+        playSound('cast');
         selectedCard.animate();
         
-        setTimeout(() => {
+        this.runAfterDelay(selectedCard.animationTime, () => {
             if (!this.player || !this.enemy) return;
             
             // Calculate and remove mana diamonds needed
@@ -517,7 +564,7 @@ export class Combat {
         }
             
             this.notify();
-        }, selectedCard.animationTime);
+        });
         
         this.setSelectedCard(null);
     }
@@ -658,13 +705,14 @@ export class Combat {
         const movable = this.getCardsMovableToManaPools();
         if (movable.length === 0) return;
         const card = movable[0]!;
+        playSound('mana');
         card.animateMoveToMana();
         this.notify();
-        setTimeout(() => {
+        this.runAfterDelay(Combat.MOVE_TO_MANA_ANIMATION_MS, () => {
             this.moveCardToArea(card, AREAS.ManaPools);
             this.notify();
-            setTimeout(() => this.scheduleNextMoveToMana(), Combat.MOVE_TO_MANA_GAP_MS);
-        }, Combat.MOVE_TO_MANA_ANIMATION_MS);
+            this.runAfterDelay(Combat.MOVE_TO_MANA_GAP_MS, () => this.scheduleNextMoveToMana());
+        });
     }
 
     /**
@@ -728,26 +776,28 @@ export class Combat {
         const handIndex = this.hand.cards.indexOf(selectedCard);
         if (handIndex !== -1) {
             // Move from hand
+            playSound('move');
             selectedCard.animateTableauMove();
-            setTimeout(() => {
+            this.runAfterDelay(450, () => {
                 this.hand.cards.splice(handIndex, 1);
                 clickedColumn.add(selectedCard);
                 this.setSelectedCard(null);
                 this.notify();
-            }, 450); // Match animation time (400ms + 50ms delay)
+            }); // Match animation time (400ms + 50ms delay)
             return;
         }
         if (this.isTopCardOfManaPool(selectedCard)) {
             // Move top card from mana pool to tableau
             const pool = this.manaPools[selectedCard.suit];
             if (!pool) return;
+            playSound('move');
             selectedCard.animateTableauMove();
-            setTimeout(() => {
+            this.runAfterDelay(450, () => {
                 pool.removeCard(selectedCard);
                 clickedColumn.add(selectedCard);
                 this.setSelectedCard(null);
                 this.notify();
-            }, 450);
+            });
             return;
         }
         {
@@ -769,8 +819,9 @@ export class Combat {
             }
 
             // Move card and all below it
+            playSound('move');
             selectedCard.animateTableauMove();
-            setTimeout(() => {
+            this.runAfterDelay(450, () => {
                 const cardsToMove = selectedCardColumn.cards.slice(selectedCardJndex);
                 clickedColumn.cards.push(...cardsToMove);
                 selectedCardColumn.cards.splice(selectedCardJndex, cardsToMove.length);
@@ -782,7 +833,7 @@ export class Combat {
                 }
                 this.setSelectedCard(null);
                 this.notify();
-            }, 450); // Match animation time (400ms + 50ms delay)
+            }); // Match animation time (400ms + 50ms delay)
             return; // Early return since we're handling notify in setTimeout
         }
     }
