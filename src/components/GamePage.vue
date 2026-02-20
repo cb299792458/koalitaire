@@ -12,10 +12,13 @@
     import type Player from '../models/Player';
     import ManaPool from '../models/ManaPool';
     import { useTown } from '../composables/useTown';
+    import { useEvent } from '../composables/useEvent';
     import { hasChosenCharacterRef } from '../composables/useCombat';
+    import EventView from './EventView.vue';
 
     const scenario = makeScenario();
     const town = useTown();
+    const eventState = useEvent();
 
     const combat = useCombat(); // useCombat always returns a Combat instance
     
@@ -33,7 +36,7 @@
     };
         
     // Create computed refs for player and enemy for template reactivity  
-    const player = computed(() => combat.player);
+    const player = computed(() => isInEvent.value ? eventState.player.value : combat.player);
     const enemy = computed(() => combat.enemy);
     
     const deck = combat.deck;
@@ -50,6 +53,14 @@
     });
 
     const canMoveToManaPools = computed(() => combat.getCardsMovableToManaPools().length > 0);
+
+    const isInEvent = computed(() => eventState.isInEvent.value);
+    const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value);
+    const eventEventRoll = computed(() => eventState.lastEventRoll.value);
+    const eventStatBonus = computed(() => eventState.lastStatBonus.value);
+    const eventStat = computed(() => eventState.lastStat.value);
+    const eventResultMessage = computed(() => eventState.resultMessage.value);
+    const eventIsResolving = computed(() => eventState.isResolving.value);
 
     const deckCount = computed(() => combat.deck.cards.length);
     const reshuffles = computed(() => combat.reshuffles);
@@ -146,10 +157,16 @@
         const entry = scenario[newPlayer.level] as ScenarioEntry | undefined;
         if (!entry) return;
         if ('town' in entry && entry.town) {
+            eventState.resetEventState();
             town.enterTown(newPlayer);
             return;
         }
+        if ('event' in entry && entry.event) {
+            eventState.enterEvent(newPlayer, entry.event);
+            return;
+        }
         if ('enemy' in entry && entry.enemy) {
+            eventState.resetEventState();
             combat.start(newPlayer, entry.enemy);
         }
     }
@@ -179,6 +196,12 @@
     }
 
     onMounted(() => {
+        eventState.onLeaveEvent(() => {
+            const persistentPlayer = eventState.player.value ?? combat.originalPlayer ?? combat.player;
+            if (!persistentPlayer) return;
+            persistentPlayer.level += 1;
+            startCombatForPlayer(persistentPlayer);
+        });
         town.onLeaveTown(() => {
             const persistentPlayer = town.player.value ?? combat.originalPlayer ?? combat.player;
             if (!persistentPlayer) return;
@@ -228,9 +251,18 @@
                         <div class="combat-left">
                             <h1>Player</h1>
                             <PlayerInfo :player="player" />
+                            <div v-if="isInEvent && eventPlayerRoll !== null" class="event-roll-display event-roll-display--player">
+                                <p class="event-roll-label">Roll</p>
+                                <p class="event-roll-value">
+                                    {{ eventPlayerRoll }}{{ eventStatBonus !== null && eventStatBonus !== 0 ? ` + ${eventStatBonus} ${eventStat}` : '' }}
+                                    = {{ eventPlayerRoll! + (eventStatBonus ?? 0) }}
+                                </p>
+                            </div>
                         </div>
             
                         <div class="combat-middle">
+                            <EventView v-if="isInEvent" />
+                            <template v-else>
                             <div class="cards-top">
                                 <div class="cards-top-left">
                                     <div class="deck-wrapper">
@@ -311,32 +343,67 @@
                                     @click="onClick"
                                 />
                             </div>
+                            </template>
                         </div>
             
                         <div class="combat-right">
-                            <h1>Enemy</h1>
-                            <EnemyInfo :enemy="enemy" />
+                            <template v-if="isInEvent">
+                                <h1>Event</h1>
+                                <div class="event-name-panel" v-if="eventState.currentEvent.value">
+                                    <h2 class="event-name">{{ eventState.currentEvent.value.name }}</h2>
+                                    <div v-if="eventEventRoll !== null" class="event-roll-display event-roll-display--event">
+                                        <p class="event-roll-label">Roll</p>
+                                        <p class="event-roll-value">{{ eventEventRoll }}</p>
+                                    </div>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <h1>Enemy</h1>
+                                <EnemyInfo :enemy="enemy" />
+                            </template>
                         </div>
                     </div>
             
                     <div class="combat-bottom">
-                        <div class="cards-hand">
-                            <CardStack
-                                :cards="hand.cards"
-                                :name="AREAS.Hand"
-                                layout="horizontal"
-                                :selectedCard="selectedCard"
-                                @click="onClick"
-                            />
-                        </div>
-                        <div class="combat-bottom-buttons">
-                            <button 
-                                @click="combat.endTurn" 
-                                id="end-turn-button"
-                                :disabled="combat.isProcessingTurn"
-                                v-if="!combat.isProcessingTurn"
-                            >End Turn</button>
-                        </div>
+                        <template v-if="isInEvent">
+                            <div class="event-choices-area">
+                                <div v-if="!eventResultMessage" class="event-choices">
+                                    <button
+                                        v-for="(option, index) in eventState.currentEvent.value?.options ?? []"
+                                        :key="index"
+                                        type="button"
+                                        class="event-choice"
+                                        :disabled="eventIsResolving"
+                                        @click="eventState.resolveChoice(option)"
+                                    >
+                                        {{ eventState.choiceLabel(option) }}
+                                    </button>
+                                </div>
+                                <div v-else class="event-result">
+                                    <p class="event-result-message">{{ eventResultMessage }}</p>
+                                    <button class="event-continue" @click="eventState.onEventContinue">Continue</button>
+                                </div>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="cards-hand">
+                                <CardStack
+                                    :cards="hand.cards"
+                                    :name="AREAS.Hand"
+                                    layout="horizontal"
+                                    :selectedCard="selectedCard"
+                                    @click="onClick"
+                                />
+                            </div>
+                            <div class="combat-bottom-buttons">
+                                <button 
+                                    @click="combat.endTurn" 
+                                    id="end-turn-button"
+                                    :disabled="combat.isProcessingTurn"
+                                    v-if="!combat.isProcessingTurn"
+                                >End Turn</button>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

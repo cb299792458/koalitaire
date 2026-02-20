@@ -78,9 +78,6 @@
             .filter((p): p is (typeof townPlaces)[number] => p != null);
     });
 
-    const firstRowPlaces = computed(() => visiblePlaces.value.slice(0, 2));
-    const secondRowPlaces = computed(() => visiblePlaces.value.slice(2));
-
     const currentLocation = ref<TownPlaceId | null>(null);
 
     const locationLabel = () => {
@@ -211,41 +208,10 @@
                         </div>
 
                         <div class="town-middle">
-                            <div class="town-places">
-                                <div class="town-places-row">
-                                    <button
-                                        v-for="place in firstRowPlaces"
-                                        :key="place.id"
-                                        type="button"
-                                        class="town-place"
-                                        @click="onPlaceClick(place.id)"
-                                    >
-                                        {{ place.label }}
-                                    </button>
-                                </div>
-                                <div class="town-places-row">
-                                    <button
-                                        v-for="place in secondRowPlaces"
-                                        :key="place.id"
-                                        type="button"
-                                        class="town-place"
-                                        @click="onPlaceClick(place.id)"
-                                    >
-                                        {{ place.label }}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="town-right">
-                            <div class="town-location">
-                                <p class="town-location-welcome">{{ locationWelcomeMessage() }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="town-bottom">
-                        <div class="town-choices">
+                            <div class="town-location-content">
+                                <h2 class="town-location-name">{{ locationLabel() }}</h2>
+                                <p class="town-location-description">{{ locationWelcomeMessage() }}</p>
+                                <div class="town-choices">
                             <template v-if="currentLocation === 'inn'">
                                 <button
                                     type="button"
@@ -346,7 +312,31 @@
                                     Increase {{ STAT_STORE_LABELS[currentLocation] }} (−{{ getStatUpgradeCostFor(currentLocation) }} 🍃)
                                 </button>
                             </template>
+                            <template v-else>
+                                <p class="town-placeholder-msg">Select a location to get started.</p>
+                            </template>
+                                </div>
+                            </div>
                         </div>
+
+                        <div class="town-right">
+                            <h1>Locations</h1>
+                            <div class="town-places">
+                                <button
+                                    v-for="place in visiblePlaces"
+                                    :key="place.id"
+                                    type="button"
+                                    class="town-place"
+                                    :class="{ 'town-place--selected': currentLocation === place.id }"
+                                    @click="onPlaceClick(place.id)"
+                                >
+                                    {{ place.label }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="town-bottom">
                         <button type="button" class="leave-town-button" @click="leave">
                             Leave Town
                         </button>
@@ -366,60 +356,65 @@
         background-color: #2d4a3e;
     }
 
-    .town-places {
+    .town-location-content {
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 24px;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         padding: 24px;
+        gap: 16px;
+        overflow-y: auto;
     }
 
-    .town-places-row {
+    .town-location-name {
+        margin: 0;
+        font-size: 1.75rem;
+        text-align: center;
+        color: #333;
+    }
+
+    .town-location-description {
+        margin: 0;
+        font-size: 1.1rem;
+        text-align: center;
+        line-height: 1.5;
+        color: #444;
+    }
+
+    .town-places {
         display: flex;
-        flex-wrap: wrap;
-        gap: 24px;
-        justify-content: center;
-        align-items: center;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+        width: 100%;
+        overflow-y: auto;
     }
 
     .town-place {
-        padding: 24px 48px;
-        font-size: 1.25rem;
+        padding: 14px 24px;
+        font-size: 1rem;
         background-color: #4a7c59;
         color: #f0e6d3;
         border: 2px solid #3d6b4a;
-        border-radius: 12px;
+        border-radius: 8px;
         cursor: pointer;
-        min-width: 140px;
+        text-align: left;
     }
 
     .town-place:hover {
         background-color: #5a9c69;
     }
 
-    .town-location {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        padding: 16px;
-        color: #f0e6d3;
-    }
-
-    .town-location-welcome {
-        font-size: 1.5rem;
+    .town-place--selected {
+        background-color: #3d6b4a;
+        border-color: #2d5a3a;
         font-weight: bold;
-        margin: 0;
-        text-align: center;
-        color: black;
     }
 
     .town-choices {
-        flex: 1;
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         justify-content: center;
         gap: 12px;
@@ -572,5 +567,9 @@
 
     .leave-town-button:hover {
         background-color: #5a9c69;
+    }
+
+    .town-bottom {
+        justify-content: center;
     }
 </style>
