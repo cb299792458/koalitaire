@@ -10,10 +10,23 @@
     }>();
 
     const CURSOR_OFFSET = 12;
+    const TOOLTIP_EDGE_PADDING = 20;
     const tooltipX = ref(0);
     const tooltipY = ref(0);
+    const tooltipRef = ref<HTMLElement | null>(null);
     const showTooltip = ref(false);
     let showDelay: ReturnType<typeof setTimeout> | null = null;
+
+    const tooltipStyle = computed(() => {
+        const x = tooltipX.value;
+        const y = tooltipY.value;
+        const height = tooltipRef.value?.offsetHeight ?? 80;
+        const wouldOverflowBottom = y + height > window.innerHeight - TOOLTIP_EDGE_PADDING;
+        return {
+            left: x + 'px',
+            top: wouldOverflowBottom ? (y - height - TOOLTIP_EDGE_PADDING) + 'px' : y + 'px',
+        };
+    });
 
     function onPortraitMouseMove(e: MouseEvent) {
         tooltipX.value = e.clientX + CURSOR_OFFSET;
@@ -69,9 +82,10 @@
             <img :src="props.enemy.portrait" alt="Enemy Portrait" width="100%"/>
             <Teleport to="body">
                 <div
+                    ref="tooltipRef"
                     class="cursor-tooltip"
                     :class="{ 'cursor-tooltip--visible': showTooltip }"
-                    :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }"
+                    :style="tooltipStyle"
                 >
                     {{ props.enemy.tooltip }}
                 </div>

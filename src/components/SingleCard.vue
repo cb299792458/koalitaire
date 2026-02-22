@@ -12,7 +12,22 @@
     const tooltipX = ref(0);
     const tooltipY = ref(0);
     const showTooltip = ref(false);
+    const tooltipRef = ref<HTMLElement | null>(null);
     let showDelay: ReturnType<typeof setTimeout> | null = null;
+
+    const TOOLTIP_OFFSET = 12;
+    const TOOLTIP_EDGE_PADDING = 20;
+
+    const tooltipStyle = computed(() => {
+        const x = tooltipX.value;
+        const y = tooltipY.value;
+        const height = tooltipRef.value?.offsetHeight ?? 450;
+        const wouldOverflowBottom = y + TOOLTIP_OFFSET + height > window.innerHeight - TOOLTIP_EDGE_PADDING;
+        return {
+            left: x + TOOLTIP_OFFSET + 'px',
+            top: wouldOverflowBottom ? (y - height - TOOLTIP_EDGE_PADDING) + 'px' : (y + TOOLTIP_OFFSET) + 'px',
+        };
+    });
 
     function onMouseMove(e: MouseEvent) {
         tooltipX.value = e.clientX;
@@ -95,12 +110,17 @@
     const artworkSrc = ref<string | null>(null);
     const artworkVisible = ref(false);
 
-    const artworkFallbacks = computed(() => [
-        `${artworkBasePath.value}.png`,
-        `${artworkBasePath.value}.jpg`,
-        `${artworkBasePathWithSpaces.value}.png`,
-        `${artworkBasePathWithSpaces.value}.jpg`,
-    ]);
+    const artworkFallbacks = computed(() => {
+        const base = [
+            `${artworkBasePath.value}.png`,
+            `${artworkBasePath.value}.jpg`,
+            `${artworkBasePathWithSpaces.value}.png`,
+            `${artworkBasePathWithSpaces.value}.jpg`,
+        ];
+        // Deduplicate: single-word names (Thunderstruck, Koallaborator) produce identical base + withSpaces paths
+        const unique = [...new Set([...base, '/cards/default.png', '/cards/default.jpg', '/unknown.jpg'])];
+        return unique;
+    });
 
     function resetArtwork() {
         artworkSrc.value = artworkFallbacks.value[0] ?? null;
@@ -111,7 +131,7 @@
         const fallbacks = artworkFallbacks.value;
         const currentIdx = fallbacks.findIndex((url) => artworkSrc.value === url);
         if (currentIdx >= 0 && currentIdx < fallbacks.length - 1) {
-            artworkSrc.value = fallbacks[currentIdx + 1] ?? '/unknown.jpg';
+            artworkSrc.value = fallbacks[currentIdx + 1]!;
         } else {
             artworkSrc.value = '/unknown.jpg';
         }
@@ -140,10 +160,49 @@
     >
         <Teleport to="body">
             <div
+                ref="tooltipRef"
                 class="card-tooltip"
                 :class="{ 'card-tooltip--visible': showTooltip }"
-                :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }"
+                :style="tooltipStyle"
             >
+                <div class="card-tooltip-preview-wrapper">
+                    <div class="card-tooltip-preview-inner card-view">
+                        <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
+                        <div v-else-if="isSpell && spellCard" class="card-front spell-card-front">
+                            <div class="card-top spell-card-top" :class="card.suit">
+                                <div class="spell-card-left">
+                                    <span class="spell-card-rank">{{ symbols[card.rank] || card.rank }}</span>
+                                    <img :src="suitIcon" :alt="card.suit" class="card-rank-icon" :class="suitClass" />
+                                </div>
+                                <span class="spell-card-name">{{ spellCard.name }}</span>
+                            </div>
+                            <div v-if="artworkVisible && artworkSrc" class="card-artwork-container">
+                                <img :src="artworkSrc" :alt="spellCard.name" class="card-artwork" />
+                            </div>
+                            <div class="spell-card-bottom">
+                                <p class="card-description spell-card-description">{{ spellCard.description }}</p>
+                                <p v-if="Number.isFinite(spellCard.charges)" class="spell-card-charges">{{ spellCard.charges }} {{ spellCard.charges === 1 ? 'charge' : 'charges' }}</p>
+                            </div>
+                        </div>
+                        <div v-else class="card-front playing-card">
+                            <div class="card-top spell-card-top" :class="card.suit">
+                                <div class="spell-card-left">
+                                    <span class="spell-card-rank">{{ symbols[card.rank] || card.rank }}</span>
+                                    <img :src="suitIcon" :alt="card.suit" class="card-rank-icon" :class="suitClass" />
+                                </div>
+                                <span class="spell-card-name"></span>
+                            </div>
+                            <div class="card-icons-center" :class="'rank-' + card.rank">
+                                <div v-if="card.rank === 5 || card.rank === 6" class="card-icons-inner">
+                                    <img v-for="index in card.rank" :key="index" :src="suitIcon" :alt="card.suit" class="card-icon" :class="suitClass" />
+                                </div>
+                                <template v-else>
+                                    <img v-for="index in card.rank" :key="index" :src="suitIcon" :alt="card.suit" class="card-icon" :class="suitClass" />
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="card-tooltip-title">{{ tooltipTitle }}</div>
                 <template v-if="keywordExplanations.length">
                     <div v-for="item in keywordExplanations" :key="item.id" class="card-tooltip-keyword">
@@ -233,6 +292,25 @@
 
 .card-tooltip--visible {
     opacity: 1;
+}
+
+.card-tooltip-preview-wrapper {
+    width: 240px;
+    height: 336px;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+
+.card-tooltip-preview-inner {
+    width: 120px;
+    aspect-ratio: 5 / 7;
+    transform: scale(2);
+    transform-origin: top left;
+    background-color: #f5f0d0;
+    border-radius: 10px;
+    border: 1px solid black;
+    overflow: hidden;
+    color: black;
 }
 
 .card-tooltip-title {

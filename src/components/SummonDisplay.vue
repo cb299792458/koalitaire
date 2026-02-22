@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { ref } from 'vue';
+    import { computed, ref } from 'vue';
     import type Summon from '../models/Summon';
 
     const props = defineProps<{
@@ -7,10 +7,23 @@
     }>();
 
     const CURSOR_OFFSET = 12;
+    const TOOLTIP_EDGE_PADDING = 20;
     const tooltipX = ref(0);
     const tooltipY = ref(0);
+    const tooltipRef = ref<HTMLElement | null>(null);
     const showTooltip = ref(false);
     let showDelay: ReturnType<typeof setTimeout> | null = null;
+
+    const tooltipStyle = computed(() => {
+        const x = tooltipX.value;
+        const y = tooltipY.value;
+        const height = tooltipRef.value?.offsetHeight ?? 80;
+        const wouldOverflowBottom = y + height > window.innerHeight - TOOLTIP_EDGE_PADDING;
+        return {
+            left: x + 'px',
+            top: wouldOverflowBottom ? (y - height - TOOLTIP_EDGE_PADDING) + 'px' : y + 'px',
+        };
+    });
 
     function onMouseMove(e: MouseEvent) {
         tooltipX.value = e.clientX + CURSOR_OFFSET;
@@ -47,9 +60,10 @@
         <span v-if="props.summon.power > 0" class="summon-power">⚔ {{ props.summon.power }}</span>
         <Teleport to="body">
             <div
+                ref="tooltipRef"
                 class="cursor-tooltip"
                 :class="{ 'cursor-tooltip--visible': showTooltip }"
-                :style="{ left: tooltipX + 'px', top: tooltipY + 'px' }"
+                :style="tooltipStyle"
             >
                 {{ props.summon.tooltip }}
             </div>

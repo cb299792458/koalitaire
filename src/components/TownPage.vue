@@ -1,11 +1,14 @@
 <script setup lang="ts">
     import { onMounted, onBeforeUnmount, ref, unref, computed } from 'vue';
     import { useTown, type StatStoreId } from '../composables/useTown';
+    import { useModalState, closeModal } from '../stores/modalStore';
     import PlayerInfo from './PlayerInfo.vue';
     import SingleCard from './SingleCard.vue';
+    import MapDeckModal from './MapDeckModal.vue';
     import { SpellCard } from '../models/Card';
 
     const town = useTown();
+    const modalState = useModalState();
     const player = town.player;
     const innUsedThisVisit = town.innUsedThisVisit;
 
@@ -208,7 +211,14 @@
                         </div>
 
                         <div class="town-middle">
-                            <div class="town-location-content">
+                            <MapDeckModal
+                                v-if="modalState.currentModal?.name === 'mapDeck' && modalState.currentModal?.props"
+                                :player="modalState.currentModal.props.player"
+                                :scenario="modalState.currentModal.props.scenario"
+                                :on-continue="modalState.currentModal.props.onContinue"
+                                @close="closeModal"
+                            />
+                            <div v-else class="town-location-content">
                                 <h2 class="town-location-name">{{ locationLabel() }}</h2>
                                 <p class="town-location-description">{{ locationWelcomeMessage() }}</p>
                                 <div class="town-choices">

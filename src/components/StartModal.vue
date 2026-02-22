@@ -2,7 +2,8 @@
     import Player, { koaParams, testCharacterParams, type PlayerParams } from '../models/Player';
 
     const props = defineProps<{
-        onSelect: (player: Player) => void;
+        /** Called when character is selected. Return false to prevent closing (e.g. when opening another modal). */
+        onSelect: (player: Player) => void | boolean;
     }>();
 
     const characters = [
@@ -16,8 +17,10 @@
 
     function selectCharacter(params: PlayerParams) {
         const player = new Player(params);
-        props.onSelect(player);
-        emit('close');
+        const result = props.onSelect(player);
+        if (result !== false) {
+            emit('close');
+        }
     }
 </script>
 

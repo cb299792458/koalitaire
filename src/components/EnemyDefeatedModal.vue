@@ -4,14 +4,15 @@
     }>();
 
     const props = defineProps<{
-        onContinue?: () => void;
+        /** Called when Continue is clicked. Return false to prevent closing (e.g. when opening another modal). */
+        onContinue?: () => void | boolean;
     }>();
 
     function continueGame() {
-        if (props.onContinue) {
-            props.onContinue();
+        const result = props.onContinue?.();
+        if (result !== false) {
+            emit('close');
         }
-        emit('close');
     }
 </script>
 

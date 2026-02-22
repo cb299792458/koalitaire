@@ -223,7 +223,8 @@ export function useTown(): {
                 cardParams.keywords,
                 cardParams.flavorText
             );
-            p.deck.push(card);
+            p.allCards.push(card);
+            p.deckList.push(true);
         },
         traderOffers: traderOffersRef,
         refreshTraderOffers() {
@@ -232,7 +233,7 @@ export function useTown(): {
                 traderOffersRef.value = [];
                 return;
             }
-            const spellCards = p.deck.filter((c): c is SpellCard => c.isSpell);
+            const spellCards = p.allCards.filter((_, i) => p.deckList[i]);
             const playerCards = pickRandom(spellCards, 3);
             const generalCardsPicked = pickRandom([...generalCards], 3);
             const offers: TraderOffer[] = [];
@@ -253,11 +254,10 @@ export function useTown(): {
             if (!p || !offer) return;
 
             const { playerCard, generalCard } = offer;
-            const deckIndex = p.deck.indexOf(playerCard);
-            if (deckIndex === -1) return;
+            const cardIndex = p.allCards.indexOf(playerCard);
+            if (cardIndex === -1) return;
 
-            p.deck.splice(deckIndex, 1);
-            p.deck.push(new SpellCard(
+            p.allCards[cardIndex] = new SpellCard(
                 generalCard.rank,
                 generalCard.suit,
                 generalCard.name,
@@ -266,7 +266,7 @@ export function useTown(): {
                 generalCard.charges,
                 generalCard.keywords,
                 generalCard.flavorText
-            ));
+            );
 
             offers.splice(slotIndex, 1);
             traderOffersRef.value = offers;

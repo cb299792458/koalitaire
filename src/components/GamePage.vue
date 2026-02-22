@@ -5,7 +5,7 @@
     import { AREAS, type Area } from '../models/Areas';
     import ModalManager from './ModalManager.vue';
     import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue';
-    import { openModal, closeModal } from '../stores/modalStore';
+    import { openModal, closeModal, useModalState } from '../stores/modalStore';
     import PlayerInfo from './PlayerInfo.vue';
     import EnemyInfo from './EnemyInfo.vue';
     import makeScenario, { type ScenarioEntry } from '../game/makeScenario';
@@ -15,8 +15,10 @@
     import { useEvent } from '../composables/useEvent';
     import { hasChosenCharacterRef } from '../composables/useCombat';
     import EventView from './EventView.vue';
+    import MapDeckModal from './MapDeckModal.vue';
 
     const scenario = makeScenario();
+    const modalState = useModalState();
     const town = useTown();
     const eventState = useEvent();
 
@@ -32,7 +34,14 @@
         const persistentPlayer = combat.originalPlayer ?? combat.player;
         if (!persistentPlayer) return;
         persistentPlayer.level += 1;
-        startCombatForPlayer(persistentPlayer);
+        openModal('mapDeck', {
+            player: persistentPlayer,
+            scenario,
+            onContinue: () => {
+                closeModal();
+                startCombatForPlayer(persistentPlayer);
+            },
+        }, true);
     };
         
     // Create computed refs for player and enemy for template reactivity  
@@ -55,6 +64,8 @@
     const canMoveToManaPools = computed(() => combat.getCardsMovableToManaPools().length > 0);
 
     const isInEvent = computed(() => eventState.isInEvent.value);
+    const isMapDeckOpen = computed(() => modalState.currentModal?.name === 'mapDeck');
+    const isInCombat = computed(() => !isInEvent.value && !isMapDeckOpen.value);
     const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value);
     const eventEventRoll = computed(() => eventState.lastEventRoll.value);
     const eventStatBonus = computed(() => eventState.lastStatBonus.value);
@@ -169,6 +180,14 @@
             eventState.resetEventState();
             await combat.start(newPlayer, entry.enemy);
         }
+        if ('elite' in entry && entry.elite) {
+            eventState.resetEventState();
+            await combat.start(newPlayer, entry.elite);
+        }
+        if ('boss' in entry && entry.boss) {
+            eventState.resetEventState();
+            await combat.start(newPlayer, entry.boss);
+        }
     }
     
     watch(() => player.value?.level, () => {
@@ -200,20 +219,42 @@
             const persistentPlayer = eventState.player.value ?? combat.originalPlayer ?? combat.player;
             if (!persistentPlayer) return;
             persistentPlayer.level += 1;
-            startCombatForPlayer(persistentPlayer);
+            openModal('mapDeck', {
+                player: persistentPlayer,
+                scenario,
+                onContinue: () => {
+                    closeModal();
+                    startCombatForPlayer(persistentPlayer);
+                },
+            }, true);
         });
         town.onLeaveTown(() => {
             const persistentPlayer = town.player.value ?? combat.originalPlayer ?? combat.player;
             if (!persistentPlayer) return;
             persistentPlayer.level += 1;
-            startCombatForPlayer(persistentPlayer);
+            openModal('mapDeck', {
+                player: persistentPlayer,
+                scenario,
+                onContinue: () => {
+                    closeModal();
+                    startCombatForPlayer(persistentPlayer);
+                },
+            }, true);
         });
         if (!hasChosenCharacterRef.value) {
             openModal(
                 'start',
                 { onSelect: (newPlayer: Player) => {
                     hasChosenCharacterRef.value = true;
-                    startCombatForPlayer(newPlayer);
+                    openModal('mapDeck', {
+                        player: newPlayer,
+                        scenario,
+                        onContinue: () => {
+                            closeModal();
+                            startCombatForPlayer(newPlayer);
+                        },
+                    }, true);
+                    return false; // Don't close; we've replaced with mapDeck modal
                 }},
                 true, // keepOpen
             );
@@ -261,7 +302,16 @@
                         </div>
             
                         <div class="combat-middle">
-                            <EventView v-if="isInEvent" />
+                            <MapDeckModal
+                                v-if="modalState.currentModal?.name === 'mapDeck' && modalState.currentModal?.props"
+                                :player="modalState.currentModal.props.player"
+                                :scenario="modalState.currentModal.props.scenario"
+                                :on-continue="modalState.currentModal.props.onContinue"
+                                @close="closeModal"
+                            />
+                            <template v-else-if="isInEvent">
+                            <EventView />
+                            </template>
                             <template v-else>
                             <div class="cards-top">
                                 <div class="cards-top-left">
@@ -358,8 +408,8 @@
                                 </div>
                             </template>
                             <template v-else>
-                                <h1>Enemy</h1>
-                                <EnemyInfo :enemy="enemy" />
+                                <h1 v-if="isInCombat">Enemy</h1>
+                                <EnemyInfo v-if="isInCombat" :enemy="enemy" />
                             </template>
                         </div>
                     </div>
@@ -386,7 +436,7 @@
                             </div>
                         </template>
                         <template v-else>
-                            <div class="cards-hand">
+                            <div v-if="isInCombat" class="cards-hand">
                                 <CardStack
                                     :cards="hand.cards"
                                     :name="AREAS.Hand"
@@ -395,7 +445,7 @@
                                     @click="onClick"
                                 />
                             </div>
-                            <div class="combat-bottom-buttons">
+                            <div v-if="isInCombat" class="combat-bottom-buttons">
                                 <button 
                                     @click="combat.endTurn" 
                                     id="end-turn-button"

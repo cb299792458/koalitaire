@@ -4,6 +4,8 @@ import { events } from "../models/Event";
 
 export type ScenarioEntry =
     | { enemy: Enemy }
+    | { elite: Enemy }
+    | { boss: Enemy }
     | { town: true }
     | { event: Event }
     | null;
@@ -22,7 +24,7 @@ export default function makeScenario(): ScenarioEntry[] {
         { enemy: new Enemy(gnokkaParams) },
         { event: pickRandomEvent() },
         { town: true },
-        { enemy: new Enemy(squirrelfParams) },
-        { enemy: new Enemy(dingorcParams) },
+        { elite: new Enemy(squirrelfParams) },
+        { boss: new Enemy(dingorcParams) },
     ]
 }

@@ -1,14 +1,18 @@
 import Card, { SpellCard, type SpellCardParams } from "./Card";
+import { Suit, Suits } from "./Card";
 import Combatant from "./Combatant";
 import type { DamageNumberType } from "./Combatant";
 
 import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 import { openMessageModal } from "../stores/modalStore";
-import koaDeck from "../game/decks/koaDeck";
 import useDamageNumbers from "../composables/useDamageNumbers";
+import { starterCards } from "../game/cards/starterCards";
 import { generalCards } from "../game/cards/generalCards";
 import { debugCards } from "../game/cards/debugCards";
+
+/** Per-suit count of mana cards to bring to combat (ranks 1 through N). */
+export type ManaCardsBySuit = Partial<Record<Suit, number>>;
 
 export interface PlayerParams {
     name: string;
@@ -33,7 +37,27 @@ export interface PlayerParams {
     gold: number;
     bytecoins?: number;
 
-    makeDeck: () => Card[];
+    /** All spell cards the player owns. */
+    allCards: SpellCard[];
+    /** Per-suit count of mana cards to bring to combat. For Koa, starts at 6 per suit. */
+    manaCards: ManaCardsBySuit;
+}
+
+function defaultManaCards(countPerSuit: number): ManaCardsBySuit {
+    return Object.fromEntries(Suits.map(suit => [suit, countPerSuit])) as ManaCardsBySuit;
+}
+
+function spellCardsFromParams(params: SpellCardParams[]): SpellCard[] {
+    return params.map(p => new SpellCard(
+        p.rank,
+        p.suit,
+        p.name,
+        p.description,
+        p.effect,
+        p.charges,
+        p.keywords,
+        p.flavorText
+    ));
 }
 
 class Player extends Combatant {
@@ -52,13 +76,18 @@ class Player extends Combatant {
     gold: number;
     bytecoins: number = 0;
 
-    deck: Card[];
+    /** All spell cards the player owns. */
+    allCards: SpellCard[];
+    /** Same length as allCards; true = card is in combat deck. */
+    deckList: boolean[];
+    /** Per-suit count of mana cards to bring to combat. */
+    manaCards: ManaCardsBySuit;
 
     /** Reference to the original player when this is a combat copy; used to sync HP at combat end. */
     originalPlayer?: Player;
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, makeDeck } = params;
+        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, allCards, manaCards } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.handSize = handSize;
@@ -72,7 +101,43 @@ class Player extends Combatant {
         this.gold = gold;
         this.bytecoins = bytecoins;
 
-        this.deck = makeDeck();
+        this.allCards = [...allCards];
+        this.deckList = allCards.map(() => true);
+        this.manaCards = { ...manaCards };
+    }
+
+    /** Build the full combat deck from spell cards (where deckList is true) plus mana cards. */
+    getCombatDeck(): Card[] {
+        const cards: Card[] = [];
+        for (let i = 0; i < this.allCards.length; i++) {
+            if (this.deckList[i]) {
+                const spellCard = this.allCards[i]!;
+                cards.push(new SpellCard(
+                    spellCard.rank,
+                    spellCard.suit,
+                    spellCard.name,
+                    spellCard.description,
+                    spellCard.effect,
+                    spellCard.charges,
+                    spellCard.keywords,
+                    spellCard.flavorText
+                ));
+            }
+        }
+        for (const suit of Suits) {
+            const count = this.manaCards[suit] ?? 0;
+            for (let rank = 1; rank <= count; rank++) {
+                cards.push(new Card(rank, suit));
+            }
+        }
+        return cards;
+    }
+
+    /** Number of cards in the combat deck. */
+    get deckSize(): number {
+        const spellCount = this.deckList.filter(Boolean).length;
+        const manaCount = Suits.reduce((sum, suit) => sum + (this.manaCards[suit] ?? 0), 0);
+        return spellCount + manaCount;
     }
 
     protected addDamageNumber(amount: number, type: DamageNumberType): void {
@@ -103,25 +168,19 @@ class Player extends Combatant {
             health: this.maxHealth,
             gold: this.gold,
             bytecoins: this.bytecoins,
-            makeDeck: () => this.deck.map(card => {
-                // Preserve SpellCard instances
-                if (card.isSpell) {
-                    const spellCard = card as SpellCard;
-                    return new SpellCard(
-                        spellCard.rank,
-                        spellCard.suit,
-                        spellCard.name,
-                        spellCard.description,
-                        spellCard.effect,
-                        spellCard.charges,
-                        spellCard.keywords,
-                        spellCard.flavorText
-                    );
-                } else {
-                    return new Card(card.rank, card.suit);
-                }
-            })
+            allCards: this.allCards.map(card => new SpellCard(
+                card.rank,
+                card.suit,
+                card.name,
+                card.description,
+                card.effect,
+                card.charges,
+                card.keywords,
+                card.flavorText
+            )),
+            manaCards: { ...this.manaCards },
         });
+        playerCopy.deckList = [...this.deckList];
         playerCopy.level = this.level;
         playerCopy.health = this.health;
         playerCopy.manaDiamonds = this.startingManaDiamonds;
@@ -130,6 +189,8 @@ class Player extends Combatant {
         return playerCopy;
     }
 }
+
+const koaSpellCards = spellCardsFromParams(starterCards as SpellCardParams[]);
 
 export const koaParams: PlayerParams = {
     name: "Koa XIII",
@@ -149,30 +210,11 @@ export const koaParams: PlayerParams = {
     gold: 150,
     bytecoins: 0,
 
-    makeDeck: () => {
-        const deck: Card[] = [];
-        for (const cardParams of koaDeck) {
-            // Check if it's a SpellCard
-            if ('effect' in cardParams) {
-                const spellParams = cardParams as SpellCardParams;
-                deck.push(new SpellCard(
-                    spellParams.rank,
-                    spellParams.suit,
-                    spellParams.name,
-                    spellParams.description,
-                    spellParams.effect,
-                    spellParams.charges,
-                    spellParams.keywords,
-                    spellParams.flavorText
-                ));
-            } else {
-                // Mana card
-                deck.push(new Card(cardParams.rank, cardParams.suit));
-            }
-        }
-        return deck;
-    }
+    allCards: koaSpellCards,
+    manaCards: defaultManaCards(6),
 };
+
+const testSpellCards = spellCardsFromParams([...generalCards, ...debugCards] as SpellCardParams[]);
 
 export const testCharacterParams: PlayerParams = {
     name: "DJ Testo",
@@ -192,36 +234,8 @@ export const testCharacterParams: PlayerParams = {
     gold: 1000000,
     bytecoins: 0,
 
-    makeDeck: () => {
-        const deck: Card[] = [];
-        for (const cardParams of generalCards) {
-            const spellParams = cardParams as SpellCardParams;
-            deck.push(new SpellCard(
-                spellParams.rank,
-                spellParams.suit,
-                spellParams.name,
-                spellParams.description,
-                spellParams.effect,
-                spellParams.charges,
-                spellParams.keywords,
-                spellParams.flavorText
-            ));
-        }
-        for (const cardParams of debugCards) {
-            const spellParams = cardParams as SpellCardParams;
-            deck.push(new SpellCard(
-                spellParams.rank,
-                spellParams.suit,
-                spellParams.name,
-                spellParams.description,
-                spellParams.effect,
-                spellParams.charges,
-                spellParams.keywords,
-                spellParams.flavorText
-            ));
-        }
-        return deck;
-    }
+    allCards: testSpellCards,
+    manaCards: defaultManaCards(0),
 };
 
 export default Player;

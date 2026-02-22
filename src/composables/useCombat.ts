@@ -99,24 +99,7 @@ export class Combat {
             if (!this.player) {
                 // deck already cleared
             } else {
-                const deckCards = this.player.deck.map((card) => {
-                // Preserve SpellCard instances
-                if (card.isSpell) {
-                    const spellCard = card as SpellCard;
-                    return new SpellCard(
-                        spellCard.rank,
-                        spellCard.suit,
-                        spellCard.name,
-                        spellCard.description,
-                        spellCard.effect,
-                        spellCard.charges,
-                        spellCard.keywords,
-                        spellCard.flavorText
-                    );
-                } else {
-                    return new Card(card.rank, card.suit);
-                }
-                });
+                const deckCards = this.player.getCombatDeck();
                 this.deck.initialize(deckCards);
             }
 
@@ -254,6 +237,7 @@ export class Combat {
                 if (this.onEnemyDefeatedContinue) {
                     this.onEnemyDefeatedContinue();
                 }
+                return false; // Don't emit close; we've opened mapDeck modal
             }
         }, true);
         
@@ -937,7 +921,8 @@ export function useCombat(): Combat {
             health: 0,
             gold: 0,
             bytecoins: 0,
-            makeDeck: () => []
+            allCards: [],
+            manaCards: {},
         });
         const defaultEnemy = new Enemy({
             name: '',
