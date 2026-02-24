@@ -16,6 +16,7 @@ interface ModalState {
         component: any
         props?: Record<string, any>
         keepOpen?: boolean
+        transparentOverlay?: boolean
     } | null
 }
 
@@ -37,10 +38,10 @@ const state = reactive<ModalState>({
 })
 
 // Open a modal by name, optionally passing props
-export function openModal(name: ModalName, props: Record<string, any> = {}, keepOpen?: boolean) {
+export function openModal(name: ModalName, props: Record<string, any> = {}, keepOpen?: boolean, transparentOverlay?: boolean) {
     const component = modals[name]
     if (component) {
-        state.currentModal = { name, component, props, keepOpen }
+        state.currentModal = { name, component, props, keepOpen, transparentOverlay }
     } else {
         console.warn(`Modal "${name}" does not exist.`)
     }

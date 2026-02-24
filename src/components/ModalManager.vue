@@ -5,7 +5,7 @@
 </script>
 
 <template>
-    <div v-if="state.currentModal && state.currentModal.name !== 'mapDeck'" class="modal-overlay" @click.self="state.currentModal.keepOpen ? null : closeModal()">
+    <div v-if="state.currentModal && state.currentModal.name !== 'mapDeck'" class="modal-overlay" :class="{ 'modal-overlay--transparent': state.currentModal.transparentOverlay }" @click.self="state.currentModal.keepOpen ? null : closeModal()">
         <component
             :is="state.currentModal.component"
             v-bind="state.currentModal.props"
@@ -25,8 +25,8 @@
         z-index: 9999;
     }
     
-    .modal-overlay:has(.enemy-defeated-modal) {
-        background: rgba(0, 0, 0, 0.8);
+    .modal-overlay--transparent {
+        background: transparent !important;
     }
 
 </style>

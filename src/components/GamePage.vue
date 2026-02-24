@@ -73,6 +73,19 @@
     const eventResultMessage = computed(() => eventState.resultMessage.value);
     const eventIsResolving = computed(() => eventState.isResolving.value);
 
+    // When an event resolves, open Event Complete modal instead of inline continue button.
+    // Prefer combat.originalPlayer so we pass the actual persistent player (eventState.player may be the combat copy if we came from combat).
+    watch(eventResultMessage, (msg) => {
+        if (msg && isInEvent.value) {
+            const persistentPlayer = combat.originalPlayer ?? eventState.player.value ?? combat.player;
+            openModal('enemyDefeated', {
+                title: 'Event Complete',
+                player: persistentPlayer,
+                onContinue: () => eventState.onEventContinue(),
+            }, true, true);
+        }
+    });
+
     const deckCount = computed(() => combat.deck.cards.length);
     const reshuffles = computed(() => combat.reshuffles);
     const compostCount = computed(() => combat.compost.cards.length);
@@ -190,9 +203,13 @@
         }
     }
     
-    watch(() => player.value?.level, () => {
-        if (!player.value) return;
-        startCombatForPlayer(player.value);
+    const persistentPlayer = computed(() =>
+        combat.originalPlayer ?? (isInEvent.value ? eventState.player.value : null) ?? combat.player
+    );
+    watch(() => persistentPlayer.value?.level, () => {
+        const p = persistentPlayer.value;
+        if (!p) return;
+        startCombatForPlayer(p);
     })
         
     function onClick(payload: {
@@ -216,7 +233,7 @@
 
     onMounted(() => {
         eventState.onLeaveEvent(() => {
-            const persistentPlayer = eventState.player.value ?? combat.originalPlayer ?? combat.player;
+            const persistentPlayer = combat.originalPlayer ?? eventState.player.value ?? combat.player;
             if (!persistentPlayer) return;
             persistentPlayer.level += 1;
             openModal('mapDeck', {
@@ -431,7 +448,6 @@
                                 </div>
                                 <div v-else class="event-result">
                                     <p class="event-result-message">{{ eventResultMessage }}</p>
-                                    <button class="event-continue" @click="eventState.onEventContinue">Continue</button>
                                 </div>
                             </div>
                         </template>
