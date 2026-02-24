@@ -179,6 +179,7 @@
                         :key="row"
                         :ref="(el) => setCurrentRowRef(el, row)"
                         class="diamond-row"
+                        :class="{ 'diamond-row--first-visible': row === props.player.scenarioRow }"
                         :style="{ zIndex: scenario.length - row }"
                     >
                         <div
@@ -352,7 +353,8 @@
         min-height: 70px;
     }
 
-    .diamond-row:first-child {
+    .diamond-row:first-child,
+    .diamond-row--first-visible {
         margin-top: 0;
     }
 
@@ -392,8 +394,10 @@
     }
 
     .diamond-card--current {
-        border-color: #4CAF50;
-        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.4);
+        border-width: 2px;
+        border-color: #2E7D32;
+        box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.6), 0 0 12px rgba(76, 175, 80, 0.4);
+        transform: scale(1.05);
     }
 
     .diamond-card--clickable {
