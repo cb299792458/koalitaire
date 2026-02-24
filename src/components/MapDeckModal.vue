@@ -22,13 +22,13 @@
     }
 
     function getEntryImage(entry: ScenarioEntry): string {
-        if (entry === null) return '/scenarios/town.jpg';
+        if (entry === null) return '/scenarios/town.png';
         if ('enemy' in entry) return '/scenarios/enemy.png';
         if ('elite' in entry) return '/scenarios/elite.png';
         if ('boss' in entry) return '/scenarios/boss.png';
-        if ('town' in entry) return '/scenarios/town.jpg';
+        if ('town' in entry) return '/scenarios/town.png';
         if ('event' in entry) return '/scenarios/event.png';
-        return '/scenarios/town.jpg';
+        return '/scenarios/town.png';
     }
 
     const scenario = computed(() => props.scenario ?? []);
