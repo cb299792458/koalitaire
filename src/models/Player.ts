@@ -38,9 +38,9 @@ export interface PlayerParams {
     bytecoins?: number;
 
     /** All spell cards the player owns. */
-    allCards: SpellCard[];
+    collection: SpellCard[];
     /** Per-suit count of mana cards to bring to combat. For Koa, starts at 6 per suit. */
-    manaCards: ManaCardsBySuit;
+    manaDeck: ManaCardsBySuit;
 }
 
 function defaultManaCards(countPerSuit: number): ManaCardsBySuit {
@@ -63,6 +63,11 @@ function spellCardsFromParams(params: SpellCardParams[]): SpellCard[] {
 class Player extends Combatant {
     level: number = 1;
 
+    /** Row in the diamond scenario (0 = start, 12 = boss). */
+    scenarioRow: number = 0;
+    /** Column within the row. */
+    scenarioColumn: number = 0;
+
     handSize: number;
     columnCount: number;
     startingManaDiamonds: number;
@@ -77,17 +82,17 @@ class Player extends Combatant {
     bytecoins: number = 0;
 
     /** All spell cards the player owns. */
-    allCards: SpellCard[];
-    /** Same length as allCards; true = card is in combat deck. */
-    deckList: boolean[];
+    collection: SpellCard[];
+    /** Same length as collection; true = card is in combat deck. */
+    spellDeck: boolean[];
     /** Per-suit count of mana cards to bring to combat. */
-    manaCards: ManaCardsBySuit;
+    manaDeck: ManaCardsBySuit;
 
     /** Reference to the original player when this is a combat copy; used to sync HP at combat end. */
     originalPlayer?: Player;
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, allCards, manaCards } = params;
+        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, collection, manaDeck } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.handSize = handSize;
@@ -101,17 +106,17 @@ class Player extends Combatant {
         this.gold = gold;
         this.bytecoins = bytecoins;
 
-        this.allCards = [...allCards];
-        this.deckList = allCards.map(() => true);
-        this.manaCards = { ...manaCards };
+        this.collection = [...collection];
+        this.spellDeck = collection.map(() => true);
+        this.manaDeck = { ...manaDeck };
     }
 
-    /** Build the full combat deck from spell cards (where deckList is true) plus mana cards. */
+    /** Build the full combat deck from spell cards (where spellDeck is true) plus mana cards. */
     getCombatDeck(): Card[] {
         const cards: Card[] = [];
-        for (let i = 0; i < this.allCards.length; i++) {
-            if (this.deckList[i]) {
-                const spellCard = this.allCards[i]!;
+        for (let i = 0; i < this.collection.length; i++) {
+            if (this.spellDeck[i]) {
+                const spellCard = this.collection[i]!;
                 cards.push(new SpellCard(
                     spellCard.rank,
                     spellCard.suit,
@@ -125,7 +130,7 @@ class Player extends Combatant {
             }
         }
         for (const suit of Suits) {
-            const count = this.manaCards[suit] ?? 0;
+            const count = this.manaDeck[suit] ?? 0;
             for (let rank = 1; rank <= count; rank++) {
                 cards.push(new Card(rank, suit));
             }
@@ -135,8 +140,8 @@ class Player extends Combatant {
 
     /** Number of cards in the combat deck. */
     get deckSize(): number {
-        const spellCount = this.deckList.filter(Boolean).length;
-        const manaCount = Suits.reduce((sum, suit) => sum + (this.manaCards[suit] ?? 0), 0);
+        const spellCount = this.spellDeck.filter(Boolean).length;
+        const manaCount = Suits.reduce((sum, suit) => sum + (this.manaDeck[suit] ?? 0), 0);
         return spellCount + manaCount;
     }
 
@@ -168,7 +173,7 @@ class Player extends Combatant {
             health: this.maxHealth,
             gold: this.gold,
             bytecoins: this.bytecoins,
-            allCards: this.allCards.map(card => new SpellCard(
+            collection: this.collection.map(card => new SpellCard(
                 card.rank,
                 card.suit,
                 card.name,
@@ -178,10 +183,12 @@ class Player extends Combatant {
                 card.keywords,
                 card.flavorText
             )),
-            manaCards: { ...this.manaCards },
+            manaDeck: { ...this.manaDeck },
         });
-        playerCopy.deckList = [...this.deckList];
+        playerCopy.spellDeck = [...this.spellDeck];
         playerCopy.level = this.level;
+        playerCopy.scenarioRow = this.scenarioRow;
+        playerCopy.scenarioColumn = this.scenarioColumn;
         playerCopy.health = this.health;
         playerCopy.manaDiamonds = this.startingManaDiamonds;
         playerCopy.block = this.block;
@@ -210,8 +217,8 @@ export const koaParams: PlayerParams = {
     gold: 150,
     bytecoins: 0,
 
-    allCards: koaSpellCards,
-    manaCards: defaultManaCards(6),
+    collection: koaSpellCards,
+    manaDeck: defaultManaCards(6),
 };
 
 const testSpellCards = spellCardsFromParams([...generalCards, ...debugCards] as SpellCardParams[]);
@@ -234,8 +241,8 @@ export const testCharacterParams: PlayerParams = {
     gold: 1000000,
     bytecoins: 0,
 
-    allCards: testSpellCards,
-    manaCards: defaultManaCards(0),
+    collection: testSpellCards,
+    manaDeck: defaultManaCards(0),
 };
 
 export default Player;

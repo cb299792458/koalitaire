@@ -15,7 +15,6 @@
     import { useEvent } from '../composables/useEvent';
     import { hasChosenCharacterRef } from '../composables/useCombat';
     import EventView from './EventView.vue';
-    import MapDeckModal from './MapDeckModal.vue';
 
     const scenario = makeScenario();
     const modalState = useModalState();
@@ -33,7 +32,6 @@
         closeModal();
         const persistentPlayer = combat.originalPlayer ?? combat.player;
         if (!persistentPlayer) return;
-        persistentPlayer.level += 1;
         openModal('mapDeck', {
             player: persistentPlayer,
             scenario,
@@ -178,7 +176,8 @@
     });
     
     async function startCombatForPlayer(newPlayer: Player) {
-        const entry = scenario[newPlayer.level] as ScenarioEntry | undefined;
+        const row = scenario[newPlayer.scenarioRow];
+        const entry = row?.[newPlayer.scenarioColumn] as ScenarioEntry | undefined;
         if (!entry) return;
         if ('town' in entry && entry.town) {
             eventState.resetEventState();
@@ -189,28 +188,22 @@
             eventState.enterEvent(newPlayer, entry.event);
             return;
         }
-        if ('enemy' in entry && entry.enemy) {
-            eventState.resetEventState();
-            await combat.start(newPlayer, entry.enemy);
-        }
         if ('elite' in entry && entry.elite) {
             eventState.resetEventState();
             await combat.start(newPlayer, entry.elite);
+            return;
         }
         if ('boss' in entry && entry.boss) {
             eventState.resetEventState();
             await combat.start(newPlayer, entry.boss);
+            return;
+        }
+        if ('enemy' in entry && entry.enemy) {
+            eventState.resetEventState();
+            await combat.start(newPlayer, entry.enemy);
         }
     }
     
-    const persistentPlayer = computed(() =>
-        combat.originalPlayer ?? (isInEvent.value ? eventState.player.value : null) ?? combat.player
-    );
-    watch(() => persistentPlayer.value?.level, () => {
-        const p = persistentPlayer.value;
-        if (!p) return;
-        startCombatForPlayer(p);
-    })
         
     function onClick(payload: {
         card: Card | null;
@@ -235,7 +228,6 @@
         eventState.onLeaveEvent(() => {
             const persistentPlayer = combat.originalPlayer ?? eventState.player.value ?? combat.player;
             if (!persistentPlayer) return;
-            persistentPlayer.level += 1;
             openModal('mapDeck', {
                 player: persistentPlayer,
                 scenario,
@@ -248,7 +240,6 @@
         town.onLeaveTown(() => {
             const persistentPlayer = town.player.value ?? combat.originalPlayer ?? combat.player;
             if (!persistentPlayer) return;
-            persistentPlayer.level += 1;
             openModal('mapDeck', {
                 player: persistentPlayer,
                 scenario,
@@ -263,6 +254,7 @@
                 'start',
                 { onSelect: (newPlayer: Player) => {
                     hasChosenCharacterRef.value = true;
+                    // Replace start modal with map modal directly (no closeModal - avoids unmount/remount)
                     openModal('mapDeck', {
                         player: newPlayer,
                         scenario,
@@ -271,7 +263,7 @@
                             startCombatForPlayer(newPlayer);
                         },
                     }, true);
-                    return false; // Don't close; we've replaced with mapDeck modal
+                    return false; // Prevent StartModal from emitting close (we replaced it)
                 }},
                 true, // keepOpen
             );
@@ -319,14 +311,7 @@
                         </div>
             
                         <div class="combat-middle">
-                            <MapDeckModal
-                                v-if="modalState.currentModal?.name === 'mapDeck' && modalState.currentModal?.props"
-                                :player="modalState.currentModal.props.player"
-                                :scenario="modalState.currentModal.props.scenario"
-                                :on-continue="modalState.currentModal.props.onContinue"
-                                @close="closeModal"
-                            />
-                            <template v-else-if="isInEvent">
+                            <template v-if="isInEvent">
                             <EventView />
                             </template>
                             <template v-else>

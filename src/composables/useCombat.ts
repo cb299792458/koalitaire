@@ -925,8 +925,8 @@ export function useCombat(): Combat {
             health: 0,
             gold: 0,
             bytecoins: 0,
-            allCards: [],
-            manaCards: {},
+            collection: [],
+            manaDeck: {},
         });
         const defaultEnemy = new Enemy({
             name: '',

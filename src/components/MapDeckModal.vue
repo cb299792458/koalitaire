@@ -1,14 +1,15 @@
 <script setup lang="ts">
-    import { ref, watch, computed } from 'vue';
+    import { ref, watch, computed, nextTick } from 'vue';
     import type Player from '../models/Player';
     import { Suit, Suits } from '../models/Card';
     import SingleCard from './SingleCard.vue';
     import type { ScenarioEntry } from '../game/makeScenario';
+    import { getNextRowOptions } from '../game/makeScenario';
 
     const props = defineProps<{
         player: Player;
         onContinue: () => void;
-        scenario?: ScenarioEntry[];
+        scenario?: ScenarioEntry[][];
     }>();
 
     function getEntryLabel(entry: NonNullable<ScenarioEntry>): string {
@@ -20,36 +21,76 @@
         return 'Unknown';
     }
 
-    const mapEntries = computed(() => {
-        const scenario = props.scenario ?? [];
-        return scenario
-            .map((entry, index) => ({ entry, index }))
-            .filter((x): x is { entry: NonNullable<ScenarioEntry>; index: number } => x.entry !== null && x.index >= props.player.level);
+    function getEntryImage(entry: ScenarioEntry): string {
+        if (entry === null) return '/scenarios/town.jpg';
+        if ('enemy' in entry) return '/scenarios/enemy.png';
+        if ('elite' in entry) return '/scenarios/elite.png';
+        if ('boss' in entry) return '/scenarios/boss.png';
+        if ('town' in entry) return '/scenarios/town.jpg';
+        if ('event' in entry) return '/scenarios/event.png';
+        return '/scenarios/town.jpg';
+    }
+
+    const scenario = computed(() => props.scenario ?? []);
+
+    const nextOptions = computed(() => {
+        const options = getNextRowOptions(props.player.scenarioRow, props.player.scenarioColumn);
+        return new Set(options.map(({ row, col }) => `${row}-${col}`));
     });
 
-    function goToEntry(index: number) {
-        props.player.deckList.length = 0;
-        props.player.deckList.push(...deckList.value);
-        Object.assign(props.player.manaCards, manaCards.value);
-        props.player.level = index;
-        props.onContinue();
-        emit('close');
+    function isNextOption(row: number, col: number): boolean {
+        return nextOptions.value.has(`${row}-${col}`);
     }
+
+    const currentRowRef = ref<HTMLElement | null>(null);
+
+    function setCurrentRowRef(el: unknown, row: number) {
+        if (el && row === props.player.scenarioRow) {
+            currentRowRef.value = el as HTMLElement;
+        } else if (!el) {
+            currentRowRef.value = null;
+        }
+    }
+
+    function scrollToCurrent() {
+        nextTick(() => {
+            currentRowRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
+    }
+
+    const activeTab = ref<'map' | 'deck'>('map');
+
+    watch([() => activeTab.value, () => props.player.scenarioRow, () => props.player.scenarioColumn], () => {
+        if (activeTab.value === 'map') scrollToCurrent();
+    }, { immediate: true });
 
     const emit = defineEmits<{
         (e: 'close'): void;
     }>();
 
-    const activeTab = ref<'map' | 'deck'>('map');
-
     // Reactive copies for Vue reactivity; synced back to player on Continue
     const deckList = ref<boolean[]>([]);
     const manaCards = ref<Record<string, number>>({});
 
+    watch(() => props.player, () => {
+        currentRowRef.value = null;
+    }, { deep: true });
+
+    function goToEntry(row: number, col: number) {
+        props.player.spellDeck.length = 0;
+        props.player.spellDeck.push(...deckList.value);
+        Object.assign(props.player.manaDeck, manaCards.value);
+        props.player.scenarioRow = row;
+        props.player.scenarioColumn = col;
+        props.player.level = row;
+        props.onContinue();
+        emit('close');
+    }
+
     watch(() => props.player, (player) => {
-        deckList.value = [...player.deckList];
-        manaCards.value = { ...player.manaCards };
-        player.allCards.forEach(card => { card.revealed = true; });
+        deckList.value = [...player.spellDeck];
+        manaCards.value = { ...player.manaDeck };
+        player.collection.forEach(card => { card.revealed = true; });
     }, { immediate: true });
 
     const suitIconMap: Record<Suit, string> = {
@@ -130,23 +171,33 @@
             </div>
 
             <div v-if="activeTab === 'map'" class="tab-content map-content">
-                <div
-                    class="map-stack"
-                    :style="{ minHeight: `${168 + Math.max(0, mapEntries.length - 1) * 20}px` }"
-                >
+                <div class="diamond-map">
+                    <!-- Rows from top (start) to bottom (boss): row 0 at top, row 12 at bottom -->
                     <div
-                        v-for="(item, stackIndex) in mapEntries"
-                        :key="item.index"
-                        class="map-card"
-                        :style="{
-                            top: `${(mapEntries.length - 1 - stackIndex) * 20}px`,
-                            zIndex: mapEntries.length - stackIndex,
-                            pointerEvents: stackIndex === 0 ? 'auto' : 'none',
-                        }"
-                        :class="{ 'map-card--clickable': stackIndex === 0 }"
-                        @click="stackIndex === 0 && goToEntry(item.index)"
+                        v-for="(rowEntries, row) in scenario"
+                        v-show="row >= props.player.scenarioRow"
+                        :key="row"
+                        :ref="(el) => setCurrentRowRef(el, row)"
+                        class="diamond-row"
+                        :style="{ zIndex: scenario.length - row }"
                     >
-                        <span class="map-card-label">{{ getEntryLabel(item.entry) }}</span>
+                        <div
+                            v-for="(entry, col) in rowEntries"
+                            :key="col"
+                            class="diamond-card"
+                            :class="{
+                                'diamond-card--clickable': isNextOption(row, col),
+                                'diamond-card--current': row === props.player.scenarioRow && col === props.player.scenarioColumn,
+                            }"
+                            @click="isNextOption(row, col) && goToEntry(row, col)"
+                        >
+                            <div class="diamond-card-artwork">
+                                <img :src="getEntryImage(entry)" alt="" class="diamond-card-image" />
+                            </div>
+                            <span class="diamond-card-label">
+                                {{ entry === null ? 'Start' : getEntryLabel(entry) }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -167,7 +218,7 @@
                     </div>
                     <div class="spell-cards-grid">
                         <label
-                            v-for="(card, index) in props.player.allCards"
+                            v-for="(card, index) in props.player.collection"
                             :key="index"
                             class="spell-card-cell"
                         >
@@ -283,6 +334,91 @@
         flex-direction: column;
         align-items: center;
         overflow-y: auto;
+    }
+
+    .diamond-map {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem 0;
+    }
+
+    .diamond-row {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        position: relative;
+        margin-top: -50px;
+        min-height: 70px;
+    }
+
+    .diamond-row:first-child {
+        margin-top: 0;
+    }
+
+    .diamond-card {
+        position: relative;
+        width: 100px;
+        aspect-ratio: 5 / 7;
+        padding: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-end;
+        background-color: #f5f0d0;
+        border: 1px solid #333;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #333;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        box-sizing: border-box;
+        opacity: 1;
+    }
+
+    .diamond-card-artwork {
+        flex: 1 1 0;
+        min-height: 0;
+        overflow: hidden;
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.08);
+    }
+
+    .diamond-card-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        display: block;
+    }
+
+    .diamond-card--current {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.4);
+    }
+
+    .diamond-card--clickable {
+        cursor: pointer;
+        background-color: #faf5e0;
+    }
+
+    .diamond-card--clickable:hover {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
+    }
+
+    .diamond-card-label {
+        position: relative;
+        text-align: center;
+        line-height: 1.2;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        padding: 0.25rem 0.4rem;
+        border-radius: 4px;
     }
 
     .map-stack {

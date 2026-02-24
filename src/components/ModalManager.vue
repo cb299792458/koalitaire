@@ -5,7 +5,7 @@
 </script>
 
 <template>
-    <div v-if="state.currentModal && state.currentModal.name !== 'mapDeck'" class="modal-overlay" :class="{ 'modal-overlay--transparent': state.currentModal.transparentOverlay }" @click.self="state.currentModal.keepOpen ? null : closeModal()">
+    <div v-if="state.currentModal" class="modal-overlay" :class="{ 'modal-overlay--transparent': state.currentModal.transparentOverlay || state.currentModal.name === 'mapDeck' }" @click.self="state.currentModal.keepOpen ? null : closeModal()">
         <component
             :is="state.currentModal.component"
             v-bind="state.currentModal.props"

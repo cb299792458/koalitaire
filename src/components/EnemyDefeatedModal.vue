@@ -66,8 +66,8 @@
             params.keywords,
             params.flavorText
         );
-        p.allCards.push(spellCard);
-        p.deckList.push(true);
+        p.collection.push(spellCard);
+        p.spellDeck.push(true);
         finish();
     }
 
