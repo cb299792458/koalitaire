@@ -10,7 +10,7 @@ import squirrelfPortrait from "/player_portraits/squirrelf.jpg";
 import dingorcPortrait from "/player_portraits/dingorc.jpg";
 import useDamageNumbers from "../composables/useDamageNumbers";
 
-interface EnemyParams {
+export interface EnemyParams {
     name: string;
     portrait: string;
     /** Tooltip text on portrait hover. Defaults to name if not set. */

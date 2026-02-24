@@ -5,10 +5,11 @@
     import { AREAS, type Area } from '../models/Areas';
     import ModalManager from './ModalManager.vue';
     import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue';
-    import { openModal, closeModal, useModalState } from '../stores/modalStore';
+    import { openModal, closeModal, useModalState, openMessageModal } from '../stores/modalStore';
     import PlayerInfo from './PlayerInfo.vue';
     import EnemyInfo from './EnemyInfo.vue';
-    import makeScenario, { type ScenarioEntry } from '../game/makeScenario';
+    import Enemy from '../models/Enemy';
+import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario';
     import type Player from '../models/Player';
     import ManaPool from '../models/ManaPool';
     import { useTown } from '../composables/useTown';
@@ -32,12 +33,17 @@
         closeModal();
         const persistentPlayer = combat.originalPlayer ?? combat.player;
         if (!persistentPlayer) return;
+        const nextOptions = getNextRowOptions(persistentPlayer.scenarioRow, persistentPlayer.scenarioColumn);
+        if (nextOptions.length === 0) {
+            openMessageModal('You Win!');
+            return;
+        }
         openModal('mapDeck', {
             player: persistentPlayer,
             scenario,
-            onContinue: () => {
+            onContinue: (player: Player, row: number, col: number) => {
                 closeModal();
-                startCombatForPlayer(persistentPlayer);
+                startCombatForPlayer(player, row, col);
             },
         }, true);
     };
@@ -79,7 +85,10 @@
             openModal('enemyDefeated', {
                 title: 'Event Complete',
                 player: persistentPlayer,
-                onContinue: () => eventState.onEventContinue(),
+                onContinue: () => {
+                    eventState.onEventContinue();
+                    return false; // Prevent modal from emitting close; we've replaced it with the map
+                },
             }, true, true);
         }
     });
@@ -175,9 +184,11 @@
         return combat.canPlaceSelectedCardInTableau();
     });
     
-    async function startCombatForPlayer(newPlayer: Player) {
-        const row = scenario[newPlayer.scenarioRow];
-        const entry = row?.[newPlayer.scenarioColumn] as ScenarioEntry | undefined;
+    async function startCombatForPlayer(newPlayer: Player, overrideRow?: number, overrideCol?: number) {
+        const rowIdx = overrideRow ?? newPlayer.scenarioRow;
+        const colIdx = overrideCol ?? newPlayer.scenarioColumn;
+        const row = scenario[rowIdx];
+        const entry = row?.[colIdx] as ScenarioEntry | undefined;
         if (!entry) return;
         if ('town' in entry && entry.town) {
             eventState.resetEventState();
@@ -190,17 +201,17 @@
         }
         if ('elite' in entry && entry.elite) {
             eventState.resetEventState();
-            await combat.start(newPlayer, entry.elite);
+            await combat.start(newPlayer, new Enemy(entry.elite));
             return;
         }
         if ('boss' in entry && entry.boss) {
             eventState.resetEventState();
-            await combat.start(newPlayer, entry.boss);
+            await combat.start(newPlayer, new Enemy(entry.boss));
             return;
         }
         if ('enemy' in entry && entry.enemy) {
             eventState.resetEventState();
-            await combat.start(newPlayer, entry.enemy);
+            await combat.start(newPlayer, new Enemy(entry.enemy));
         }
     }
     
@@ -226,26 +237,38 @@
 
     onMounted(() => {
         eventState.onLeaveEvent(() => {
-            const persistentPlayer = combat.originalPlayer ?? eventState.player.value ?? combat.player;
+            // Prefer eventState.player: it has the correct scenario position (event location).
+            // combat.originalPlayer is from the last combat and has the wrong position.
+            const persistentPlayer = eventState.player.value ?? combat.originalPlayer ?? combat.player;
             if (!persistentPlayer) return;
+            const nextOptions = getNextRowOptions(persistentPlayer.scenarioRow, persistentPlayer.scenarioColumn);
+            if (nextOptions.length === 0) {
+                openMessageModal('You Win!');
+                return;
+            }
             openModal('mapDeck', {
                 player: persistentPlayer,
                 scenario,
-                onContinue: () => {
+                onContinue: (player: Player, row: number, col: number) => {
                     closeModal();
-                    startCombatForPlayer(persistentPlayer);
+                    startCombatForPlayer(player, row, col);
                 },
             }, true);
         });
         town.onLeaveTown(() => {
             const persistentPlayer = town.player.value ?? combat.originalPlayer ?? combat.player;
             if (!persistentPlayer) return;
+            const nextOptions = getNextRowOptions(persistentPlayer.scenarioRow, persistentPlayer.scenarioColumn);
+            if (nextOptions.length === 0) {
+                openMessageModal('You Win!');
+                return;
+            }
             openModal('mapDeck', {
                 player: persistentPlayer,
                 scenario,
-                onContinue: () => {
+                onContinue: (player: Player, row: number, col: number) => {
                     closeModal();
-                    startCombatForPlayer(persistentPlayer);
+                    startCombatForPlayer(player, row, col);
                 },
             }, true);
         });
@@ -258,9 +281,9 @@
                     openModal('mapDeck', {
                         player: newPlayer,
                         scenario,
-                        onContinue: () => {
+                        onContinue: (player: Player, row: number, col: number) => {
                             closeModal();
-                            startCombatForPlayer(newPlayer);
+                            startCombatForPlayer(player, row, col);
                         },
                     }, true);
                     return false; // Prevent StartModal from emitting close (we replaced it)
@@ -297,7 +320,7 @@
                 <ModalManager/>
         
                 <div class="combat-screen" @click="onClick({ card: null, area: AREAS.Board, cardIndex: -1 })">
-                    <div class="combat-top">
+                    <div v-if="!isMapDeckOpen" class="combat-top">
                         <div class="combat-left">
                             <h1>Player</h1>
                             <PlayerInfo :player="player" />
@@ -314,7 +337,7 @@
                             <template v-if="isInEvent">
                             <EventView />
                             </template>
-                            <template v-else>
+                            <template v-else-if="isInCombat">
                             <div class="cards-top">
                                 <div class="cards-top-left">
                                     <div class="deck-wrapper">
@@ -396,6 +419,9 @@
                                 />
                             </div>
                             </template>
+                            <template v-else>
+                                <!-- Map is open: no combat UI shown -->
+                            </template>
                         </div>
             
                         <div class="combat-right">
@@ -416,7 +442,7 @@
                         </div>
                     </div>
             
-                    <div class="combat-bottom">
+                    <div v-if="!isMapDeckOpen" class="combat-bottom">
                         <template v-if="isInEvent">
                             <div class="event-choices-area">
                                 <div v-if="!eventResultMessage" class="event-choices">

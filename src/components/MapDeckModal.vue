@@ -8,7 +8,7 @@
 
     const props = defineProps<{
         player: Player;
-        onContinue: () => void;
+        onContinue: (player: Player, row: number, col: number) => void;
         scenario?: ScenarioEntry[][];
     }>();
 
@@ -83,7 +83,7 @@
         props.player.scenarioRow = row;
         props.player.scenarioColumn = col;
         props.player.level = row;
-        props.onContinue();
+        props.onContinue(props.player, row, col);
         emit('close');
     }
 

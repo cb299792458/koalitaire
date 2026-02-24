@@ -87,7 +87,7 @@ export class Combat {
             this.player = player.copy();
             this.player.originalPlayer = player;
             this.enemy = enemy;
-            
+
             // Clear all piles first to ensure clean slate from any previous combat
             this.deck.clear();
             this.compost.clear();
