@@ -103,9 +103,9 @@
         <p>Attack: {{ props.player.attack }}</p>
         <p>Armor: {{ props.player.armor }}</p>
         <p>Agility: {{ props.player.agility }}</p>
-        <p>Arcane: {{ props.player.arcane }}</p>
+        <p>Acumen: {{ props.player.acumen }}</p>
         
-        <p>{{ props.player.gold }} 🍃</p>
+        <p>{{ props.player.koallarbucks }} 💵</p>
         <p v-if="props.showBytecoins">Bytecoins: {{ props.player.bytecoins }}</p>
         
         <div class="summons-list" v-if="props.player.summons.length">

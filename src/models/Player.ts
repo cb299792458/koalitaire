@@ -31,10 +31,10 @@ export interface PlayerParams {
     attack: number;
     armor: number;
     agility: number;
-    arcane: number;
+    acumen: number;
 
     health: number;
-    gold: number;
+    koallarbucks: number;
     bytecoins?: number;
 
     /** All spell cards the player owns. */
@@ -75,10 +75,10 @@ class Player extends Combatant {
     appeal: number;
     attack: number;
     agility: number;
-    arcane: number;
+    acumen: number;
 
     manaDiamonds: number = 0;
-    gold: number;
+    koallarbucks: number;
     bytecoins: number = 0;
 
     /** All spell cards the player owns. */
@@ -92,7 +92,7 @@ class Player extends Combatant {
     originalPlayer?: Player;
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, arcane, health, gold, bytecoins = 0, collection, manaDeck } = params;
+        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.handSize = handSize;
@@ -101,9 +101,9 @@ class Player extends Combatant {
         this.appeal = appeal;
         this.attack = attack;
         this.agility = agility;
-        this.arcane = arcane;
+        this.acumen = acumen;
 
-        this.gold = gold;
+        this.koallarbucks = koallarbucks;
         this.bytecoins = bytecoins;
 
         this.collection = [...collection];
@@ -157,7 +157,7 @@ class Player extends Combatant {
     }
 
     copy(): Player {
-        // Copies all stats (appeal, attack, armor, agility, arcane) and gold so town upgrades apply in next combat.
+        // Copies all stats (appeal, attack, armor, agility, acumen) and koallarbucks so town upgrades apply in next combat.
         const playerCopy = new Player({
             name: this.name,
             portrait: this.portrait,
@@ -169,9 +169,9 @@ class Player extends Combatant {
             attack: this.attack,
             armor: this.armor,
             agility: this.agility,
-            arcane: this.arcane,
+            acumen: this.acumen,
             health: this.maxHealth,
-            gold: this.gold,
+            koallarbucks: this.koallarbucks,
             bytecoins: this.bytecoins,
             collection: this.collection.map(card => new SpellCard(
                 card.rank,
@@ -211,10 +211,10 @@ export const koaParams: PlayerParams = {
     attack: 3,
     armor: 3,
     agility: 3,
-    arcane: 3,
+    acumen: 3,
 
     health: 100,
-    gold: 150,
+    koallarbucks: 150,
     bytecoins: 0,
 
     collection: koaSpellCards,
@@ -235,10 +235,10 @@ export const testCharacterParams: PlayerParams = {
     attack: 0,
     armor: 0,
     agility: 0,
-    arcane: 0,
+    acumen: 0,
 
     health: 1000,
-    gold: 1000000,
+    koallarbucks: 1000000,
     bytecoins: 0,
 
     collection: testSpellCards,

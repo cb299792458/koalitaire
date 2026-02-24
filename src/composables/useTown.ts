@@ -4,13 +4,13 @@ import { SpellCard } from '../models/Card';
 import type { SpellCardParams } from '../models/Card';
 import { generalCards } from '../game/cards/generalCards';
 
-export const STAT_STORE_IDS = ['attackStore', 'armorStore', 'arcaneStore', 'agilityStore', 'appealStore'] as const;
+export const STAT_STORE_IDS = ['attackStore', 'armorStore', 'acumenStore', 'agilityStore', 'appealStore'] as const;
 export type StatStoreId = typeof STAT_STORE_IDS[number];
 
 const STAT_TO_PLAYER_KEY: Record<StatStoreId, keyof Player> = {
     attackStore: 'attack',
     armorStore: 'armor',
-    arcaneStore: 'arcane',
+    acumenStore: 'acumen',
     agilityStore: 'agility',
     appealStore: 'appeal',
 };
@@ -22,7 +22,7 @@ const bloodbankUseCountRef = ref(0);
 const statUpgradeCountsRef = ref<Record<StatStoreId, number>>({
     attackStore: 0,
     armorStore: 0,
-    arcaneStore: 0,
+    acumenStore: 0,
     agilityStore: 0,
     appealStore: 0,
 });
@@ -60,13 +60,13 @@ function getBloodbankHpCost(maxHealth: number): number {
     return Math.floor(maxHealth * 0.25);
 }
 
-const BLOODBANK_GOLD_REWARD = 100;
+const BLOODBANK_KOALLARBUCKS_REWARD = 100;
 const BLOODBANK_MAX_PER_VISIT = 3;
 
 const REST_COST = 50;
 
 const STAT_UPGRADE_BASE_COST = 10;
-/** Gold cost for next stat upgrade: 10, 20, 30, ... */
+/** Koallarbucks cost for next stat upgrade: 10, 20, 30, ... */
 function getStatUpgradeCost(useCount: number): number {
     return STAT_UPGRADE_BASE_COST * (useCount + 1);
 }
@@ -88,7 +88,7 @@ export function useTown(): {
     restAtInn: () => void;
     getRestCost: () => number;
     getBloodbankHpCost: (maxHealth: number) => number;
-    getBloodbankGoldReward: () => number;
+    getBloodbankKoallarbucksReward: () => number;
     getBloodbankMaxPerVisit: () => number;
     sellBloodAtBloodbank: () => void;
     getStatUpgradeCost: (storeId: StatStoreId, useCount: number) => number;
@@ -122,7 +122,7 @@ export function useTown(): {
             statUpgradeCountsRef.value = {
                 attackStore: 0,
                 armorStore: 0,
-                arcaneStore: 0,
+                acumenStore: 0,
                 agilityStore: 0,
                 appealStore: 0,
             };
@@ -137,17 +137,17 @@ export function useTown(): {
         restAtInn() {
             const p = playerRef.value;
             if (!p || innUsedThisVisitRef.value) return;
-            if (p.gold < REST_COST) return;
+            if (p.koallarbucks < REST_COST) return;
             const missing = p.maxHealth - p.health;
             if (missing <= 0) return;
-            p.gold -= REST_COST;
+            p.koallarbucks -= REST_COST;
             const healAmount = Math.ceil(missing * 0.75);
             p.gainHealth(healAmount);
             innUsedThisVisitRef.value = true;
         },
         getRestCost: () => REST_COST,
         getBloodbankHpCost,
-        getBloodbankGoldReward: () => BLOODBANK_GOLD_REWARD,
+        getBloodbankKoallarbucksReward: () => BLOODBANK_KOALLARBUCKS_REWARD,
         getBloodbankMaxPerVisit: () => BLOODBANK_MAX_PER_VISIT,
         sellBloodAtBloodbank() {
             const p = playerRef.value;
@@ -157,7 +157,7 @@ export function useTown(): {
             if (p.health <= cost) return; // need to keep at least 1 HP
             p.health -= cost;
             if (p.health < 1) p.health = 1;
-            p.gold += BLOODBANK_GOLD_REWARD;
+            p.koallarbucks += BLOODBANK_KOALLARBUCKS_REWARD;
             bloodbankUseCountRef.value += 1;
         },
         getStatUpgradeCost: (_storeId: StatStoreId, useCount: number) => getStatUpgradeCost(useCount),
@@ -168,11 +168,11 @@ export function useTown(): {
             const counts = { ...statUpgradeCountsRef.value };
             const useCount = counts[storeId] ?? 0;
             const cost = getStatUpgradeCost(useCount);
-            if (p.gold < cost) return;
+            if (p.koallarbucks < cost) return;
             const key = STAT_TO_PLAYER_KEY[storeId];
             const current = (p[key] as number) ?? 0;
             (p as unknown as Record<string, number>)[key] = current + 1;
-            p.gold -= cost;
+            p.koallarbucks -= cost;
             counts[storeId] = useCount + 1;
             statUpgradeCountsRef.value = counts;
         },
@@ -181,8 +181,8 @@ export function useTown(): {
             const p = playerRef.value;
             if (!p) return;
             const price = getBytecoinPrice(p.level);
-            if (p.gold < price) return;
-            p.gold -= price;
+            if (p.koallarbucks < price) return;
+            p.koallarbucks -= price;
             p.bytecoins += 1;
         },
         sellBytecoin() {
@@ -190,7 +190,7 @@ export function useTown(): {
             if (!p || p.bytecoins < 1) return;
             const price = getBytecoinPrice(p.level);
             p.bytecoins -= 1;
-            p.gold += price;
+            p.koallarbucks += price;
         },
         storeCards: storeCardsRef,
         refreshStoreCards() {
@@ -204,14 +204,14 @@ export function useTown(): {
             const p = playerRef.value;
             if (!p) return false;
             if (storePurchasedCardNamesRef.value.has(cardName)) return false;
-            return p.gold >= STORE_CARD_PRICE;
+            return p.koallarbucks >= STORE_CARD_PRICE;
         },
         buyStoreCard(cardParams: SpellCardParams) {
             const p = playerRef.value;
             if (!p) return;
             if (storePurchasedCardNamesRef.value.has(cardParams.name)) return;
-            if (p.gold < STORE_CARD_PRICE) return;
-            p.gold -= STORE_CARD_PRICE;
+            if (p.koallarbucks < STORE_CARD_PRICE) return;
+            p.koallarbucks -= STORE_CARD_PRICE;
             storePurchasedCardNamesRef.value = new Set(storePurchasedCardNamesRef.value).add(cardParams.name);
             const card = new SpellCard(
                 cardParams.rank,

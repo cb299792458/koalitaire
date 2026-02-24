@@ -22,11 +22,11 @@ const scorch = {
     rank: 5,
     suit: Suit.Fire,
     name: 'Scorch',
-    description: 'Deals 8 magic damage, plus your Arcane.',
+    description: 'Deals 8 magic damage, plus your Acumen.',
     keywords: [Keyword.Magic],
     effect: (combat: Combat) => {
         const { enemy, player } = combat;
-        const damage = 8 + (player?.arcane ?? 0);
+        const damage = 8 + (player?.acumen ?? 0);
         enemy.takeDamage(damage, [DamageType.Magic]);
     },
     flavorText: "Ow! Fire hot! -Leela; Fire indeed hot! -The Professy",

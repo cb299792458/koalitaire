@@ -47,13 +47,13 @@
         { id: 'trader', label: 'Tradies', welcomeMessage: "G'day mate! We tradies are just looking to swap a few cards after some hard yakka, fair dinkum."},
         { id: 'attackStore', label: 'Arsenal FU', welcomeMessage: "Ello gov'nor, how's your mother! Arsenal For You at your service — 'ave a butcher's and see wot tickles yer fancy!"},
         { id: 'armorStore', label: 'Block Booster', welcomeMessage: "Looking to armor up? Make it a Block Booster knight." },
-        { id: 'arcaneStore', label: 'Waverly Place Library', welcomeMessage: "Name's Bobst. Wanna see this rabbit do a Harold Holt? No worries mate, she'll be apples." },
+        { id: 'acumenStore', label: 'Waverly Place Library', welcomeMessage: "Name's Bobst. Wanna see this rabbit do a Harold Holt? No worries mate, she'll be apples." },
         { id: 'agilityStore', label: 'The Arcade Pyre', welcomeMessage: "Come on in and play games all night long to improve your reflexes. Sleeping is giving in, have a white monster and wake up." },
         { id: 'appealStore', label: 'Nobody Beats the Rizz', welcomeMessage: "Don't be a dag, I'll teach you how to rizz up any sheila before smoko." },
     ] as const;
 
     const FIXED_PLACE_IDS = ['inn', 'store'] as const;
-    const OTHER_PLACE_IDS = ['bloodbank', 'stockMarket', 'trader', 'attackStore', 'armorStore', 'arcaneStore', 'agilityStore', 'appealStore'] as const;
+    const OTHER_PLACE_IDS = ['bloodbank', 'stockMarket', 'trader', 'attackStore', 'armorStore', 'acumenStore', 'agilityStore', 'appealStore'] as const;
 
     type TownPlaceId = typeof townPlaces[number]['id'];
 
@@ -104,7 +104,7 @@
         const p = unref(player);
         const used = unref(innUsedThisVisit);
         if (!p || used) return false;
-        if (p.gold < town.getRestCost()) return false;
+        if (p.koallarbucks < town.getRestCost()) return false;
         return p.health < p.maxHealth;
     };
 
@@ -113,7 +113,7 @@
     }
 
     const bloodbankHpCost = () => town.getBloodbankHpCost(unref(player)?.maxHealth ?? 0);
-    const bloodbankGoldReward = () => town.getBloodbankGoldReward();
+    const bloodbankKoallarbucksReward = () => town.getBloodbankKoallarbucksReward();
 
     const bloodbankAtLimit = () => unref(town.bloodbankUseCount) >= town.getBloodbankMaxPerVisit();
 
@@ -131,12 +131,12 @@
     const STAT_STORE_LABELS: Record<StatStoreId, string> = {
         attackStore: 'Attack',
         armorStore: 'Armor',
-        arcaneStore: 'Arcane',
+        acumenStore: 'Acumen',
         agilityStore: 'Agility',
         appealStore: 'Appeal',
     };
 
-    const statStoreIds: StatStoreId[] = ['attackStore', 'armorStore', 'arcaneStore', 'agilityStore', 'appealStore'];
+    const statStoreIds: StatStoreId[] = ['attackStore', 'armorStore', 'acumenStore', 'agilityStore', 'appealStore'];
 
     const isStatStore = (loc: typeof currentLocation.value): loc is StatStoreId =>
         statStoreIds.includes(loc as StatStoreId);
@@ -150,7 +150,7 @@
     const canAffordStatUpgrade = (storeId: StatStoreId) => {
         const p = unref(player);
         if (!p) return false;
-        return p.gold >= getStatUpgradeCostFor(storeId);
+        return p.koallarbucks >= getStatUpgradeCostFor(storeId);
     };
 
     function upgradeStat(storeId: StatStoreId) {
@@ -158,7 +158,7 @@
     }
 
     const bytecoinPrice = () => town.getBytecoinPrice(unref(player)?.level ?? 1);
-    const canBuyBytecoin = () => (unref(player)?.gold ?? 0) >= bytecoinPrice();
+    const canBuyBytecoin = () => (unref(player)?.koallarbucks ?? 0) >= bytecoinPrice();
     const canSellBytecoin = () => (unref(player)?.bytecoins ?? 0) >= 1;
     function buyBytecoin() { town.buyBytecoin(); }
     function sellBytecoin() { town.sellBytecoin(); }
@@ -229,7 +229,7 @@
                                     :disabled="!canRestAtInn()"
                                     @click="restAtInn"
                                 >
-                                    {{ innUsedThisVisit ? 'Already rested' : `Rest (${town.getRestCost()} 🍃 — heal 75% of missing health)` }}
+                                    {{ innUsedThisVisit ? 'Already rested' : `Rest (${town.getRestCost()} 💵 — heal 75% of missing health)` }}
                                 </button>
                             </template>
                             <template v-else-if="currentLocation === 'bloodbank'">
@@ -240,7 +240,7 @@
                                     @click="sellBlood"
                                 >
                                     <template v-if="bloodbankAtLimit()">Already donated {{ town.getBloodbankMaxPerVisit() }} times this visit</template>
-                                    <template v-else>Sell blood (−{{ bloodbankHpCost() }} HP, +{{ bloodbankGoldReward() }} 🍃)</template>
+                                    <template v-else>Sell blood (−{{ bloodbankHpCost() }} HP, +{{ bloodbankKoallarbucksReward() }} 💵)</template>
                                 </button>
                             </template>
                             <template v-else-if="currentLocation === 'store'">
@@ -258,14 +258,14 @@
                                                 :disabled="!town.canBuyStoreCard(params.name)"
                                                 @click="town.buyStoreCard(params)"
                                             >
-                                                {{ town.isStoreCardPurchased(params.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 🍃)` }}
+                                                {{ town.isStoreCardPurchased(params.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 💵)` }}
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </template>
                             <template v-else-if="currentLocation === 'stockMarket'">
-                                <span class="town-stock-price">1 bytecoin = {{ bytecoinPrice() }} 🍃</span>
+                                <span class="town-stock-price">1 bytecoin = {{ bytecoinPrice() }} 💵</span>
                                 <button
                                     type="button"
                                     class="town-choice-button"
@@ -319,7 +319,7 @@
                                     :disabled="!canAffordStatUpgrade(currentLocation)"
                                     @click="upgradeStat(currentLocation)"
                                 >
-                                    Increase {{ STAT_STORE_LABELS[currentLocation] }} (−{{ getStatUpgradeCostFor(currentLocation) }} 🍃)
+                                    Increase {{ STAT_STORE_LABELS[currentLocation] }} (−{{ getStatUpgradeCostFor(currentLocation) }} 💵)
                                 </button>
                             </template>
                             <template v-else>

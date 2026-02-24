@@ -78,50 +78,50 @@ const allCards = {
         },
         {
             name: "Very Weak Blast",
-            description: "Deals 1 damage, plus 1 damage for each point of arcane",
+            description: "Deals 1 damage, plus 1 damage for each point of acumen",
             effect: (combat: Combat) => {
                 const { player, enemy } = combat;
-                enemy.takeDamage(1 + player.arcane);
+                enemy.takeDamage(1 + player.acumen);
             },
         },
         {
             name: "Weak Blast",
-            description: "Deals 3 damage, plus 1 damage for each point of arcane",
+            description: "Deals 3 damage, plus 1 damage for each point of acumen",
             effect: (combat: Combat) => {
                 const { player, enemy } = combat;
-                enemy.takeDamage(3 + player.arcane);
+                enemy.takeDamage(3 + player.acumen);
             },
         },
         {
             name: "Moderate Blast",
-            description: "Deals 6 damage, plus 1 damage for each point of arcane",
+            description: "Deals 6 damage, plus 1 damage for each point of acumen",
             effect: (combat: Combat) => {
                 const { player, enemy } = combat;
-                enemy.takeDamage(6 + player.arcane);
+                enemy.takeDamage(6 + player.acumen);
             },
         },
         {
             name: "Strong Blast",
-            description: "Deals 10 damage, plus 1 damage for each point of arcane",
+            description: "Deals 10 damage, plus 1 damage for each point of acumen",
             effect: (combat: Combat) => {
                 const { player, enemy } = combat;
-                enemy.takeDamage(10 + player.arcane);
+                enemy.takeDamage(10 + player.acumen);
             },
         },
         {
             name: "Very Strong Blast",
-            description: "Deals 15 damage, plus 1 damage for each point of arcane",
+            description: "Deals 15 damage, plus 1 damage for each point of acumen",
             effect: (combat: Combat) => {
                 const { player, enemy } = combat;
-                enemy.takeDamage(15 + player.arcane);
+                enemy.takeDamage(15 + player.acumen);
             },
         },
         {
             name: "Critical Blast",
-            description: "Deals 21 damage, plus 1 damage for each point of arcane",
+            description: "Deals 21 damage, plus 1 damage for each point of acumen",
             effect: (combat: Combat) => {
                 const { player, enemy } = combat;
-                enemy.takeDamage(21 + player.arcane);
+                enemy.takeDamage(21 + player.acumen);
             },
         },
     ],

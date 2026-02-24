@@ -7,7 +7,7 @@ export interface Event {
 }
 
 export interface EventOption {
-    stat: 'attack' | 'agility' | 'arcane' | 'appeal' | 'armor' | '';
+    stat: 'attack' | 'agility' | 'acumen' | 'appeal' | 'armor' | '';
     description: string;
     success?: {
         effect: (player: Player) => void;
@@ -28,13 +28,13 @@ const lockedChest: Event = {
             description: 'Try to break open the chest by force.',
             success: {
                 effect: (player: Player) => {
-                    player.gold += 100;
+                    player.koallarbucks += 100;
                 },
-                message: 'You break open the chest and find an antique didgeridoo, inlaid with opals. You can sell it in town for 100 gold.',
+                message: 'You break open the chest and find an antique didgeridoo, inlaid with opals. You can sell it in town for 100 koallarbucks.',
             },
             failure: {
                 effect: (player: Player) => {
-                    player.gold += 10;
+                    player.koallarbucks += 10;
                     player.takeDamage(10);
                 },
                 message: 'You hurt your paw breaking open the chest, taking 10 damage. You also destroy the antique didgeridoo inside, but pick up some valuable scraps.',
@@ -45,9 +45,9 @@ const lockedChest: Event = {
             description: 'Try to pick the lock with your claws.',
             success: {
                 effect: (player: Player) => {
-                player.gold += 100;
+                player.koallarbucks += 100;
                 },
-                message: 'You pick the lock with your claws and find an antique didgeridoo, inlaid with opals. You can sell it in town for 100 gold.',
+                message: 'You pick the lock with your claws and find an antique didgeridoo, inlaid with opals. You can sell it in town for 100 koallarbucks.',
             },
             failure: {
                 effect: (_player: Player) => {
@@ -67,9 +67,9 @@ const bandits: Event = {
             description: 'Try to block the crossbow with your armor shield.',
             success: {
                 effect: (player: Player) => {
-                    player.gold += 100;
+                    player.koallarbucks += 100;
                 },
-                message: 'You protect the merchant with your armor and he rewards you with 100 gold.',
+                message: 'You protect the merchant with your armor and he rewards you with 100 koallarbucks.',
             },
             failure: {
                 effect: (player: Player) => {
@@ -83,16 +83,16 @@ const bandits: Event = {
             description: 'Try to scare the bandits into leaving the merchant alone.',
             success: {
                 effect: (player: Player) => {
-                    player.gold += 100;
+                    player.koallarbucks += 100;
                 },
-                message: 'You convince the bandits that it\'s not worth it to fight you, and they leave the merchant alone. He gives you 100 gold for your help.',
+                message: 'You convince the bandits that it\'s not worth it to fight you, and they leave the merchant alone. He gives you 100 koallarbucks for your help.',
             },
             failure: {
                 effect: (player: Player) => {
-                    player.gold -= 100;
-                    player.gold = Math.max(0, player.gold);
+                    player.koallarbucks -= 100;
+                    player.koallarbucks = Math.max(0, player.koallarbucks);
                 },
-                message: 'A few more bandits arrive they rob you as well. You lose 100 gold.',
+                message: 'A few more bandits arrive they rob you as well. You lose 100 koallarbucks.',
             },
         },
     ]
@@ -133,9 +133,9 @@ const swagman: Event = {
             description: 'A chocolate cake',
             failure: {
                 effect: (player: Player) => {
-                    player.gold += 15;
+                    player.koallarbucks += 15;
                 },
-                message: 'He says, "I understood that reference." in a perfect Chris Evans impression. That\'s not right, but thanks for the laugh. He gives you 15 gold.',
+                message: 'He says, "I understood that reference." in a perfect Chris Evans impression. That\'s not right, but thanks for the laugh. He gives you 15 koallarbucks.',
             },
         },
     ],
@@ -146,13 +146,13 @@ const storm: Event = {
     description: 'You come across a few travelers struggling to set up a tent. They say, "Can\'t you hear, can\'t you hear the thunder? You better run, you better take cover."',
     options: [
         {
-            stat: 'arcane',
+            stat: 'acumen',
             description: 'Summon a magical brolly for yourself and the travelers.',
             success: {
                 effect: (player: Player) => {
-                    player.gold += 15;
+                    player.koallarbucks += 15;
                 },
-                message: 'You summon a magical brolly for yourself and the travelers. You all stay dry, and they offer some gold as thanks.',
+                message: 'You summon a magical brolly for yourself and the travelers. You all stay dry, and they offer some koallarbucks as thanks.',
             },
             failure: {
                 effect: (player: Player) => {

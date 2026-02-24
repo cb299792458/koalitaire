@@ -131,7 +131,7 @@ const koality = {
         player.attack += 5;
         player.armor += 5;
         player.agility += 5;
-        player.arcane += 5;
+        player.acumen += 5;
         player.appeal += 5;
     },
     charges: 1,
@@ -223,11 +223,11 @@ const thunderstruck = {
     rank: 4,
     suit: Suit.Fire,
     name: 'Thunderstruck',
-    description: 'Deals 25, plus five times your Arcane, ranged magic damage to the enemy.',
+    description: 'Deals 25, plus five times your Acumen, ranged magic damage to the enemy.',
     keywords: [Keyword.Magic, Keyword.Ranged],
     effect: (combat: Combat) => {
         const { enemy, player } = combat;
-        const damage = 25 + (player?.arcane ?? 0) * 5;
+        const damage = 25 + (player?.acumen ?? 0) * 5;
         enemy.takeDamage(damage, [DamageType.Ranged, DamageType.Magic]);
     },
     flavorText: "You've been thunderstruck!",
