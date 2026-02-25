@@ -1,40 +1,54 @@
 <script setup lang="ts">
-    import { onMounted, onBeforeUnmount, ref, unref, computed } from 'vue';
-    import { useTown, type StatStoreId } from '../composables/useTown';
-    import { useModalState, closeModal } from '../stores/modalStore';
-    import PlayerInfo from './PlayerInfo.vue';
-    import SingleCard from './SingleCard.vue';
-    import MapDeckModal from './MapDeckModal.vue';
-    import { SpellCard } from '../models/Card';
+    import { onMounted, onBeforeUnmount, ref, unref, computed } from 'vue'
+    import { useTown, type StatStoreId, STAT_STORE_IDS } from '../composables/useTown'
+    import { useModalState, closeModal } from '../stores/modalStore'
+    import CombatantInfo from './CombatantInfo.vue'
+    import SingleCard from './Cards/SingleCard.vue'
+    import BackAtCampModal from './Modals/BackAtCampModal.vue'
+    import { SpellCard } from '../models/Card'
+    import type { SpellCardParams } from '../models/Card'
 
-    const town = useTown();
-    const modalState = useModalState();
-    const player = town.player;
-    const innUsedThisVisit = town.innUsedThisVisit;
+    const town = useTown()
+    const modalState = useModalState()
+    const player = town.player
+    const innUsedThisVisit = town.innUsedThisVisit
 
-    function leave() {
-        town.leaveTown();
-    }
+    const scale = ref(0.8)
+    const DESIGN_WIDTH = 1920
+    const DESIGN_HEIGHT = 1080
 
-    const scale = ref(0.8);
-    const designWidth = 1920;
-    const designHeight = 1080;
     function updateScale() {
         scale.value = Math.min(
-            window.innerWidth / designWidth,
-            window.innerHeight / designHeight
-        );
+            window.innerWidth / DESIGN_WIDTH,
+            window.innerHeight / DESIGN_HEIGHT
+        )
     }
+
     onMounted(() => {
-        if (unref(town.isInTown)) setVisiblePlacesForVisit();
-        updateScale();
-        window.addEventListener('resize', updateScale);
-        window.addEventListener('focus', updateScale);
-    });
+        if (unref(town.isInTown)) setVisiblePlacesForVisit()
+        updateScale()
+        window.addEventListener('resize', updateScale)
+        window.addEventListener('focus', updateScale)
+    })
     onBeforeUnmount(() => {
-        window.removeEventListener('resize', updateScale);
-        window.removeEventListener('focus', updateScale);
-    });
+        window.removeEventListener('resize', updateScale)
+        window.removeEventListener('focus', updateScale)
+    })
+
+    function spellCardFromParams(params: SpellCardParams, revealed = true): SpellCard {
+        const card = new SpellCard(
+            params.rank,
+            params.suit,
+            params.name,
+            params.description,
+            params.effect,
+            params.charges,
+            params.keywords,
+            params.flavorText
+        )
+        card.revealed = revealed
+        return card
+    }
 
     const townPlaces = [
         // always present
@@ -81,52 +95,48 @@
             .filter((p): p is (typeof townPlaces)[number] => p != null);
     });
 
-    const currentLocation = ref<TownPlaceId | null>(null);
+    const currentLocation = ref<TownPlaceId | null>(null)
 
-    const locationLabel = () => {
-        if (!currentLocation.value) return 'Town';
-        return townPlaces.find(p => p.id === currentLocation.value)?.label ?? 'Town';
-    };
+    const locationLabel = computed(() => {
+        if (!currentLocation.value) return 'Town'
+        return townPlaces.find((p) => p.id === currentLocation.value)?.label ?? 'Town'
+    })
 
-    const locationWelcomeMessage = () => {
-        if (!currentLocation.value) return 'Welcome to town.';
-        const place = townPlaces.find(p => p.id === currentLocation.value);
-        return place?.welcomeMessage ?? `Welcome to ${locationLabel()}.`;
-    };
+    const locationWelcomeMessage = computed(() => {
+        if (!currentLocation.value) return 'Welcome to town.'
+        const place = townPlaces.find((p) => p.id === currentLocation.value)
+        return place?.welcomeMessage ?? `Welcome to ${locationLabel.value}.`
+    })
 
-    function onPlaceClick(placeId: typeof townPlaces[number]['id']) {
-        currentLocation.value = placeId;
-        if (placeId === 'store') town.refreshStoreCards();
-        if (placeId === 'trader') town.refreshTraderOffers();
+    function onPlaceClick(placeId: (typeof townPlaces)[number]['id']) {
+        currentLocation.value = placeId
+        if (placeId === 'store') town.refreshStoreCards()
+        if (placeId === 'trader') town.refreshTraderOffers()
     }
 
-    const canRestAtInn = () => {
-        const p = unref(player);
-        const used = unref(innUsedThisVisit);
-        if (!p || used) return false;
-        if (p.koallarbucks < town.getRestCost()) return false;
-        return p.health < p.maxHealth;
-    };
+    const bloodbankHpCost = computed(() =>
+        town.getBloodbankHpCost(unref(player)?.maxHealth ?? 0)
+    )
+    const bloodbankKoallarbucksReward = computed(() =>
+        town.getBloodbankKoallarbucksReward()
+    )
+    const bloodbankAtLimit = computed(
+        () => unref(town.bloodbankUseCount) >= town.getBloodbankMaxPerVisit()
+    )
 
-    function restAtInn() {
-        town.restAtInn();
-    }
+    const canRestAtInn = computed(() => {
+        const p = unref(player)
+        const used = unref(innUsedThisVisit)
+        if (!p || used) return false
+        if (p.koallarbucks < town.getRestCost()) return false
+        return p.health < p.maxHealth
+    })
 
-    const bloodbankHpCost = () => town.getBloodbankHpCost(unref(player)?.maxHealth ?? 0);
-    const bloodbankKoallarbucksReward = () => town.getBloodbankKoallarbucksReward();
-
-    const bloodbankAtLimit = () => unref(town.bloodbankUseCount) >= town.getBloodbankMaxPerVisit();
-
-    const canSellBlood = () => {
-        const p = unref(player);
-        if (!p) return false;
-        if (bloodbankAtLimit()) return false;
-        return p.health > bloodbankHpCost();
-    };
-
-    function sellBlood() {
-        town.sellBloodAtBloodbank();
-    }
+    const canSellBlood = computed(() => {
+        const p = unref(player)
+        if (!p || bloodbankAtLimit.value) return false
+        return p.health > bloodbankHpCost.value
+    })
 
     const STAT_STORE_LABELS: Record<StatStoreId, string> = {
         attackStore: 'Attack',
@@ -134,69 +144,46 @@
         acumenStore: 'Acumen',
         agilityStore: 'Agility',
         appealStore: 'Appeal',
-    };
-
-    const statStoreIds: StatStoreId[] = ['attackStore', 'armorStore', 'acumenStore', 'agilityStore', 'appealStore'];
-
-    const isStatStore = (loc: typeof currentLocation.value): loc is StatStoreId =>
-        statStoreIds.includes(loc as StatStoreId);
-
-    const getStatUpgradeCostFor = (storeId: StatStoreId) => {
-        const counts = unref(town.statUpgradeCounts);
-        const useCount = counts[storeId] ?? 0;
-        return town.getStatUpgradeCost(storeId, useCount);
-    };
-
-    const canAffordStatUpgrade = (storeId: StatStoreId) => {
-        const p = unref(player);
-        if (!p) return false;
-        return p.koallarbucks >= getStatUpgradeCostFor(storeId);
-    };
-
-    function upgradeStat(storeId: StatStoreId) {
-        town.upgradeStatAtStore(storeId);
     }
 
-    const bytecoinPrice = () => town.getBytecoinPrice(unref(player)?.level ?? 1);
-    const canBuyBytecoin = () => (unref(player)?.koallarbucks ?? 0) >= bytecoinPrice();
-    const canSellBytecoin = () => (unref(player)?.bytecoins ?? 0) >= 1;
-    function buyBytecoin() { town.buyBytecoin(); }
-    function sellBytecoin() { town.sellBytecoin(); }
+    const isStatStore = (
+        loc: typeof currentLocation.value
+    ): loc is StatStoreId =>
+        STAT_STORE_IDS.includes(loc as StatStoreId)
+
+    const getStatUpgradeCostFor = (storeId: StatStoreId) => {
+        const counts = unref(town.statUpgradeCounts)
+        const useCount = counts[storeId] ?? 0
+        return town.getStatUpgradeCost(storeId, useCount)
+    }
+
+    const canAffordStatUpgrade = (storeId: StatStoreId) => {
+        const p = unref(player)
+        return (p?.koallarbucks ?? 0) >= getStatUpgradeCostFor(storeId)
+    }
+
+    const bytecoinPrice = computed(() =>
+        town.getBytecoinPrice(unref(player)?.level ?? 1)
+    )
+    const canBuyBytecoin = computed(
+        () => (unref(player)?.koallarbucks ?? 0) >= bytecoinPrice.value
+    )
+    const canSellBytecoin = computed(
+        () => (unref(player)?.bytecoins ?? 0) >= 1
+    )
 
     const storeDisplayCards = computed(() =>
-        town.storeCards.value.map((params) => {
-            const card = new SpellCard(
-                params.rank,
-                params.suit,
-                params.name,
-                params.description,
-                params.effect,
-                params.charges,
-                params.keywords,
-                params.flavorText
-            );
-            card.revealed = true;
-            return { params, displayCard: card };
-        })
-    );
+        town.storeCards.value.map((params) => ({
+            params,
+            displayCard: spellCardFromParams(params),
+        }))
+    )
 
     const traderGeneralDisplayCards = computed(() =>
-        town.traderOffers.value.map((offer) => {
-            const params = offer.generalCard;
-            const card = new SpellCard(
-                params.rank,
-                params.suit,
-                params.name,
-                params.description,
-                params.effect,
-                params.charges,
-                params.keywords,
-                params.flavorText
-            );
-            card.revealed = true;
-            return card;
-        })
-    );
+        town.traderOffers.value.map((offer) =>
+            spellCardFromParams(offer.generalCard)
+        )
+    )
 </script>
 
 <template>
@@ -207,124 +194,132 @@
                     <div class="town-top">
                         <div class="town-left">
                             <h1>Player</h1>
-                            <PlayerInfo v-if="player" :player="player" :show-bytecoins="(unref(player)?.bytecoins ?? 0) > 0" />
+                            <CombatantInfo
+                                v-if="player"
+                                :combatant="player"
+                                variant="player"
+                                :show-bytecoins="(unref(player)?.bytecoins ?? 0) > 0"
+                            />
                         </div>
 
                         <div class="town-middle">
-                            <MapDeckModal
-                                v-if="modalState.currentModal?.name === 'mapDeck' && modalState.currentModal?.props"
+                            <BackAtCampModal
+                                v-if="modalState.currentModal?.name === 'backAtCamp' && modalState.currentModal?.props"
                                 :player="modalState.currentModal.props.player"
                                 :scenario="modalState.currentModal.props.scenario"
                                 :on-continue="modalState.currentModal.props.onContinue"
                                 @close="closeModal"
                             />
                             <div v-else class="town-location-content">
-                                <h2 class="town-location-name">{{ locationLabel() }}</h2>
-                                <p class="town-location-description">{{ locationWelcomeMessage() }}</p>
+                                <h2 class="town-location-name">{{ locationLabel }}</h2>
+                                <p class="town-location-description">{{ locationWelcomeMessage }}</p>
                                 <div class="town-choices">
-                            <template v-if="currentLocation === 'inn'">
-                                <button
-                                    type="button"
-                                    class="town-choice-button"
-                                    :disabled="!canRestAtInn()"
-                                    @click="restAtInn"
-                                >
-                                    {{ innUsedThisVisit ? 'Already rested' : `Rest (${town.getRestCost()} 💵 — heal 75% of missing health)` }}
-                                </button>
-                            </template>
-                            <template v-else-if="currentLocation === 'bloodbank'">
-                                <button
-                                    type="button"
-                                    class="town-choice-button"
-                                    :disabled="!canSellBlood()"
-                                    @click="sellBlood"
-                                >
-                                    <template v-if="bloodbankAtLimit()">Already donated {{ town.getBloodbankMaxPerVisit() }} times this visit</template>
-                                    <template v-else>Sell blood (−{{ bloodbankHpCost() }} HP, +{{ bloodbankKoallarbucksReward() }} 💵)</template>
-                                </button>
-                            </template>
-                            <template v-else-if="currentLocation === 'store'">
-                                <div class="town-store-cards">
-                                    <div
-                                        v-for="{ params, displayCard } in storeDisplayCards"
-                                        :key="params.name"
-                                        class="town-store-card"
-                                    >
-                                        <div class="town-store-card-display">
-                                            <SingleCard :card="displayCard" />
-                                            <button
-                                                type="button"
-                                                class="town-store-buy-button"
-                                                :disabled="!town.canBuyStoreCard(params.name)"
-                                                @click="town.buyStoreCard(params)"
-                                            >
-                                                {{ town.isStoreCardPurchased(params.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 💵)` }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </template>
-                            <template v-else-if="currentLocation === 'stockMarket'">
-                                <span class="town-stock-price">1 bytecoin = {{ bytecoinPrice() }} 💵</span>
-                                <button
-                                    type="button"
-                                    class="town-choice-button"
-                                    :disabled="!canBuyBytecoin()"
-                                    @click="buyBytecoin"
-                                >
-                                    Buy bytecoin
-                                </button>
-                                <button
-                                    type="button"
-                                    class="town-choice-button"
-                                    :disabled="!canSellBytecoin()"
-                                    @click="sellBytecoin"
-                                >
-                                    Sell bytecoin
-                                </button>
-                            </template>
-                            <template v-else-if="currentLocation === 'trader'">
-                                <div class="town-trader-slots">
-                                    <div
-                                        v-for="(offer, idx) in town.traderOffers.value"
-                                        :key="idx"
-                                        class="town-trader-slot"
-                                    >
-                                        <div class="town-trader-cards">
-                                            <div class="town-trader-card-display">
-                                                <SingleCard :card="offer.playerCard" />
-                                                <span class="town-trader-label">Your card</span>
-                                            </div>
-                                            <span class="town-trader-arrow">⇄</span>
-                                            <div class="town-trader-card-display">
-                                                <SingleCard v-if="traderGeneralDisplayCards[idx]" :card="traderGeneralDisplayCards[idx]!" />
-                                                <span class="town-trader-label">Trade for</span>
-                                            </div>
-                                        </div>
+                                    <template v-if="currentLocation === 'inn'">
                                         <button
                                             type="button"
-                                            class="town-choice-button town-trader-button"
-                                            @click="town.doTrade(idx)"
+                                            class="town-choice-button"
+                                            :disabled="!canRestAtInn"
+                                            @click="town.restAtInn"
                                         >
-                                            Trade
+                                            {{ innUsedThisVisit ? 'Already rested' : `Rest (${town.getRestCost()} 💵 — heal 75% of missing health)` }}
                                         </button>
-                                    </div>
-                                    <p v-if="town.traderOffers.value.length === 0" class="town-placeholder-msg">No spell cards in your deck to trade.</p>
-                                </div>
-                            </template>
-                            <template v-else-if="currentLocation && isStatStore(currentLocation)">
-                                <button
-                                    type="button"
-                                    class="town-choice-button"
-                                    :disabled="!canAffordStatUpgrade(currentLocation)"
-                                    @click="upgradeStat(currentLocation)"
-                                >
-                                    Increase {{ STAT_STORE_LABELS[currentLocation] }} (−{{ getStatUpgradeCostFor(currentLocation) }} 💵)
-                                </button>
-                            </template>
-                            <template v-else>
-                                <p class="town-placeholder-msg">Select a location to get started.</p>
-                            </template>
+                                    </template>
+                                    <template v-else-if="currentLocation === 'bloodbank'">
+                                        <button
+                                            type="button"
+                                            class="town-choice-button"
+                                            :disabled="!canSellBlood"
+                                            @click="town.sellBloodAtBloodbank"
+                                        >
+                                            <template v-if="bloodbankAtLimit">Already donated {{ town.getBloodbankMaxPerVisit() }} times this visit</template>
+                                            <template v-else>Sell blood (−{{ bloodbankHpCost }} HP, +{{ bloodbankKoallarbucksReward }} 💵)</template>
+                                        </button>
+                                    </template>
+                                    <template v-else-if="currentLocation === 'store'">
+                                        <div class="town-store-cards">
+                                            <div
+                                                v-for="{ params, displayCard } in storeDisplayCards"
+                                                :key="params.name"
+                                                class="town-store-card"
+                                            >
+                                                <div class="town-store-card-display">
+                                                    <SingleCard :card="displayCard" />
+                                                    <button
+                                                        type="button"
+                                                        class="town-store-buy-button"
+                                                        :disabled="!town.canBuyStoreCard(params.name)"
+                                                        @click="town.buyStoreCard(params)"
+                                                    >
+                                                        {{ town.isStoreCardPurchased(params.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 💵)` }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <template v-else-if="currentLocation === 'stockMarket'">
+                                        <span class="town-stock-price">1 bytecoin = {{ bytecoinPrice }} 💵</span>
+                                        <button
+                                            type="button"
+                                            class="town-choice-button"
+                                            :disabled="!canBuyBytecoin"
+                                            @click="town.buyBytecoin"
+                                        >
+                                            Buy bytecoin
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="town-choice-button"
+                                            :disabled="!canSellBytecoin"
+                                            @click="town.sellBytecoin"
+                                        >
+                                            Sell bytecoin
+                                        </button>
+                                    </template>
+                                    <template v-else-if="currentLocation === 'trader'">
+                                        <div class="town-trader-slots">
+                                            <div
+                                                v-for="(offer, idx) in town.traderOffers.value"
+                                                :key="idx"
+                                                class="town-trader-slot"
+                                            >
+                                                <div class="town-trader-cards">
+                                                    <div class="town-trader-card-display">
+                                                        <SingleCard :card="offer.playerCard" />
+                                                        <span class="town-trader-label">Your card</span>
+                                                    </div>
+                                                    <span class="town-trader-arrow">⇄</span>
+                                                    <div class="town-trader-card-display">
+                                                        <SingleCard
+                                                            v-if="traderGeneralDisplayCards[idx]"
+                                                            :card="traderGeneralDisplayCards[idx]!"
+                                                        />
+                                                        <span class="town-trader-label">Trade for</span>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    class="town-choice-button town-trader-button"
+                                                    @click="town.doTrade(idx)"
+                                                >
+                                                    Trade
+                                                </button>
+                                            </div>
+                                            <p v-if="town.traderOffers.value.length === 0" class="town-placeholder-msg">No spell cards in your deck to trade.</p>
+                                        </div>
+                                    </template>
+                                    <template v-else-if="currentLocation && isStatStore(currentLocation)">
+                                        <button
+                                            type="button"
+                                            class="town-choice-button"
+                                            :disabled="!canAffordStatUpgrade(currentLocation)"
+                                            @click="town.upgradeStatAtStore(currentLocation)"
+                                        >
+                                            Increase {{ STAT_STORE_LABELS[currentLocation] }} (−{{ getStatUpgradeCostFor(currentLocation) }} 💵)
+                                        </button>
+                                    </template>
+                                    <template v-else>
+                                        <p class="town-placeholder-msg">Select a location to get started.</p>
+                                    </template>
                                 </div>
                             </div>
                         </div>
@@ -347,7 +342,7 @@
                     </div>
 
                     <div class="town-bottom">
-                        <button type="button" class="leave-town-button" @click="leave">
+                        <button type="button" class="leave-town-button" @click="town.leaveTown">
                             Leave Town
                         </button>
                     </div>
@@ -358,6 +353,60 @@
 </template>
 
 <style scoped>
+    .game-page {
+        display: flex;
+        flex-direction: column;
+        width: 100vw;
+        height: 100vh;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .scale-wrapper {
+        width: 1920px;
+        height: 1080px;
+        position: relative;
+    }
+
+    .scale-container {
+        width: 100%;
+        height: 100%;
+        transform-origin: center center;
+    }
+
+    .town-top {
+        display: flex;
+        flex-direction: row;
+        height: 860px;
+    }
+
+    .town-right,
+    .town-left {
+        background-color: lightblue;
+        width: 260px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 0;
+    }
+
+    .town-middle {
+        background-color: lightgreen;
+        width: 1400px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .town-bottom {
+        background-color: pink;
+        height: 220px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
     .town-page {
         background-color: #2d4a3e;
     }
@@ -440,7 +489,7 @@
 
     .town-store-card {
         padding: 12px;
-        background-color: rgba(0,0,0,0.1);
+        background-color: rgba(0, 0, 0, 0.1);
         border-radius: 8px;
     }
 

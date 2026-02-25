@@ -1,17 +1,15 @@
 import { nextTick } from "vue";
 import type { Combat } from "../composables/useCombat";
+import { Suit } from "./Suit";
 
-export enum Suit {
-    Wood = "wood",
-    Fire = "fire",
-    Earth = "earth",
-    Metal = "metal",
-    Water = "water",
-    /** Debug-only suit, not used in normal gameplay. */
-    Koala = "koala",
+const ANIMATION_DELAY = 50;
+
+function scheduleAnimation(card: Card, name: string, duration: number): void {
+    nextTick(() => {
+        setTimeout(() => { card.animation = name; }, ANIMATION_DELAY);
+        setTimeout(() => { card.animation = ''; }, ANIMATION_DELAY + duration);
+    });
 }
-
-export const Suits: Suit[] = [Suit.Wood, Suit.Fire, Suit.Earth, Suit.Metal, Suit.Water];
 
 export interface CardParams {
     rank: number;
@@ -66,66 +64,28 @@ class Card {
                     default:
                         this.animation = 'fly-up';
                 }
-            }, 50); // tiny delay to allow the card to appear in center
+            }, ANIMATION_DELAY);
 
-            // Reset after animation duration
             setTimeout(() => {
                 this.animation = '';
-            }, 50 + this.animationTime);
+            }, ANIMATION_DELAY + this.animationTime);
         });
     }
 
-    // TODO: clean up this method, make animations enumerable
     animateBurn(): void {
-        const burnAnimationTime = 1200; // Faster burn animation (1.2s)
-        nextTick(() => {
-            setTimeout(() => {
-                this.animation = 'burn';
-            }, 50);
-
-            setTimeout(() => {
-                this.animation = '';
-            }, 50 + burnAnimationTime);
-        });
+        scheduleAnimation(this, 'burn', 1200);
     }
 
     animateTableauMove(): void {
-        const tableauMoveTime = 400; // Quick animation for tableau moves (0.4s)
-        nextTick(() => {
-            setTimeout(() => {
-                this.animation = 'tableau-move';
-            }, 50);
-
-            setTimeout(() => {
-                this.animation = '';
-            }, 50 + tableauMoveTime);
-        });
+        scheduleAnimation(this, 'tableau-move', 400);
     }
 
     animateDraw(): void {
-        const drawAnimationTime = 500; // Animation for drawing cards (0.5s)
-        nextTick(() => {
-            setTimeout(() => {
-                this.animation = 'draw';
-            }, 50);
-
-            setTimeout(() => {
-                this.animation = '';
-            }, 50 + drawAnimationTime);
-        });
+        scheduleAnimation(this, 'draw', 500);
     }
 
     animateMoveToMana(): void {
-        const moveToManaTime = 350;
-        nextTick(() => {
-            setTimeout(() => {
-                this.animation = 'move-to-mana';
-            }, 50);
-
-            setTimeout(() => {
-                this.animation = '';
-            }, 50 + moveToManaTime);
-        });
+        scheduleAnimation(this, 'move-to-mana', 350);
     }
 }
 
@@ -147,7 +107,6 @@ export class SpellCard extends Card {
         flavorText?: string
     ) {
         super(rank, suit);
-        this.isSpell = true;
         this.name = name;
         this.description = description;
         this.effect = effect;

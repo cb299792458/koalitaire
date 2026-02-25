@@ -1,5 +1,5 @@
 import Card, { SpellCard, type SpellCardParams } from "./Card";
-import { Suit, Suits } from "./Card";
+import { Suit, Suits } from "./Suit";
 import Combatant from "./Combatant";
 import type { DamageNumberType } from "./Combatant";
 

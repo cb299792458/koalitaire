@@ -1,8 +1,9 @@
 <script setup lang="ts">
     import { computed, ref, watch } from 'vue';
-    import type Card from '../models/Card';
-    import { Suit, type SpellCard } from '../models/Card';
-    import { getKeywordExplanation } from '../game/keywords';
+    import type Card from '../../models/Card';
+    import { type SpellCard } from '../../models/Card';
+    import { getKeywordExplanation } from '../../game/keywords';
+    import { suitIconMap, suitClassMap } from '../../utils/suitAssets';
 
     const { card, selectedCard } = defineProps<{
         card: Card,
@@ -59,26 +60,8 @@
     const isSpell = computed(() => card.isSpell);
     const spellCard = computed(() => isSpell.value ? card as SpellCard : null);
     
-    const suitIconMap: Record<string, string> = {
-        [Suit.Wood]: '/icons/tree-svgrepo-com.svg',
-        [Suit.Fire]: '/icons/fire-svgrepo-com.svg',
-        [Suit.Earth]: '/icons/rock-svgrepo-com.svg',
-        [Suit.Metal]: '/icons/metal-bar-svgrepo-com.svg',
-        [Suit.Water]: '/icons/water-drop-svgrepo-com.svg',
-        [Suit.Koala]: '/icons/koala.svg',
-    };
-    
-    const suitIcon = computed(() => suitIconMap[card.suit] || '');
-    
-    const suitClass = computed(() => {
-        if (card.suit === Suit.Wood) return 'suit-wood';
-        if (card.suit === Suit.Fire) return 'suit-fire';
-        if (card.suit === Suit.Water) return 'suit-water';
-        if (card.suit === Suit.Earth) return 'suit-earth';
-        if (card.suit === Suit.Metal) return 'suit-metal';
-        if (card.suit === Suit.Koala) return 'suit-koala';
-        return '';
-    });
+    const suitIcon = computed(() => suitIconMap[card.suit] ?? '');
+    const suitClass = computed(() => suitClassMap[card.suit] ?? '');
 
     const tooltipTitle = computed(() => {
         if (isSpell.value && spellCard.value) {
@@ -272,6 +255,351 @@
 <style scoped>
 .card-view {
     position: relative;
+    width: 120px;
+    aspect-ratio: 5 / 7;
+    background-color: #f5f0d0;
+    opacity: 1;
+    margin: 10px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    border-radius: 10px;
+    border: 1px solid black;
+    cursor: pointer;
+    overflow: hidden;
+    box-sizing: border-box;
+    font-size: 12px;
+    color: black;
+}
+
+.card-view.start-animation {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(1.5);
+    z-index: 999;
+    transition: none;
+    opacity: 1;
+}
+
+.card-view.fly-right,
+.card-view.fly-left,
+.card-view.fly-up {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 999;
+    opacity: 0;
+    transition: transform 2s ease, opacity 2s ease;
+}
+
+.card-view.fly-right {
+    transform: translate(100vw, -50%) scale(2) rotate(180deg);
+}
+
+.card-view.fly-left {
+    transform: translate(-100vw, -50%) scale(2) rotate(-180deg);
+}
+
+.card-view.fly-up {
+    transform: translate(-50%, -100vh) scale(2) rotate(1800deg);
+}
+
+.card-view.burn {
+    transform: scale(0.8);
+    transition: transform 1.2s ease, opacity 1.2s ease, box-shadow 0s ease;
+    animation: burn-flicker 1.2s ease forwards;
+    opacity: 0;
+    box-shadow:
+        0 0 20px orange,
+        0 0 40px orange,
+        0 0 60px yellow,
+        0 0 80px red,
+        0 0 100px orange;
+    z-index: 999;
+}
+
+.card-view.tableau-move {
+    animation: tableau-move-pulse 0.4s ease;
+    z-index: 1000;
+    transition: transform 0.4s ease;
+}
+
+.card-view.move-to-mana {
+    animation: move-to-mana-pulse 0.35s ease;
+    z-index: 1000;
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+.card-view.draw {
+    animation: draw-flip 0.5s ease;
+    z-index: 1000;
+}
+
+.card-view.selected {
+    box-shadow: 0 0 20px purple;
+    transform: scale(1.05);
+    transition: border 0.2s, transform 0.2s, box-shadow 0.2s;
+    z-index: 1000;
+}
+
+@keyframes burn-flicker {
+    0%, 100% { transform: scale(1.2) rotate(-10deg); }
+    50% { transform: scale(1.3) rotate(10deg); }
+}
+
+@keyframes tableau-move-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes move-to-mana-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 transparent; }
+    50% { transform: scale(1.08); box-shadow: 0 0 12px rgba(0, 170, 255, 0.6); }
+}
+
+@keyframes draw-flip {
+    0% {
+        transform: rotateY(180deg) scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: rotateY(90deg) scale(1.1);
+    }
+    100% {
+        transform: rotateY(0deg) scale(1);
+        opacity: 1;
+    }
+}
+
+.card-front {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.spell-card-front {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+    padding: 2px;
+    padding-bottom: 36px;
+    box-sizing: border-box;
+}
+
+.spell-card-top {
+    flex-shrink: 0;
+}
+
+.spell-card-bottom {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    right: 5px;
+    margin: 0;
+}
+
+.spell-card-description {
+    margin: 0 0 2px 0;
+    color: black;
+    font-weight: bold;
+    font-size: 10px;
+}
+
+.spell-card-charges {
+    margin: 0;
+    font-size: 11px;
+    color: black;
+    font-weight: bold;
+}
+
+.card-front.playing-card {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 2px;
+    box-sizing: border-box;
+}
+
+.card-rank-top {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: left;
+    line-height: 1;
+    align-self: flex-start;
+    justify-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 3px;
+    padding: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.card-rank-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.card-rank-bottom {
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1;
+    transform: rotate(180deg);
+}
+
+.card-icons-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    flex-grow: 1;
+    flex-shrink: 0;
+}
+
+.card-icons-center.rank-2,
+.card-icons-center.rank-3 {
+    gap: 14px;
+}
+
+.card-icons-center.rank-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    place-items: center;
+}
+
+.card-icons-center.rank-5 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-icons-center.rank-5 .card-icons-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 10px;
+    place-items: center;
+    width: 100px;
+    height: 100px;
+}
+
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(1) { grid-column: 1; grid-row: 1; }
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(2) { grid-column: 3; grid-row: 1; }
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(3) { grid-column: 2; grid-row: 2; }
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(4) { grid-column: 1; grid-row: 3; }
+.card-icons-center.rank-5 .card-icons-inner .card-icon:nth-child(5) { grid-column: 3; grid-row: 3; }
+
+.card-icons-center.rank-6 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-icons-center.rank-6 .card-icons-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 10px;
+    place-items: center;
+    width: 72px;
+    height: 108px;
+}
+
+.card-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+}
+
+.card-rank-icon.suit-wood,
+.card-icon.suit-wood { filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(90deg) brightness(70%) contrast(120%); }
+.card-rank-icon.suit-fire,
+.card-icon.suit-fire { filter: brightness(0) saturate(100%) invert(16%) sepia(94%) saturate(7151%) hue-rotate(358deg) brightness(99%) contrast(113%); }
+.card-rank-icon.suit-water,
+.card-icon.suit-water { filter: brightness(0) saturate(100%) invert(48%) sepia(99%) saturate(2476%) hue-rotate(182deg) brightness(95%) contrast(86%); }
+.card-rank-icon.suit-metal,
+.card-icon.suit-metal { filter: brightness(0) saturate(0%) invert(50%) grayscale(100%); }
+.card-rank-icon.suit-earth,
+.card-icon.suit-earth { filter: brightness(0) saturate(100%) invert(30%) sepia(100%) saturate(1200%) hue-rotate(30deg) brightness(70%) contrast(110%); }
+.card-rank-icon.suit-koala,
+.card-icon.suit-koala { filter: brightness(0) saturate(100%) invert(20%) sepia(40%) saturate(800%) hue-rotate(25deg) brightness(60%) contrast(100%); }
+
+.card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 5px;
+    width: calc(100% - 10px);
+    box-sizing: border-box;
+}
+
+.spell-card-top {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: calc(100% - 6px);
+    max-width: calc(100% - 6px);
+    gap: 2px;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin: 0 3px;
+}
+
+.spell-card-left {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.spell-card-rank {
+    font-weight: bold;
+}
+
+.spell-card-name {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: calc(100% - 60px);
+    margin-left: auto;
+    text-align: right;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    font-weight: bold;
+    font-size: 10px;
+}
+
+.card-description {
+    color: black;
+    margin: 5px;
+}
+
+.card-back {
+    height: 100%;
+    width: auto;
+    display: block;
+    border-radius: 8px;
+    border: 5px solid white;
 }
 
 .card-tooltip {

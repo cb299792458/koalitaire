@@ -1,5 +1,5 @@
 import type { Combat } from "../../composables/useCombat";
-import { Suit } from "../../models/Card";
+import { Suit } from "../../models/Suit";
 import { DamageType } from "../../models/DamageType";
 
 /**

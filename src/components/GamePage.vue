@@ -1,308 +1,223 @@
 <script setup lang="ts">
-    import Card, { Suits } from '../models/Card';
-    import CardStack from './CardStack.vue';
-    import { useCombat } from '../composables/useCombat';
-    import { AREAS, type Area } from '../models/Areas';
-    import ModalManager from './ModalManager.vue';
-    import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue';
-    import { openModal, closeModal, useModalState, openMessageModal } from '../stores/modalStore';
-    import PlayerInfo from './PlayerInfo.vue';
-    import EnemyInfo from './EnemyInfo.vue';
-    import Enemy from '../models/Enemy';
-import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario';
-    import type Player from '../models/Player';
-    import ManaPool from '../models/ManaPool';
-    import { useTown } from '../composables/useTown';
-    import { useEvent } from '../composables/useEvent';
-    import { hasChosenCharacterRef } from '../composables/useCombat';
-    import EventView from './EventView.vue';
+    import Card from '../models/Card'
+    import { Suits } from '../models/Suit'
+    import CardStack from './Cards/CardStack.vue'
+    import { useCombat } from '../composables/useCombat'
+    import { AREAS, type Area } from '../models/Areas'
+    import ModalManager from './ModalManager.vue'
+    import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
+    import { openModal, closeModal, useModalState, openMessageModal } from '../stores/modalStore'
+    import CombatantInfo from './CombatantInfo.vue'
+    import Enemy from '../models/Enemy'
+    import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario'
+    import type Player from '../models/Player'
+    import ManaPool from '../models/ManaPool'
+    import { useTown } from '../composables/useTown'
+    import { useEvent } from '../composables/useEvent'
+    import { hasChosenCharacterRef } from '../composables/useCombat'
+    import EventView from './EventView.vue'
 
-    const scenario = makeScenario();
-    const modalState = useModalState();
-    const town = useTown();
-    const eventState = useEvent();
+    const scenario = makeScenario()
+    const modalState = useModalState()
+    const town = useTown()
+    const eventState = useEvent()
+    const combat = useCombat()
 
-    const combat = useCombat(); // useCombat always returns a Combat instance
+    combat.onEnemyDefeated = () => {}
     
-    // Set up enemy defeat callbacks
-    combat.onEnemyDefeated = () => {
-        // Modal will be shown automatically
-    };
-    
-    combat.onEnemyDefeatedContinue = () => {
-        closeModal();
-        const persistentPlayer = combat.originalPlayer ?? combat.player;
-        if (!persistentPlayer) return;
-        const nextOptions = getNextRowOptions(persistentPlayer.scenarioRow, persistentPlayer.scenarioColumn);
+    function openMapDeckForPlayer(p: Player, keepOpen = true) {
+        const nextOptions = getNextRowOptions(p.scenarioRow, p.scenarioColumn)
         if (nextOptions.length === 0) {
-            openMessageModal('You Win!');
-            return;
+            openMessageModal('You Win!')
+            return
         }
-        openModal('mapDeck', {
-            player: persistentPlayer,
+        openModal('backAtCamp', {
+            player: p,
             scenario,
             onContinue: (player: Player, row: number, col: number) => {
-                closeModal();
-                startCombatForPlayer(player, row, col);
+                closeModal()
+                startCombatForPlayer(player, row, col)
             },
-        }, true);
-    };
-        
-    // Create computed refs for player and enemy for template reactivity  
-    const player = computed(() => isInEvent.value ? eventState.player.value : combat.player);
-    const enemy = computed(() => combat.enemy);
-    
-    const deck = combat.deck;
-    const compost = combat.compost;
-    const trash = combat.trash;
-    const hand = combat.hand;
-    const tableau = computed(() => combat.tableau.getCardsArrays());
-    const manaPools = combat.manaPools;
-    const selectedCard = computed(() => combat.selectedCard);
-    
-    // Make mana pools reactive by accessing them in a computed
-    const allManaPoolCounts = computed(() => {
-        return Object.values(combat.manaPools).map(pool => pool.cards.length);
-    });
+        }, keepOpen)
+    }
 
-    const canMoveToManaPools = computed(() => combat.getCardsMovableToManaPools().length > 0);
+    combat.onEnemyDefeatedContinue = () => {
+        closeModal()
+        const p = combat.originalPlayer ?? combat.player
+        if (p) openMapDeckForPlayer(p)
+    }
+    const player = computed(() =>
+        isInEvent.value ? eventState.player.value : combat.player
+    )
+    const enemy = computed(() => combat.enemy)
 
-    const isInEvent = computed(() => eventState.isInEvent.value);
-    const isMapDeckOpen = computed(() => modalState.currentModal?.name === 'mapDeck');
-    const isInCombat = computed(() => !isInEvent.value && !isMapDeckOpen.value);
-    const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value);
-    const eventEventRoll = computed(() => eventState.lastEventRoll.value);
-    const eventStatBonus = computed(() => eventState.lastStatBonus.value);
-    const eventStat = computed(() => eventState.lastStat.value);
-    const eventResultMessage = computed(() => eventState.resultMessage.value);
-    const eventIsResolving = computed(() => eventState.isResolving.value);
+    const deck = combat.deck
+    const compost = combat.compost
+    const trash = combat.trash
+    const hand = combat.hand
+    const tableau = computed(() => combat.tableau.getCardsArrays())
+    const manaPools = combat.manaPools
+    const selectedCard = computed(() => combat.selectedCard)
 
-    // When an event resolves, open Event Complete modal instead of inline continue button.
-    // Prefer combat.originalPlayer so we pass the actual persistent player (eventState.player may be the combat copy if we came from combat).
+    const allManaPoolCounts = computed(() =>
+        Object.values(combat.manaPools).map((pool) => pool.cards.length)
+    )
+    const canMoveToManaPools = computed(
+        () => combat.getCardsMovableToManaPools().length > 0
+    )
+
+    const isInEvent = computed(() => eventState.isInEvent.value)
+    const isBackAtCampOpen = computed(() => modalState.currentModal?.name === 'backAtCamp')
+    const isInCombat = computed(() => !isInEvent.value && !isBackAtCampOpen.value)
+    const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value)
+    const eventEventRoll = computed(() => eventState.lastEventRoll.value)
+    const eventStatBonus = computed(() => eventState.lastStatBonus.value)
+    const eventStat = computed(() => eventState.lastStat.value)
+    const eventResultMessage = computed(() => eventState.resultMessage.value)
+    const eventIsResolving = computed(() => eventState.isResolving.value)
+
     watch(eventResultMessage, (msg) => {
         if (msg && isInEvent.value) {
-            const persistentPlayer = combat.originalPlayer ?? eventState.player.value ?? combat.player;
-            openModal('enemyDefeated', {
+            const p = combat.originalPlayer ?? eventState.player.value ?? combat.player
+            openModal('cardReward', {
                 title: 'Event Complete',
-                player: persistentPlayer,
+                player: p,
                 onContinue: () => {
-                    eventState.onEventContinue();
-                    return false; // Prevent modal from emitting close; we've replaced it with the map
+                    eventState.onEventContinue()
+                    return false
                 },
-            }, true, true);
+            }, true, true)
         }
-    });
+    })
 
-    const deckCount = computed(() => combat.deck.cards.length);
-    const reshuffles = computed(() => combat.reshuffles);
-    const compostCount = computed(() => combat.compost.cards.length);
-    const hasTrashCards = computed(() => combat.trash.cards.length > 0);
-    const trashCount = computed(() => combat.trash.cards.length);
+    const deckCount = computed(() => combat.deck.cards.length)
+    const reshuffles = computed(() => combat.reshuffles)
+    const compostCount = computed(() => combat.compost.cards.length)
+    const hasTrashCards = computed(() => combat.trash.cards.length > 0)
+    const trashCount = computed(() => combat.trash.cards.length)
     
     const isCompostHighlighted = computed(() => {
-        // Use the reactive selectedCard computed
-        const card = selectedCard.value;
-        if (!card || !card.revealed) return false;
-        
-        // Check if card is castable (uses mana diamonds)
-        return combat.isSelectedCardPlayable();
-    });
-    
+        const card = selectedCard.value
+        return (card?.revealed && combat.isSelectedCardPlayable()) ?? false
+    })
+
     const manaDiamondsCost = computed(() => {
-        const cost = combat.getManaDiamondsNeededForCast();
-        // Only show cost if card is castable (player has enough mana diamonds)
-        if (cost > 0 && combat.isSelectedCardPlayable()) {
-            return cost;
-        }
-        return null;
-    });
-    
-    const compostHighlightType = computed(() => {
-        const cost = combat.getManaDiamondsNeededForCast();
-        // If cost is 0, use burn highlight (red), otherwise use cast highlight (blue)
-        return cost === 0 ? 'burn' : 'cast';
-    });
-    
+        const cost = combat.getManaDiamondsNeededForCast()
+        return cost > 0 && combat.isSelectedCardPlayable() ? cost : null
+    })
+
+    const compostHighlightType = computed(() =>
+        combat.getManaDiamondsNeededForCast() === 0 ? 'burn' : 'cast'
+    )
+
     const showCastSpellText = computed(() => {
-        const card = selectedCard.value;
-        if (!card || !card.revealed) return false;
-        // Show "Cast Spell" if card is castable
-        return combat.isSelectedCardPlayable();
-    });
+        const card = selectedCard.value
+        return (card?.revealed && combat.isSelectedCardPlayable()) ?? false
+    })
     
-    // Get the suit index for the selected card's mana pool highlighting
     const highlightedManaPoolIndex = computed(() => {
-        const card = selectedCard.value;
-        if (!card || !card.revealed) return -1;
-        
-        // Spell cards cannot be burned
-        if (card.isSpell) {
-            return -1;
-        }
-        
-        const { rank, suit } = card;
-        const manaPool = combat.manaPools[suit];
-        if (!manaPool) return -1;
-        
-        // Access allManaPoolCounts to ensure reactivity
-        void allManaPoolCounts.value;
-        
-        // Check if rank is one more than mana pool count (required for burning)
-        // Card can be placed if rank === poolCount + 1
-        const poolCount = manaPool.cards.length;
-        if (poolCount !== rank - 1) {
-            return -1;
-        }
-        
-        // Card must be from hand or last in tableau
-        const handIndex = combat.hand.cards.indexOf(card);
+        const card = selectedCard.value
+        if (!card || !card.revealed || card.isSpell) return -1
+
+        const { rank, suit } = card
+        const manaPool = combat.manaPools[suit]
+        if (!manaPool || manaPool.cards.length !== rank - 1) return -1
+
+        void allManaPoolCounts.value
+
+        const handIndex = combat.hand.cards.indexOf(card)
         if (handIndex === -1) {
-            // Check if it's the last card in a tableau column
-            const tableauColumns = combat.tableau.getColumns();
-            let isLastInTableau = false;
-            for (const column of tableauColumns) {
-                if (column.cards.length > 0) {
-                    const lastCard = column.cards[column.cards.length - 1];
-                    if (lastCard === card) {
-                        isLastInTableau = true;
-                        break;
-                    }
-                }
-            }
-            if (!isLastInTableau) return -1;
+            const columns = combat.tableau.getColumns()
+            const isLastInTableau = columns.some(
+                (col) => col.cards.length > 0 && col.cards[col.cards.length - 1] === card
+            )
+            if (!isLastInTableau) return -1
         }
-        
-        // Find the index of this suit in the Suits array
-        const suitIndex = Suits.indexOf(suit);
-        return suitIndex;
-    });
-    
-    // Get the tableau column indices that can accept the selected card
+
+        return Suits.indexOf(suit)
+    })
+
     const highlightedTableauIndices = computed(() => {
-        // Access tableau to ensure reactivity
-        void tableau.value;
-        return combat.canPlaceSelectedCardInTableau();
-    });
+        void tableau.value
+        return combat.canPlaceSelectedCardInTableau()
+    })
     
     async function startCombatForPlayer(newPlayer: Player, overrideRow?: number, overrideCol?: number) {
-        const rowIdx = overrideRow ?? newPlayer.scenarioRow;
-        const colIdx = overrideCol ?? newPlayer.scenarioColumn;
-        const row = scenario[rowIdx];
-        const entry = row?.[colIdx] as ScenarioEntry | undefined;
-        if (!entry) return;
+        const rowIdx = overrideRow ?? newPlayer.scenarioRow
+        const colIdx = overrideCol ?? newPlayer.scenarioColumn
+        const row = scenario[rowIdx]
+        const entry = row?.[colIdx] as ScenarioEntry | undefined
+        if (!entry) return
+
         if ('town' in entry && entry.town) {
-            eventState.resetEventState();
-            town.enterTown(newPlayer);
-            return;
+            eventState.resetEventState()
+            town.enterTown(newPlayer)
+            return
         }
         if ('event' in entry && entry.event) {
-            eventState.enterEvent(newPlayer, entry.event);
-            return;
+            eventState.enterEvent(newPlayer, entry.event)
+            return
         }
         if ('elite' in entry && entry.elite) {
-            eventState.resetEventState();
-            await combat.start(newPlayer, new Enemy(entry.elite));
-            return;
+            eventState.resetEventState()
+            await combat.start(newPlayer, new Enemy(entry.elite))
+            return
         }
         if ('boss' in entry && entry.boss) {
-            eventState.resetEventState();
-            await combat.start(newPlayer, new Enemy(entry.boss));
-            return;
+            eventState.resetEventState()
+            await combat.start(newPlayer, new Enemy(entry.boss))
+            return
         }
         if ('enemy' in entry && entry.enemy) {
-            eventState.resetEventState();
-            await combat.start(newPlayer, new Enemy(entry.enemy));
+            eventState.resetEventState()
+            await combat.start(newPlayer, new Enemy(entry.enemy))
         }
     }
     
         
     function onClick(payload: {
-        card: Card | null;
-        area: Area;
-        arrayIndex?: number;
-        cardIndex: number;
+        card: Card | null
+        area: Area
+        arrayIndex?: number
+        cardIndex: number
     }) {
-        const { card, area, arrayIndex, cardIndex } = payload;
-        combat.updateGameState(
-            card,
-            area,
-            arrayIndex,
-            cardIndex,
-        );
+        const { card, area, arrayIndex, cardIndex } = payload
+        combat.updateGameState(card, area, arrayIndex, cardIndex)
     }
 
     function onMoveToManaClick() {
-        combat.moveAllPossibleToManaPools();
+        combat.moveAllPossibleToManaPools()
+    }
+
+    const scale = ref(0.8)
+    const DESIGN_WIDTH = 1920
+    const DESIGN_HEIGHT = 1080
+
+    function updateScale() {
+        scale.value = Math.min(
+            window.innerWidth / DESIGN_WIDTH,
+            window.innerHeight / DESIGN_HEIGHT
+        )
     }
 
     onMounted(() => {
         eventState.onLeaveEvent(() => {
-            // Prefer eventState.player: it has the correct scenario position (event location).
-            // combat.originalPlayer is from the last combat and has the wrong position.
-            const persistentPlayer = eventState.player.value ?? combat.originalPlayer ?? combat.player;
-            if (!persistentPlayer) return;
-            const nextOptions = getNextRowOptions(persistentPlayer.scenarioRow, persistentPlayer.scenarioColumn);
-            if (nextOptions.length === 0) {
-                openMessageModal('You Win!');
-                return;
-            }
-            openModal('mapDeck', {
-                player: persistentPlayer,
-                scenario,
-                onContinue: (player: Player, row: number, col: number) => {
-                    closeModal();
-                    startCombatForPlayer(player, row, col);
-                },
-            }, true);
-        });
+            const p = eventState.player.value ?? combat.originalPlayer ?? combat.player
+            if (p) openMapDeckForPlayer(p)
+        })
         town.onLeaveTown(() => {
-            const persistentPlayer = town.player.value ?? combat.originalPlayer ?? combat.player;
-            if (!persistentPlayer) return;
-            const nextOptions = getNextRowOptions(persistentPlayer.scenarioRow, persistentPlayer.scenarioColumn);
-            if (nextOptions.length === 0) {
-                openMessageModal('You Win!');
-                return;
-            }
-            openModal('mapDeck', {
-                player: persistentPlayer,
-                scenario,
-                onContinue: (player: Player, row: number, col: number) => {
-                    closeModal();
-                    startCombatForPlayer(player, row, col);
-                },
-            }, true);
-        });
+            const p = town.player.value ?? combat.originalPlayer ?? combat.player
+            if (p) openMapDeckForPlayer(p)
+        })
         if (!hasChosenCharacterRef.value) {
-            openModal(
-                'start',
-                { onSelect: (newPlayer: Player) => {
-                    hasChosenCharacterRef.value = true;
-                    // Replace start modal with map modal directly (no closeModal - avoids unmount/remount)
-                    openModal('mapDeck', {
-                        player: newPlayer,
-                        scenario,
-                        onContinue: (player: Player, row: number, col: number) => {
-                            closeModal();
-                            startCombatForPlayer(player, row, col);
-                        },
-                    }, true);
-                    return false; // Prevent StartModal from emitting close (we replaced it)
-                }},
-                true, // keepOpen
-            );
+            openModal('start', {
+                onSelect: (newPlayer: Player) => {
+                    hasChosenCharacterRef.value = true
+                    openMapDeckForPlayer(newPlayer)
+                    return false
+                },
+            }, true)
         }
-    })
-
-    const scale = ref(0.8);
-    const designWidth = 1920
-    const designHeight = 1080
-    function updateScale() {
-        scale.value = Math.min(
-            window.innerWidth / designWidth,
-            window.innerHeight / designHeight
-        );
-    }
-    onMounted(() => {
         updateScale()
         window.addEventListener('resize', updateScale)
         window.addEventListener('focus', updateScale)
@@ -320,10 +235,10 @@ import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/mak
                 <ModalManager/>
         
                 <div class="combat-screen" @click="onClick({ card: null, area: AREAS.Board, cardIndex: -1 })">
-                    <div v-if="!isMapDeckOpen" class="combat-top">
+                    <div v-if="!isBackAtCampOpen" class="combat-top">
                         <div class="combat-left">
                             <h1>Player</h1>
-                            <PlayerInfo :player="player" />
+                            <CombatantInfo :combatant="player" variant="player" />
                             <div v-if="isInEvent && eventPlayerRoll !== null" class="event-roll-display event-roll-display--player">
                                 <p class="event-roll-label">Roll</p>
                                 <p class="event-roll-value">
@@ -437,12 +352,12 @@ import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/mak
                             </template>
                             <template v-else>
                                 <h1 v-if="isInCombat">Enemy</h1>
-                                <EnemyInfo v-if="isInCombat" :enemy="enemy" />
+                                <CombatantInfo v-if="isInCombat" :combatant="enemy" variant="enemy" />
                             </template>
                         </div>
                     </div>
             
-                    <div v-if="!isMapDeckOpen" class="combat-bottom">
+                    <div v-if="!isBackAtCampOpen" class="combat-bottom">
                         <template v-if="isInEvent">
                             <div class="event-choices-area">
                                 <div v-if="!eventResultMessage" class="event-choices">
@@ -473,12 +388,14 @@ import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/mak
                                 />
                             </div>
                             <div v-if="isInCombat" class="combat-bottom-buttons">
-                                <button 
-                                    @click="combat.endTurn" 
-                                    id="end-turn-button"
-                                    :disabled="combat.isProcessingTurn"
+                                <button
                                     v-if="!combat.isProcessingTurn"
-                                >End Turn</button>
+                                    id="end-turn-button"
+                                    type="button"
+                                    @click="combat.endTurn"
+                                >
+                                    End Turn
+                                </button>
                             </div>
                         </template>
                     </div>
@@ -487,4 +404,370 @@ import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/mak
         </div>
     </div>
 </template>
+
+<style scoped>
+.game-page {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.scale-wrapper {
+    width: 1920px;
+    height: 1080px;
+    position: relative;
+}
+
+.scale-container {
+    width: 100%;
+    height: 100%;
+    transform-origin: center center;
+}
+
+.combat-top {
+    display: flex;
+    flex-direction: row;
+    height: 860px;
+}
+
+.combat-right, .combat-left {
+    background-color: lightblue;
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 0;
+}
+
+.combat-middle {
+    background-color: lightgreen;
+    width: 1400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.combat-bottom {
+    background-color: pink;
+    height: 220px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.combat-bottom-buttons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    margin-right: 10px;
+}
+
+#end-turn-button {
+    width: 200px;
+    height: 100px;
+    margin: 10px;
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.cards-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    width: 100%;
+    margin-top: 6px;
+}
+
+.cards-top-left {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.deck-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    min-width: 120px;
+    padding-left: 10px;
+}
+
+.deck-wrapper > :deep(.card-stack) {
+    flex-shrink: 0;
+    margin: 6px;
+}
+
+.deck-wrapper > :deep(.card-stack.pile .card-view) {
+    margin: 0;
+}
+
+.trash-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    min-width: 120px;
+}
+
+.trash-wrapper > :deep(.card-stack) {
+    flex-shrink: 0;
+    width: 120px !important;
+    margin: 6px;
+}
+
+.trash-wrapper > :deep(.card-stack.pile .card-view),
+.trash-wrapper > :deep(.card-stack.pile .card-stack-empty) {
+    margin: 0;
+}
+
+.trash-wrapper > :deep(.card-stack.pile) {
+    width: 120px !important;
+}
+
+.trash-wrapper > .trash-count {
+    flex-shrink: 0;
+}
+
+.trash-wrapper--empty {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.cards-top-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    width: 100%;
+}
+
+.mana-pools {
+    display: flex;
+    justify-content: space-evenly;
+    min-width: max-content;
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.mana-pools :deep(.card-stack) {
+    max-width: 100%;
+    overflow: hidden;
+    position: relative;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mana-pools :deep(.card-stack .mana-pool-pile-slot) {
+    position: relative;
+    width: 120px;
+    aspect-ratio: 5 / 7;
+}
+
+.mana-pools :deep(.card-stack .mana-pool-pile-slot .card-view) {
+    margin: 0;
+}
+
+.mana-pools-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.move-to-mana-button {
+    margin-top: 0;
+    padding: 2px 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #888;
+    background: #f0f0f0;
+    cursor: pointer;
+    height: fit-content;
+    width: fit-content;
+}
+
+.move-to-mana-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.tableau {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+}
+
+.cards-hand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40%;
+    height: 100%;
+}
+
+.compost-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    min-width: 120px;
+    padding-right: 8px;
+}
+
+.compost-wrapper > :deep(.card-stack) {
+    flex-shrink: 0;
+    width: 120px !important;
+    margin: 6px;
+}
+
+.compost-wrapper > :deep(.card-stack.pile .card-view),
+.compost-wrapper > :deep(.card-stack.pile .card-stack-empty) {
+    margin: 0;
+}
+
+.compost-wrapper > :deep(.card-stack.pile) {
+    width: 120px !important;
+}
+
+.compost-wrapper > .compost-count {
+    flex-shrink: 0;
+}
+
+.mana-diamonds-cost {
+    position: absolute;
+    top: 10px;
+}
+
+.cast-spell-text {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 18px;
+    font-weight: bold;
+    color: #4a90e2;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+}
+
+.event-name-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px;
+    min-height: 0;
+}
+
+.event-name {
+    margin: 0;
+    font-size: 1.5rem;
+    text-align: center;
+    color: #333;
+}
+
+.event-roll-display {
+    margin-top: auto;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.08);
+    border-radius: 6px;
+}
+
+.event-roll-display--player {
+    margin-top: auto;
+}
+
+.event-roll-label {
+    margin: 0 0 4px 0;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #555;
+}
+
+.event-roll-value {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+}
+
+.event-choices-area {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.event-choices {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+}
+
+.event-choice {
+    padding: 14px 20px;
+    font-size: 1rem;
+    text-align: left;
+    background: #e8e8e8;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.event-choice:hover:not(:disabled) {
+    background: #d0d0d0;
+    border-color: #999;
+}
+
+.event-choice:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.event-result {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+.event-result-message {
+    margin: 0;
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 8px;
+    line-height: 1.5;
+    text-align: center;
+}
+</style>
 

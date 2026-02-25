@@ -1,14 +1,12 @@
 import { markRaw, reactive } from 'vue'
-import TestModal from '../components/TestModal.vue'
-import CompostModal from '../components/CompostModal.vue'
-import TrashModal from '../components/TrashModal.vue'
-import StartModal from '../components/StartModal.vue'
-import MessageModal from '../components/MessageModal.vue'
-import EnemyDefeatedModal from '../components/EnemyDefeatedModal.vue'
-import ConfirmModal from '../components/ConfirmModal.vue'
-import MapDeckModal from '../components/MapDeckModal.vue'
+import CardListModal from '../components/Modals/CardListModal.vue'
+import StartModal from '../components/Modals/StartModal.vue'
+import MessageModal from '../components/Modals/MessageModal.vue'
+import CardRewardModal from '../components/Modals/CardRewardModal.vue'
+import ConfirmModal from '../components/Modals/ConfirmModal.vue'
+import BackAtCampModal from '../components/Modals/BackAtCampModal.vue'
 
-export type ModalName = 'test' | 'compost' | 'trash' | 'start' | 'message' | 'enemyDefeated' | 'confirmNoReshuffles' | 'mapDeck'
+export type ModalName = 'compost' | 'trash' | 'start' | 'message' | 'cardReward' | 'confirmNoReshuffles' | 'backAtCamp'
 
 interface ModalState {
     currentModal: {
@@ -22,14 +20,13 @@ interface ModalState {
 
 // Map of modal names to components
 const modals: Record<ModalName, any> = {
-    test: markRaw(TestModal),
-    compost: markRaw(CompostModal),
-    trash: markRaw(TrashModal),
+    compost: markRaw(CardListModal),
+    trash: markRaw(CardListModal),
     start: markRaw(StartModal),
     message: markRaw(MessageModal),
-    enemyDefeated: markRaw(EnemyDefeatedModal),
+    cardReward: markRaw(CardRewardModal),
     confirmNoReshuffles: markRaw(ConfirmModal),
-    mapDeck: markRaw(MapDeckModal),
+    backAtCamp: markRaw(BackAtCampModal),
 }
 
 // Reactive state for the current modal

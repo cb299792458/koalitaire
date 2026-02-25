@@ -7,6 +7,21 @@ export interface DamageNumber {
     timestamp: number;
 }
 
+export type DamageNumberType = DamageNumber['type'];
+
+/** Maps damage number type to container flash class (used by CombatantInfo). */
+export const FLASH_CLASS_MAP: Record<DamageNumberType, string> = {
+    damage: 'flash-red',
+    heal: 'flash-red',
+    'block-gain': 'flash-gray',
+    'block-loss': 'flash-gray',
+};
+
+export function getFlashClassForLatest(numbers: DamageNumber[]): string {
+    const latest = numbers[numbers.length - 1];
+    return (latest && FLASH_CLASS_MAP[latest.type]) ?? '';
+}
+
 let damageNumbersInstance: {
     playerNumbers: Ref<DamageNumber[]>;
     enemyNumbers: Ref<DamageNumber[]>;

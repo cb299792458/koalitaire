@@ -1,155 +1,135 @@
 <script setup lang="ts">
-    import { ref, watch, computed, nextTick } from 'vue';
-    import type Player from '../models/Player';
-    import { Suit, Suits } from '../models/Card';
-    import SingleCard from './SingleCard.vue';
-    import type { ScenarioEntry } from '../game/makeScenario';
-    import { getNextRowOptions } from '../game/makeScenario';
+    import { ref, watch, computed, nextTick } from 'vue'
+    import type Player from '../../models/Player'
+    import { Suit, Suits } from '../../models/Suit'
+    import { suitIconMap, suitClassMap } from '../../utils/suitAssets'
+    import SingleCard from '../Cards/SingleCard.vue'
+    import type { ScenarioEntry } from '../../game/makeScenario'
+    import { getNextRowOptions } from '../../game/makeScenario'
 
     const props = defineProps<{
-        player: Player;
-        onContinue: (player: Player, row: number, col: number) => void;
-        scenario?: ScenarioEntry[][];
-    }>();
+        player: Player
+        onContinue: (player: Player, row: number, col: number) => void
+        scenario?: ScenarioEntry[][]
+    }>()
 
     function getEntryLabel(entry: NonNullable<ScenarioEntry>): string {
-        if ('enemy' in entry) return 'Combat';
-        if ('elite' in entry) return 'Elite';
-        if ('boss' in entry) return 'Boss';
-        if ('town' in entry) return 'Town';
-        if ('event' in entry) return 'Event';
-        return 'Unknown';
+        if ('enemy' in entry) return 'Combat'
+        if ('elite' in entry) return 'Elite'
+        if ('boss' in entry) return 'Boss'
+        if ('town' in entry) return 'Town'
+        if ('event' in entry) return 'Event'
+        return 'Unknown'
     }
 
     function getEntryImage(entry: ScenarioEntry): string {
-        if (entry === null) return '/scenarios/town.png';
-        if ('enemy' in entry) return '/scenarios/enemy.png';
-        if ('elite' in entry) return '/scenarios/elite.png';
-        if ('boss' in entry) return '/scenarios/boss.png';
-        if ('town' in entry) return '/scenarios/town.png';
-        if ('event' in entry) return '/scenarios/event.png';
-        return '/scenarios/town.png';
+        if (entry === null) return '/scenarios/town.png'
+        if ('enemy' in entry) return '/scenarios/enemy.png'
+        if ('elite' in entry) return '/scenarios/elite.png'
+        if ('boss' in entry) return '/scenarios/boss.png'
+        if ('town' in entry) return '/scenarios/town.png'
+        if ('event' in entry) return '/scenarios/event.png'
+        return '/scenarios/town.png'
     }
 
-    const scenario = computed(() => props.scenario ?? []);
+    const scenario = computed(() => props.scenario ?? [])
 
     const nextOptions = computed(() => {
-        const options = getNextRowOptions(props.player.scenarioRow, props.player.scenarioColumn);
-        return new Set(options.map(({ row, col }) => `${row}-${col}`));
-    });
+        const options = getNextRowOptions(props.player.scenarioRow, props.player.scenarioColumn)
+        return new Set(options.map(({ row, col }) => `${row}-${col}`))
+    })
 
     function isNextOption(row: number, col: number): boolean {
-        return nextOptions.value.has(`${row}-${col}`);
+        return nextOptions.value.has(`${row}-${col}`)
     }
 
-    const currentRowRef = ref<HTMLElement | null>(null);
+    const currentRowRef = ref<HTMLElement | null>(null)
 
     function setCurrentRowRef(el: unknown, row: number) {
         if (el && row === props.player.scenarioRow) {
-            currentRowRef.value = el as HTMLElement;
+            currentRowRef.value = el as HTMLElement
         } else if (!el) {
-            currentRowRef.value = null;
+            currentRowRef.value = null
         }
     }
 
     function scrollToCurrent() {
         nextTick(() => {
-            currentRowRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        });
+            currentRowRef.value?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        })
     }
 
-    const activeTab = ref<'map' | 'deck'>('map');
+    const activeTab = ref<'map' | 'deck'>('map')
 
     watch([() => activeTab.value, () => props.player.scenarioRow, () => props.player.scenarioColumn], () => {
-        if (activeTab.value === 'map') scrollToCurrent();
-    }, { immediate: true });
+        if (activeTab.value === 'map') scrollToCurrent()
+    }, { immediate: true })
 
     const emit = defineEmits<{
-        (e: 'close'): void;
-    }>();
+        (e: 'close'): void
+    }>()
 
-    // Reactive copies for Vue reactivity; synced back to player on Continue
-    const deckList = ref<boolean[]>([]);
-    const manaCards = ref<Record<string, number>>({});
+    const deckList = ref<boolean[]>([])
+    const manaCards = ref<Record<string, number>>({})
 
     watch(() => props.player, () => {
-        currentRowRef.value = null;
-    }, { deep: true });
+        currentRowRef.value = null
+    }, { deep: true })
 
     function goToEntry(row: number, col: number) {
-        props.player.spellDeck.length = 0;
-        props.player.spellDeck.push(...deckList.value);
-        Object.assign(props.player.manaDeck, manaCards.value);
-        props.player.scenarioRow = row;
-        props.player.scenarioColumn = col;
-        props.player.level = row;
-        props.onContinue(props.player, row, col);
-        emit('close');
+        props.player.spellDeck.length = 0
+        props.player.spellDeck.push(...deckList.value)
+        Object.assign(props.player.manaDeck, manaCards.value)
+        props.player.scenarioRow = row
+        props.player.scenarioColumn = col
+        props.player.level = row
+        props.onContinue(props.player, row, col)
+        emit('close')
     }
 
     watch(() => props.player, (player) => {
-        deckList.value = [...player.spellDeck];
-        manaCards.value = { ...player.manaDeck };
-        player.collection.forEach(card => { card.revealed = true; });
-    }, { immediate: true });
+        deckList.value = [...player.spellDeck]
+        manaCards.value = { ...player.manaDeck }
+        player.collection.forEach((card) => { card.revealed = true })
+    }, { immediate: true })
 
-    const suitIconMap: Record<Suit, string> = {
-        [Suit.Wood]: '/icons/tree-svgrepo-com.svg',
-        [Suit.Fire]: '/icons/fire-svgrepo-com.svg',
-        [Suit.Earth]: '/icons/rock-svgrepo-com.svg',
-        [Suit.Metal]: '/icons/metal-bar-svgrepo-com.svg',
-        [Suit.Water]: '/icons/water-drop-svgrepo-com.svg',
-        [Suit.Koala]: '/icons/koala.svg',
-    };
-
-    function suitClass(suit: Suit): string {
-        if (suit === Suit.Wood) return 'suit-wood';
-        if (suit === Suit.Fire) return 'suit-fire';
-        if (suit === Suit.Water) return 'suit-water';
-        if (suit === Suit.Earth) return 'suit-earth';
-        if (suit === Suit.Metal) return 'suit-metal';
-        if (suit === Suit.Koala) return 'suit-koala';
-        return '';
-    }
-
-    const manaSuits = Suits;
+    const manaSuits = Suits
 
     function toggleDeckCard(index: number) {
         if (index >= 0 && index < deckList.value.length) {
-            deckList.value[index] = !deckList.value[index];
+            deckList.value[index] = !deckList.value[index]
         }
     }
 
     function addAllCardsToDeck() {
-        deckList.value = deckList.value.map(() => true);
+        deckList.value = deckList.value.map(() => true)
     }
 
     function removeAllCardsFromDeck() {
-        deckList.value = deckList.value.map(() => false);
+        deckList.value = deckList.value.map(() => false)
     }
 
     function setManaCards(suit: Suit, value: number) {
-        manaCards.value[suit] = Math.max(0, Math.min(9, value));
+        manaCards.value[suit] = Math.max(0, Math.min(9, value))
     }
 
-    function getManaCards(suit: Suit): number {
-        return manaCards.value[suit] ?? 0;
+    function getManaCards(suit: Suit) {
+        return manaCards.value[suit] ?? 0
     }
 
     function incrementManaCards(suit: Suit) {
-        setManaCards(suit, getManaCards(suit) + 1);
+        setManaCards(suit, getManaCards(suit) + 1)
     }
 
     function decrementManaCards(suit: Suit) {
-        setManaCards(suit, getManaCards(suit) - 1);
+        setManaCards(suit, getManaCards(suit) - 1)
     }
-
 </script>
 
 <template>
-    <div class="map-deck-modal">
+    <div class="back-at-camp-modal">
         <div class="modal-content">
-            <h2>Back at Camp</h2>
+            <h2>Meanwhile Back at Camp...</h2>
 
             <div class="tabs">
                 <button
@@ -172,7 +152,6 @@
 
             <div v-if="activeTab === 'map'" class="tab-content map-content">
                 <div class="diamond-map">
-                    <!-- Rows from top (start) to bottom (boss): row 0 at top, row 12 at bottom -->
                     <div
                         v-for="(rowEntries, row) in scenario"
                         v-show="row >= props.player.scenarioRow"
@@ -247,7 +226,7 @@
                             class="mana-control-row"
                         >
                             <div class="mana-label">
-                                <img :src="suitIconMap[suit]" :alt="suit" class="mana-suit-icon" :class="suitClass(suit)" />
+                                <img :src="suitIconMap[suit]" :alt="suit" class="mana-suit-icon" :class="suitClassMap[suit] ?? ''" />
                             </div>
                             <div class="mana-stepper">
                                 <button
@@ -277,7 +256,7 @@
 </template>
 
 <style scoped>
-    .map-deck-modal {
+    .back-at-camp-modal {
         width: 100%;
         height: 100%;
         display: flex;
@@ -592,6 +571,13 @@
         height: 24px;
         object-fit: contain;
     }
+
+    .mana-suit-icon.suit-wood { filter: brightness(0) saturate(100%) invert(25%) sepia(100%) saturate(2000%) hue-rotate(90deg) brightness(70%) contrast(120%); }
+    .mana-suit-icon.suit-fire { filter: brightness(0) saturate(100%) invert(16%) sepia(94%) saturate(7151%) hue-rotate(358deg) brightness(99%) contrast(113%); }
+    .mana-suit-icon.suit-water { filter: brightness(0) saturate(100%) invert(48%) sepia(99%) saturate(2476%) hue-rotate(182deg) brightness(95%) contrast(86%); }
+    .mana-suit-icon.suit-metal { filter: brightness(0) saturate(0%) invert(50%) grayscale(100%); }
+    .mana-suit-icon.suit-earth { filter: brightness(0) saturate(100%) invert(30%) sepia(100%) saturate(1200%) hue-rotate(30deg) brightness(70%) contrast(110%); }
+    .mana-suit-icon.suit-koala { filter: brightness(0) saturate(100%) invert(20%) sepia(40%) saturate(800%) hue-rotate(25deg) brightness(60%) contrast(100%); }
 
     .mana-stepper {
         display: flex;

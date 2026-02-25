@@ -1,7 +1,8 @@
 import { ref, triggerRef, toRaw } from 'vue';
 
 // Models
-import Card, { Suit, Suits, SpellCard } from '../models/Card';
+import Card, { SpellCard } from '../models/Card';
+import { Suit, Suits } from '../models/Suit';
 import Player from '../models/Player';
 import Enemy from '../models/Enemy';
 import DrawPile from '../models/DrawPile';
@@ -234,14 +235,14 @@ export class Combat {
         // Open enemy defeated modal first; level is advanced when user clicks Continue.
         // Use combat.originalPlayer (not this.player) so we always pass the actual persistent player, not the combat copy.
         const persistentPlayer = this.originalPlayer ?? this.player;
-        openModal('enemyDefeated', { 
+        openModal('cardReward', { 
             title: 'Enemy Defeated',
             player: persistentPlayer,
             onContinue: () => {
                 if (this.onEnemyDefeatedContinue) {
                     this.onEnemyDefeatedContinue();
                 }
-                return false; // Don't emit close; we've opened mapDeck modal
+                return false // Don't emit close; we've opened backAtCamp modal
             }
         }, true, true);
         
@@ -467,12 +468,12 @@ export class Combat {
                 if (this.selectedCard && this.canCastSelectedCard()) {
                     this.castCard();
                 } else {
-                    openModal('compost', { compost: this.compost.cards });
+                    openModal('compost', { title: 'Compost', cards: this.compost.cards });
                 }
                 break;
 
             case AREAS.Trash:
-                openModal('trash', { trash: this.trash.cards });
+                openModal('trash', { title: 'Trash', cards: this.trash.cards });
                 break;
 
             default:

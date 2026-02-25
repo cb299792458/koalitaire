@@ -1,22 +1,23 @@
 <script setup lang="ts">
-    import { computed } from 'vue';
-    import type { DamageNumber } from '../composables/useDamageNumbers';
+import { computed } from 'vue';
+import type { DamageNumber } from '../composables/useDamageNumbers';
 
-    const props = defineProps<{
-        number: DamageNumber;
-    }>();
+const props = defineProps<{
+    number: DamageNumber;
+}>();
 
-    const displayValue = computed(() => {
-        const sign = props.number.type === 'damage' || props.number.type === 'block-loss' ? '-' : '+';
-        return `${sign}${props.number.value}`;
-    });
+const NEGATIVE_TYPES = new Set(['damage', 'block-loss']);
+const displayValue = computed(() => {
+    const { type, value } = props.number;
+    const sign = NEGATIVE_TYPES.has(type) ? '-' : '+';
+    return `${sign}${value}`;
+});
 
-    const numberClass = computed(() => {
-        if (props.number.type === 'damage' || props.number.type === 'heal') {
-            return 'health-number';
-        }
-        return 'block-number';
-    });
+const numberClass = computed(() =>
+    props.number.type === 'damage' || props.number.type === 'heal'
+        ? 'health-number'
+        : 'block-number'
+);
 </script>
 
 <template>
@@ -80,4 +81,3 @@
         }
     }
 </style>
-

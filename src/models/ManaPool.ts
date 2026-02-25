@@ -1,5 +1,5 @@
 import type Card from "./Card";
-import type { Suit } from "./Card";
+import type { Suit } from "./Suit";
 
 class ManaPool {
     suit: Suit;

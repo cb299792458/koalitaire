@@ -1,23 +1,17 @@
 <script setup lang="ts">
-    const emit = defineEmits<{
-        (e: 'close'): void;
-    }>();
+const props = defineProps<{
+    message: string;
+    onConfirm?: () => void;
+}>();
 
-    const props = defineProps<{
-        message: string;
-        onConfirm?: () => void;
-    }>();
+const emit = defineEmits<{
+    (e: 'close'): void;
+}>();
 
-    function confirm() {
-        if (props.onConfirm) {
-            props.onConfirm();
-        }
-        emit('close');
-    }
-
-    function cancel() {
-        emit('close');
-    }
+function confirm() {
+    props.onConfirm?.();
+    emit('close');
+}
 </script>
 
 <template>
@@ -25,7 +19,7 @@
         <div class="modal-content">
             <p class="message">{{ message }}</p>
             <div class="buttons">
-                <button type="button" class="cancel-button" @click="cancel">Cancel</button>
+                <button type="button" class="cancel-button" @click="emit('close')">Cancel</button>
                 <button type="button" class="confirm-button" @click="confirm">Confirm</button>
             </div>
         </div>
@@ -64,8 +58,7 @@
         justify-content: center;
     }
 
-    .cancel-button,
-    .confirm-button {
+    .buttons button {
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
         border-radius: 8px;

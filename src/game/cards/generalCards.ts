@@ -1,5 +1,5 @@
 import type { Combat } from "../../composables/useCombat";
-import { Suit } from "../../models/Card";
+import { Suit } from "../../models/Suit";
 import type ManaPool from "../../models/ManaPool";
 import { createSummon, summons } from "../summons";
 import { Keyword } from "../keywords";
