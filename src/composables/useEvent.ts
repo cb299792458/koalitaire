@@ -26,6 +26,13 @@ function getPlayerStat(player: Player, stat: EventOption['stat']): number {
     return typeof val === 'number' ? val : 0;
 }
 
+function clearRollRefs(): void {
+    lastPlayerRollRef.value = null;
+    lastEventRollRef.value = null;
+    lastStatBonusRef.value = null;
+    lastStatRef.value = null;
+}
+
 export function useEvent(): {
     player: Ref<Player | null>;
     currentEvent: Ref<Event | null>;
@@ -58,10 +65,7 @@ export function useEvent(): {
             isInEventRef.value = false;
             currentEventRef.value = null;
             playerRef.value = null;
-            lastPlayerRollRef.value = null;
-            lastEventRollRef.value = null;
-            lastStatBonusRef.value = null;
-            lastStatRef.value = null;
+            clearRollRefs();
             resultMessageRef.value = null;
             isResolvingRef.value = false;
         },
@@ -75,12 +79,12 @@ export function useEvent(): {
             const hasSuccess = !!option.success;
             const hasFailure = !!option.failure;
 
+            let outcome: { effect: (player: Player) => void; message: string } | null = null;
+
             if (hasSuccess && !hasFailure) {
-                option.success!.effect(p as Player);
-                resultMessageRef.value = option.success!.message;
+                outcome = option.success!;
             } else if (hasFailure && !hasSuccess) {
-                option.failure!.effect(p as Player);
-                resultMessageRef.value = option.failure!.message;
+                outcome = option.failure!;
             } else if (hasSuccess && hasFailure) {
                 playSound('dice', 'mp3');
                 const playerRoll = rollD20();
@@ -93,32 +97,20 @@ export function useEvent(): {
                 lastStatBonusRef.value = option.stat ? statBonus : null;
                 lastStatRef.value = option.stat || null;
 
-                if (playerTotal > eventRoll) {
-                    option.success!.effect(p as Player);
-                    resultMessageRef.value = option.success!.message;
-                } else {
-                    option.failure!.effect(p as Player);
-                    resultMessageRef.value = option.failure!.message;
-                }
+                outcome = playerTotal > eventRoll ? option.success! : option.failure!;
             }
 
+            if (outcome) {
+                outcome.effect(p as Player);
+                resultMessageRef.value = outcome.message;
+            }
             isResolvingRef.value = false;
         },
         onEventContinue() {
-            resultMessageRef.value = null;
-            isInEventRef.value = false;
-            currentEventRef.value = null;
-            lastPlayerRollRef.value = null;
-            lastEventRollRef.value = null;
-            lastStatBonusRef.value = null;
-            lastStatRef.value = null;
-            onLeaveEventCallback?.();
+            this.leaveEvent();
         },
         choiceLabel(option: EventOption) {
-            if (option.stat) {
-                return `${option.description} (${option.stat})`;
-            }
-            return option.description;
+            return option.stat ? `${option.description} (${option.stat})` : option.description;
         },
         enterEvent(player: Player, event: Event) {
             playerRef.value = player;
@@ -126,20 +118,14 @@ export function useEvent(): {
             isInEventRef.value = true;
             resultMessageRef.value = null;
             isResolvingRef.value = false;
-            lastPlayerRollRef.value = null;
-            lastEventRollRef.value = null;
-            lastStatBonusRef.value = null;
-            lastStatRef.value = null;
+            clearRollRefs();
         },
         leaveEvent() {
             resultMessageRef.value = null;
             isResolvingRef.value = false;
             isInEventRef.value = false;
             currentEventRef.value = null;
-            lastPlayerRollRef.value = null;
-            lastEventRollRef.value = null;
-            lastStatBonusRef.value = null;
-            lastStatRef.value = null;
+            clearRollRefs();
             onLeaveEventCallback?.();
         },
         onLeaveEvent(fn: () => void) {

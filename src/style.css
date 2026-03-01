@@ -15,6 +15,10 @@ html, body {
     animation: flash-gray-bg 0.3s ease-out;
 }
 
+.flash-green {
+    animation: flash-green-bg 0.3s ease-out;
+}
+
 @keyframes flash-red-bg {
     0%, 100% { background-color: transparent; }
     50% { background-color: rgba(255, 0, 0, 0.3); }
@@ -23,4 +27,9 @@ html, body {
 @keyframes flash-gray-bg {
     0%, 100% { background-color: transparent; }
     50% { background-color: rgba(128, 128, 128, 0.3); }
+}
+
+@keyframes flash-green-bg {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(0, 180, 0, 0.3); }
 }

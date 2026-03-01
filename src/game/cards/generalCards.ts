@@ -1,7 +1,7 @@
 import type { Combat } from "../../composables/useCombat";
 import { Suit } from "../../models/Suit";
 import type ManaPool from "../../models/ManaPool";
-import { createSummon, summons } from "../summons";
+import { addSummon } from "../summons";
 import { Keyword } from "../keywords";
 import { Race } from "../../models/Summon";
 import { DamageType } from "../../models/DamageType";
@@ -14,7 +14,7 @@ const parry = {
     keywords: [Keyword.Block],
     effect: (combat: Combat) => {
         const { player } = combat;
-        combat.player.gainBlock(2 + (player?.agility ?? 0));
+        if (player) player.gainBlock(2 + (player.agility ?? 0));
     },
 }
 
@@ -25,7 +25,8 @@ const sparkRitual = {
     description: 'Add 3 mana diamonds.',
     keywords: [Keyword.ManaDiamond],
     effect: (combat: Combat) => {
-        combat.player.manaDiamonds += 3;
+        const { player } = combat;
+        if (player) player.manaDiamonds += 3;
     },
 }
 
@@ -38,7 +39,7 @@ const manaBurn = {
     effect: (combat: Combat) => {
         const { manaPools, enemy } = combat;
         enemy.takeDamage(
-            Object.values(manaPools).reduce(
+            manaPools.pools().reduce(
                 (acc: number, pool: ManaPool) => acc + pool.cards.length, 0
             )
         );
@@ -51,13 +52,7 @@ export const summonKoallaborator = {
     name: 'Koallaborator',
     description: 'Summons a collaborator to protect you.',
     keywords: [Keyword.Summon],
-    effect: (combat: Combat) => {
-        const { player } = combat;
-        const collaborator = summons.collaborator;
-        if (collaborator) {
-            player.summons.push(createSummon(collaborator));
-        }
-    },
+    effect: (combat: Combat) => addSummon(combat, 'collaborator'),
 }
 
 const shieldBash = {
@@ -102,10 +97,10 @@ const bde = {
     name: 'Big Dig Energy',
     description: 'Returns all mana cards from the compost to your hand.',
     effect: (combat: Combat) => {
-        const { compost } = combat;
-        compost.cards.forEach(card => {
-            combat.hand.addCard(card);
-        });
+        const { compost, hand } = combat;
+        const manaCards = compost.cards.filter((card) => !card.isSpell);
+        compost.cards = compost.cards.filter((card) => card.isSpell);
+        manaCards.forEach((card) => hand.addCard(card));
     },
 }
 
@@ -114,6 +109,7 @@ const regenerate = {
     suit: Suit.Fire,
     name: 'Regenerate',
     description: 'Restores 10 health.',
+    keywords: [Keyword.Heal],
     effect: (combat: Combat) => {
         const { player } = combat;
         player.gainHealth(10);
@@ -143,13 +139,7 @@ const summonWarKoala = {
     name: 'Loyal War Koala',
     description: 'Summons a loyal war koala to protect you.',
     keywords: [Keyword.Summon],
-    effect: (combat: Combat) => {
-        const { player } = combat;
-        const warKoala = summons.warKoala;
-        if (warKoala) {
-            player.summons.push(createSummon(warKoala));
-        }
-    },
+    effect: (combat: Combat) => addSummon(combat, 'warKoala'),
 }
 
 const summonWallKoala = {
@@ -158,13 +148,7 @@ const summonWallKoala = {
     name: 'Royal Wall Koala',
     description: 'Summons a royal wall koala to protect you.',
     keywords: [Keyword.Summon, Keyword.Block],
-    effect: (combat: Combat) => {
-        const { player } = combat;
-        const wallKoala = summons.wallKoala;
-        if (wallKoala) {
-            player.summons.push(createSummon(wallKoala));
-        }
-    },
+    effect: (combat: Combat) => addSummon(combat, 'wallKoala'),
 }
 
 const koalitionVictory = {
@@ -175,13 +159,9 @@ const koalitionVictory = {
     keywords: [Keyword.Summon],
     effect: (combat: Combat) => {
         const { player } = combat;
-        for (let i = 0; i < 3; i++) {
-            const koala = summons.collaborator;
-            if (koala) {
-                player.summons.push(createSummon(koala));
-            }
-        }
-        player.summons.filter(summon => summon.race === Race.Koala).forEach(summon => {
+        for (let i = 0; i < 3; i++) addSummon(combat, 'collaborator');
+        if (!player) return;
+        player.summons.filter((summon) => summon.race === Race.Koala).forEach((summon) => {
             summon.maxhp += 5;
             summon.hp = summon.maxhp;
             summon.power++;
@@ -195,13 +175,7 @@ const summonCharLizard = {
     name: 'Char Lizard',
     description: 'Summons a char lizard to protect you.',
     keywords: [Keyword.Summon],
-    effect: (combat: Combat) => {
-        const { player } = combat;
-        const charLizard = summons.charLizard;
-        if (charLizard) {
-            player.summons.push(createSummon(charLizard));
-        }
-    },
+    effect: (combat: Combat) => addSummon(combat, 'charLizard'),
 }
 
 const summonAttackaQuacka = {
@@ -210,14 +184,37 @@ const summonAttackaQuacka = {
     name: 'Summon Attacker Quacker',
     description: 'Summons an attacker quacker to protect you.',
     keywords: [Keyword.Summon],
+    effect: (combat: Combat) => addSummon(combat, 'attackaQuacka'),
+}
+
+const shinzouWoSasageyo = {
+    rank: 5,
+    suit: Suit.Metal,
+    name: 'Shinzou wo Sasageyo',
+    description: 'Remove all your Koala summons. Deal 10 damage to the enemy for each.',
+    keywords: [Keyword.Attack, Keyword.Summon],
+    flavorText: 'Sasageyo! Sasageyo! Shinzou wo Sasageyo!',
+    effect: (combat: Combat) => {
+        const { player, enemy } = combat;
+        const koalas = player?.summons.filter((s) => s.race === Race.Koala) ?? [];
+        const count = koalas.length;
+        if (player) player.summons = player.summons.filter((s) => s.race !== Race.Koala);
+        if (count > 0 && enemy) enemy.takeDamage(10 * count);
+    },
+};
+
+const despertaFerro = {
+    rank: 4,
+    suit: Suit.Metal,
+    name: 'Desperta Ferro',
+    description: 'Summons koalas equal to your Appeal.',
+    keywords: [Keyword.Summon],
     effect: (combat: Combat) => {
         const { player } = combat;
-        const attackaQuacka = summons.attackaQuacka;
-        if (attackaQuacka) {
-            player.summons.push(createSummon(attackaQuacka));
-        }
+        const count = player?.appeal ?? 0;
+        for (let i = 0; i < count; i++) addSummon(combat, 'collaborator');
     },
-}
+};
 
 const thunderstruck = {
     rank: 4,
@@ -249,5 +246,7 @@ export const generalCards = [
     koalitionVictory,
     summonCharLizard,
     summonAttackaQuacka,
+    despertaFerro,
+    shinzouWoSasageyo,
     thunderstruck,
 ];

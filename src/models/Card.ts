@@ -1,6 +1,7 @@
 import { nextTick } from "vue";
 import type { Combat } from "../composables/useCombat";
 import { Suit } from "./Suit";
+import { Keyword } from "../game/keywords";
 
 const ANIMATION_DELAY = 50;
 
@@ -45,25 +46,18 @@ class Card {
         this.suit = suit;
     }
 
+    /** Direction the card flies when cast. Overridden by SpellCard for keyword-based direction. */
+    getCastAnimationDirection(): 'left' | 'right' | 'up' {
+        return 'up';
+    }
+
     animate(): void {
         this.animation = 'start-animation';
 
         nextTick(() => {
             setTimeout(() => {
-                switch (this.suit) {
-                    case Suit.Wood:
-                    case Suit.Earth:
-                        this.animation = 'fly-right';
-                        break;
-                    case Suit.Fire:
-                    case Suit.Metal:
-                        this.animation = 'fly-left';
-                        break;
-                    case Suit.Water:
-                    case Suit.Koala:
-                    default:
-                        this.animation = 'fly-up';
-                }
+                const dir = this.getCastAnimationDirection();
+                this.animation = dir === 'left' ? 'fly-left' : dir === 'right' ? 'fly-right' : 'fly-up';
             }, ANIMATION_DELAY);
 
             setTimeout(() => {
@@ -89,12 +83,22 @@ class Card {
     }
 }
 
+const CAST_LEFT_KEYWORDS: string[] = [Keyword.Block, Keyword.Summon, Keyword.Heal, Keyword.ManaDiamond, Keyword.Draw];
+const CAST_RIGHT_KEYWORDS: string[] = [Keyword.Attack, Keyword.Ranged, Keyword.Magic, Keyword.Piercing, Keyword.Backstab, Keyword.Aoe];
+
 export class SpellCard extends Card {
     isSpell: boolean = true;
     name: string;
     description: string;
     effect: (combat: Combat) => void;
     charges?: number;
+
+    getCastAnimationDirection(): 'left' | 'right' | 'up' {
+        const kw = this.keywords ?? [];
+        if (kw.some((k) => CAST_LEFT_KEYWORDS.includes(k))) return 'left';
+        if (kw.some((k) => CAST_RIGHT_KEYWORDS.includes(k))) return 'right';
+        return 'up';
+    }
 
     constructor(
         rank: number,

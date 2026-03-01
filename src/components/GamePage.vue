@@ -11,7 +11,6 @@
     import Enemy from '../models/Enemy'
     import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario'
     import type Player from '../models/Player'
-    import ManaPool from '../models/ManaPool'
     import { useTown } from '../composables/useTown'
     import { useEvent } from '../composables/useEvent'
     import { hasChosenCharacterRef } from '../composables/useCombat'
@@ -61,7 +60,7 @@
     const selectedCard = computed(() => combat.selectedCard)
 
     const allManaPoolCounts = computed(() =>
-        Object.values(combat.manaPools).map((pool) => pool.cards.length)
+        combat.manaPools.pools().map((pool) => pool.cards.length)
     )
     const canMoveToManaPools = computed(
         () => combat.getCardsMovableToManaPools().length > 0
@@ -99,12 +98,12 @@
     
     const isCompostHighlighted = computed(() => {
         const card = selectedCard.value
-        return (card?.revealed && combat.isSelectedCardPlayable()) ?? false
+        return (card?.revealed && combat.canCastSelectedCard()) ?? false
     })
 
     const manaDiamondsCost = computed(() => {
         const cost = combat.getManaDiamondsNeededForCast()
-        return cost > 0 && combat.isSelectedCardPlayable() ? cost : null
+        return cost > 0 && combat.canCastSelectedCard() ? cost : null
     })
 
     const compostHighlightType = computed(() =>
@@ -113,7 +112,7 @@
 
     const showCastSpellText = computed(() => {
         const card = selectedCard.value
-        return (card?.revealed && combat.isSelectedCardPlayable()) ?? false
+        return (card?.revealed && combat.canCastSelectedCard()) ?? false
     })
     
     const highlightedManaPoolIndex = computed(() => {
@@ -121,7 +120,7 @@
         if (!card || !card.revealed || card.isSpell) return -1
 
         const { rank, suit } = card
-        const manaPool = combat.manaPools[suit]
+        const manaPool = combat.manaPools.getPool(suit)
         if (!manaPool || manaPool.cards.length !== rank - 1) return -1
 
         void allManaPoolCounts.value
@@ -298,9 +297,9 @@
                                     <div class="cards-top-right">
                                         <div class="mana-pools">
                                             <CardStack
-                                                v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
+                                                v-for="([_suit, manaPool], index) in manaPools.entries()"
                                                 :key="index"
-                                                :cards="(manaPool as ManaPool).cards"
+                                                :cards="manaPool.cards"
                                                 :name="AREAS.ManaPools"
                                                 :arrayIndex="index"
                                                 :selectedCard="selectedCard"

@@ -13,11 +13,11 @@ const displayValue = computed(() => {
     return `${sign}${value}`;
 });
 
-const numberClass = computed(() =>
-    props.number.type === 'damage' || props.number.type === 'heal'
-        ? 'health-number'
-        : 'block-number'
-);
+const numberClass = computed(() => {
+    if (props.number.type === 'damage') return 'damage-number';
+    if (props.number.type === 'heal') return 'heal-number';
+    return 'block-number';
+});
 </script>
 
 <template>
@@ -40,13 +40,18 @@ const numberClass = computed(() =>
         animation: float-up 2s ease-out forwards;
     }
 
-    .health-number {
-        color: red;
+    .damage-number {
+        color: #e00;
         animation: float-up 2s ease-out forwards, flash-red 0.3s ease-out;
     }
 
+    .heal-number {
+        color: #0a0;
+        animation: float-up 2s ease-out forwards, flash-green 0.3s ease-out;
+    }
+
     .block-number {
-        color: gray;
+        color: #888;
         animation: float-up 2s ease-out forwards, flash-gray 0.3s ease-out;
     }
 
@@ -78,6 +83,16 @@ const numberClass = computed(() =>
         50% {
             background-color: rgba(128, 128, 128, 0.3);
             box-shadow: 0 0 20px rgba(128, 128, 128, 0.5);
+        }
+    }
+
+    @keyframes flash-green {
+        0%, 100% {
+            background-color: transparent;
+        }
+        50% {
+            background-color: rgba(0, 180, 0, 0.3);
+            box-shadow: 0 0 20px rgba(0, 180, 0, 0.5);
         }
     }
 </style>

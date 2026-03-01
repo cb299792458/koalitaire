@@ -1,6 +1,10 @@
 import type { Combat } from '../composables/useCombat';
 import Summon, { Race } from '../models/Summon';
 
+function koalaCount(combat: Combat): number {
+    return combat.player?.summons.filter((s) => s.race === Race.Koala).length ?? 0;
+}
+
 export interface SummonTemplate {
     name: string;
     description: string;
@@ -33,9 +37,6 @@ export const summons: Record<string, SummonTemplate> = {
         maxhp: 1,
         power: 0,
         race: Race.Koala,
-        effect: (combat: Combat) => {
-            combat.enemy?.takeDamage(0);
-        },
         tooltip: "A koala guard, fiercely loyal to Prince Koa, but not particularly fierce in any other regard.",
     },
     warKoala: {
@@ -45,7 +46,8 @@ export const summons: Record<string, SummonTemplate> = {
         power: 0,
         race: Race.Koala,
         effect: (combat: Combat) => {
-            combat.enemy?.takeDamage(combat.player?.summons.filter(summon => summon.race === Race.Koala).length ?? 0);
+            const dmg = koalaCount(combat);
+            if (dmg > 0) combat.enemy?.takeDamage(dmg);
         },
         tooltip: "Koalas together strong.",
     },
@@ -56,7 +58,8 @@ export const summons: Record<string, SummonTemplate> = {
         power: 0,
         race: Race.Koala,
         effect: (combat: Combat) => {
-            combat.player?.gainBlock(combat.player?.summons.filter(summon => summon.race === Race.Koala).length ?? 0);
+            const block = koalaCount(combat);
+            if (block > 0) combat.player?.gainBlock(block);
         },
         tooltip: "Koalas together strong.",
     },
@@ -147,3 +150,12 @@ export const summons: Record<string, SummonTemplate> = {
         },
     },
 };
+
+/** Add one summon to the player's board by key. No-op if player or template missing. */
+export function addSummon(combat: Combat, key: keyof typeof summons): void {
+    const { player } = combat;
+    const template = summons[key];
+    if (player && template) {
+        player.summons.push(createSummon(template));
+    }
+}

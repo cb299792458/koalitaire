@@ -51,6 +51,7 @@ const slash = {
     suit: Suit.Metal,
     name: 'Slash',
     description: 'Deals 3 damage, plus your Attack.',
+    keywords: [Keyword.Attack],
     effect: (combat: Combat) => {
         const { enemy, player } = combat;
         const damage = 3 + (player?.attack ?? 0);

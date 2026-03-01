@@ -12,7 +12,7 @@ export type DamageNumberType = DamageNumber['type'];
 /** Maps damage number type to container flash class (used by CombatantInfo). */
 export const FLASH_CLASS_MAP: Record<DamageNumberType, string> = {
     damage: 'flash-red',
-    heal: 'flash-red',
+    heal: 'flash-green',
     'block-gain': 'flash-gray',
     'block-loss': 'flash-gray',
 };
@@ -22,64 +22,37 @@ export function getFlashClassForLatest(numbers: DamageNumber[]): string {
     return (latest && FLASH_CLASS_MAP[latest.type]) ?? '';
 }
 
-let damageNumbersInstance: {
-    playerNumbers: Ref<DamageNumber[]>;
-    enemyNumbers: Ref<DamageNumber[]>;
-    addPlayerNumber: (value: number, type: DamageNumber['type']) => void;
-    addEnemyNumber: (value: number, type: DamageNumber['type']) => void;
-} | null = null;
-
+const REMOVAL_DELAY_MS = 2000;
 let nextId = 0;
+let instance: ReturnType<typeof createDamageNumbers> | null = null;
 
-function useDamageNumbers() {
-    if (damageNumbersInstance) return damageNumbersInstance;
-
+function createDamageNumbers() {
     const playerNumbers = ref<DamageNumber[]>([]);
     const enemyNumbers = ref<DamageNumber[]>([]);
 
-    function addPlayerNumber(value: number, type: DamageNumber['type']): void {
+    function addNumberTo(numbersRef: Ref<DamageNumber[]>, value: number, type: DamageNumberType): void {
         const id = nextId++;
-        playerNumbers.value.push({
-            id,
-            value,
-            type,
-            timestamp: Date.now(),
-        });
-        // Remove after animation completes
+        const entry: DamageNumber = { id, value, type, timestamp: Date.now() };
+        numbersRef.value.push(entry);
         setTimeout(() => {
-            const index = playerNumbers.value.findIndex(n => n.id === id);
-            if (index !== -1) {
-                playerNumbers.value.splice(index, 1);
-            }
-        }, 2000);
+            const index = numbersRef.value.findIndex((n) => n.id === id);
+            if (index !== -1) numbersRef.value.splice(index, 1);
+        }, REMOVAL_DELAY_MS);
     }
 
-    function addEnemyNumber(value: number, type: DamageNumber['type']): void {
-        const id = nextId++;
-        enemyNumbers.value.push({
-            id,
-            value,
-            type,
-            timestamp: Date.now(),
-        });
-        // Remove after animation completes
-        setTimeout(() => {
-            const index = enemyNumbers.value.findIndex(n => n.id === id);
-            if (index !== -1) {
-                enemyNumbers.value.splice(index, 1);
-            }
-        }, 2000);
-    }
-
-    damageNumbersInstance = {
+    return {
         playerNumbers,
         enemyNumbers,
-        addPlayerNumber,
-        addEnemyNumber,
+        addPlayerNumber(value: number, type: DamageNumberType) {
+            addNumberTo(playerNumbers, value, type);
+        },
+        addEnemyNumber(value: number, type: DamageNumberType) {
+            addNumberTo(enemyNumbers, value, type);
+        },
     };
-
-    return damageNumbersInstance;
 }
 
-export default useDamageNumbers;
-
+export default function useDamageNumbers() {
+    if (!instance) instance = createDamageNumbers();
+    return instance;
+}

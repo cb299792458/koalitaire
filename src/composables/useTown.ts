@@ -15,17 +15,15 @@ const STAT_TO_PLAYER_KEY: Record<StatStoreId, keyof Player> = {
     appealStore: 'appeal',
 };
 
+const INITIAL_STAT_UPGRADE_COUNTS: Record<StatStoreId, number> = Object.fromEntries(
+    STAT_STORE_IDS.map((id) => [id, 0])
+) as Record<StatStoreId, number>;
+
 const playerRef = ref<Player | null>(null);
 const isInTownRef = ref(false);
 const innUsedThisVisitRef = ref(false);
 const bloodbankUseCountRef = ref(0);
-const statUpgradeCountsRef = ref<Record<StatStoreId, number>>({
-    attackStore: 0,
-    armorStore: 0,
-    acumenStore: 0,
-    agilityStore: 0,
-    appealStore: 0,
-});
+const statUpgradeCountsRef = ref<Record<StatStoreId, number>>({ ...INITIAL_STAT_UPGRADE_COUNTS });
 /** Card names purchased at the store this visit (one of each per visit). */
 const storePurchasedCardNamesRef = ref<Set<string>>(new Set());
 /** Five random cards offered at the store this visit. */
@@ -76,6 +74,19 @@ function getBytecoinPrice(level: number): number {
     return level * 10;
 }
 
+function createSpellCardFromParams(params: SpellCardParams): SpellCard {
+    return new SpellCard(
+        params.rank,
+        params.suit,
+        params.name,
+        params.description,
+        params.effect,
+        params.charges,
+        params.keywords,
+        params.flavorText
+    );
+}
+
 export function useTown(): {
     player: Ref<Player | null>;
     isInTown: Ref<boolean>;
@@ -119,13 +130,7 @@ export function useTown(): {
             bloodbankUseCountRef.value = 0;
             storePurchasedCardNamesRef.value = new Set();
             storeCardsRef.value = [];
-            statUpgradeCountsRef.value = {
-                attackStore: 0,
-                armorStore: 0,
-                acumenStore: 0,
-                agilityStore: 0,
-                appealStore: 0,
-            };
+            statUpgradeCountsRef.value = { ...INITIAL_STAT_UPGRADE_COUNTS };
         },
         leaveTown() {
             isInTownRef.value = false;
@@ -194,7 +199,7 @@ export function useTown(): {
         },
         storeCards: storeCardsRef,
         refreshStoreCards() {
-            storeCardsRef.value = shuffle([...generalCards]).slice(0, 5);
+            storeCardsRef.value = pickRandom([...generalCards], 5);
         },
         getStoreCardPrice: () => STORE_CARD_PRICE,
         isStoreCardPurchased(cardName: string) {
@@ -213,17 +218,7 @@ export function useTown(): {
             if (p.koallarbucks < STORE_CARD_PRICE) return;
             p.koallarbucks -= STORE_CARD_PRICE;
             storePurchasedCardNamesRef.value = new Set(storePurchasedCardNamesRef.value).add(cardParams.name);
-            const card = new SpellCard(
-                cardParams.rank,
-                cardParams.suit,
-                cardParams.name,
-                cardParams.description,
-                cardParams.effect,
-                cardParams.charges,
-                cardParams.keywords,
-                cardParams.flavorText
-            );
-            p.collection.push(card);
+            p.collection.push(createSpellCardFromParams(cardParams));
             p.spellDeck.push(true);
         },
         traderOffers: traderOffersRef,
@@ -257,16 +252,7 @@ export function useTown(): {
             const cardIndex = p.collection.indexOf(playerCard);
             if (cardIndex === -1) return;
 
-            p.collection[cardIndex] = new SpellCard(
-                generalCard.rank,
-                generalCard.suit,
-                generalCard.name,
-                generalCard.description,
-                generalCard.effect,
-                generalCard.charges,
-                generalCard.keywords,
-                generalCard.flavorText
-            );
+            p.collection[cardIndex] = createSpellCardFromParams(generalCard);
 
             offers.splice(slotIndex, 1);
             traderOffersRef.value = offers;
