@@ -7,6 +7,7 @@
     import BackAtCampModal from './Modals/BackAtCampModal.vue'
     import { SpellCard } from '../models/Card'
     import type { SpellCardParams } from '../models/Card'
+    import GameLayout from './GameLayout.vue'
 
     const town = useTown()
     const modalState = useModalState()
@@ -191,8 +192,8 @@
         <div class="scale-wrapper">
             <div class="scale-container" :style="{ transform: `scale(${scale})` }">
                 <div class="town-screen">
-                    <div class="town-top">
-                        <div class="town-left">
+                    <GameLayout>
+                        <template #left>
                             <h1>Player</h1>
                             <CombatantInfo
                                 v-if="player"
@@ -200,9 +201,9 @@
                                 variant="player"
                                 :show-bytecoins="(unref(player)?.bytecoins ?? 0) > 0"
                             />
-                        </div>
+                        </template>
 
-                        <div class="town-middle">
+                        <template #center>
                             <BackAtCampModal
                                 v-if="modalState.currentModal?.name === 'backAtCamp' && modalState.currentModal?.props"
                                 :player="modalState.currentModal.props.player"
@@ -322,9 +323,9 @@
                                     </template>
                                 </div>
                             </div>
-                        </div>
+                        </template>
 
-                        <div class="town-right">
+                        <template #right>
                             <h1>Locations</h1>
                             <div class="town-places">
                                 <button
@@ -338,14 +339,16 @@
                                     {{ place.label }}
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                        </template>
 
-                    <div class="town-bottom">
-                        <button type="button" class="leave-town-button" @click="town.leaveTown">
-                            Leave Town
-                        </button>
-                    </div>
+                        <template #bottom>
+                            <div class="town-bottom-slot">
+                                <button type="button" class="leave-town-button" @click="town.leaveTown">
+                                    Leave Town
+                                </button>
+                            </div>
+                        </template>
+                    </GameLayout>
                 </div>
             </div>
         </div>
@@ -375,36 +378,10 @@
         transform-origin: center center;
     }
 
-    .town-top {
+    .town-bottom-slot {
         display: flex;
-        flex-direction: row;
-        height: 860px;
-    }
-
-    .town-right,
-    .town-left {
-        background-color: lightblue;
-        width: 260px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        min-height: 0;
-    }
-
-    .town-middle {
-        background-color: lightgreen;
-        width: 1400px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .town-bottom {
-        background-color: pink;
-        height: 220px;
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
+        justify-content: center;
+        width: 100%;
     }
 
     .town-page {
@@ -626,9 +603,5 @@
 
     .leave-town-button:hover {
         background-color: #5a9c69;
-    }
-
-    .town-bottom {
-        justify-content: center;
     }
 </style>

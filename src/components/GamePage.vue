@@ -16,6 +16,7 @@
     import { useEvent } from '../composables/useEvent'
     import { hasChosenCharacterRef } from '../composables/useCombat'
     import EventView from './EventView.vue'
+    import GameLayout from './GameLayout.vue'
 
     const scenario = makeScenario()
     const modalState = useModalState()
@@ -234,9 +235,13 @@
             <div class="scale-container" :style="{ transform: `scale(${scale})` }">
                 <ModalManager/>
         
-                <div class="combat-screen" @click="onClick({ card: null, area: AREAS.Board, cardIndex: -1 })">
-                    <div v-if="!isBackAtCampOpen" class="combat-top">
-                        <div class="combat-left">
+                <div
+                    v-if="!isBackAtCampOpen"
+                    class="game-screen"
+                    @click="onClick({ card: null, area: AREAS.Board, cardIndex: -1 })"
+                >
+                    <GameLayout>
+                        <template #left>
                             <h1>Player</h1>
                             <CombatantInfo :combatant="player" variant="player" />
                             <div v-if="isInEvent && eventPlayerRoll !== null" class="event-roll-display event-roll-display--player">
@@ -246,100 +251,94 @@
                                     = {{ eventPlayerRoll! + (eventStatBonus ?? 0) }}
                                 </p>
                             </div>
-                        </div>
-            
-                        <div class="combat-middle">
-                            <template v-if="isInEvent">
-                            <EventView />
-                            </template>
+                        </template>
+
+                        <template #center>
+                            <EventView v-if="isInEvent" />
                             <template v-else-if="isInCombat">
-                            <div class="cards-top">
-                                <div class="cards-top-left">
-                                    <div class="deck-wrapper">
-                                        <CardStack
-                                            :cards="deck.cards"
-                                            :name="AREAS.Deck"
-                                            layout="pile"
-                                            @click="onClick"
-                                        />
-                                        <div class="deck-count">{{ deckCount }} cards</div>
-                                        <div class="deck-reshuffles">Reshuffles: {{ reshuffles }}</div>
-                                    </div>
-                                    <div class="compost-wrapper">
-                                        <div v-if="manaDiamondsCost !== null" class="mana-diamonds-cost">
-                                            -{{ manaDiamondsCost }} mana diamonds
+                                <div class="cards-top">
+                                    <div class="cards-top-left">
+                                        <div class="deck-wrapper">
+                                            <CardStack
+                                                :cards="deck.cards"
+                                                :name="AREAS.Deck"
+                                                layout="pile"
+                                                @click="onClick"
+                                            />
+                                            <div class="deck-count">{{ deckCount }} cards</div>
+                                            <div class="deck-reshuffles">Reshuffles: {{ reshuffles }}</div>
                                         </div>
-                                        <div v-if="showCastSpellText" class="cast-spell-text">
-                                            Cast Spell
+                                        <div class="compost-wrapper">
+                                            <div v-if="manaDiamondsCost !== null" class="mana-diamonds-cost">
+                                                -{{ manaDiamondsCost }} mana diamonds
+                                            </div>
+                                            <div v-if="showCastSpellText" class="cast-spell-text">
+                                                Cast Spell
+                                            </div>
+                                            <CardStack
+                                                :cards="compost.cards"
+                                                :name="AREAS.Compost"
+                                                :highlighted="isCompostHighlighted"
+                                                :highlightType="compostHighlightType"
+                                                customLabel="Compost"
+                                                @click="onClick"
+                                            />
+                                            <div class="compost-count">{{ compostCount }} cards</div>
                                         </div>
-                                        <CardStack
-                                            :cards="compost.cards"
-                                            :name="AREAS.Compost"
-                                            :highlighted="isCompostHighlighted"
-                                            :highlightType="compostHighlightType"
-                                            customLabel="Compost"
-                                            @click="onClick"
-                                        />
-                                        <div class="compost-count">{{ compostCount }} cards</div>
+                                        <div class="trash-wrapper" :class="{ 'trash-wrapper--empty': !hasTrashCards }">
+                                            <CardStack
+                                                :cards="trash.cards"
+                                                :name="AREAS.Trash"
+                                                customLabel="Trash (WIP)"
+                                                @click="onClick"
+                                            />
+                                            <div class="trash-count">{{ trashCount }} cards</div>
+                                        </div>
                                     </div>
-                                    <div class="trash-wrapper" :class="{ 'trash-wrapper--empty': !hasTrashCards }">
-                                        <CardStack
-                                            :cards="trash.cards"
-                                            :name="AREAS.Trash"
-                                            customLabel="Trash (WIP)"
-                                            @click="onClick"
-                                        />
-                                        <div class="trash-count">{{ trashCount }} cards</div>
+                                    <div class="cards-top-right">
+                                        <div class="mana-pools">
+                                            <CardStack
+                                                v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
+                                                :key="index"
+                                                :cards="(manaPool as ManaPool).cards"
+                                                :name="AREAS.ManaPools"
+                                                :arrayIndex="index"
+                                                :selectedCard="selectedCard"
+                                                :highlighted="highlightedManaPoolIndex === index"
+                                                highlightType="burn"
+                                                @mousedown.prevent
+                                                @click="onClick"
+                                            />
+                                        </div>
+                                        <div class="mana-pools-buttons">
+                                            <button
+                                                type="button"
+                                                class="move-to-mana-button"
+                                                :disabled="!canMoveToManaPools"
+                                                @click="onMoveToManaClick"
+                                            >Auto Mana</button>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="cards-top-right">
-                                    <div class="mana-pools">
-                                        <CardStack
-                                            v-for="([_suit, manaPool], index) in Object.entries(manaPools)"
-                                            :key="index"
-                                            :cards="(manaPool as ManaPool).cards"
-                                            :name="AREAS.ManaPools"
-                                            :arrayIndex="index"
-                                            :selectedCard="selectedCard"
-                                            :highlighted="highlightedManaPoolIndex === index"
-                                            highlightType="burn"
-                                            @mousedown.prevent
-                                            @click="onClick"
-                                        />
-                                    </div>
-                                    <div class="mana-pools-buttons">
-                                        <button
-                                            type="button"
-                                            class="move-to-mana-button"
-                                            :disabled="!canMoveToManaPools"
-                                            @click="onMoveToManaClick"
-                                        >Auto Mana</button>
-                                    </div>
+                                <div class="tableau">
+                                    <CardStack
+                                        v-for="(cards, index) in tableau"
+                                        :key="index"
+                                        :cards="cards"
+                                        :name="AREAS.Tableau"
+                                        layout="vertical"
+                                        :selectedCard="selectedCard"
+                                        :arrayIndex="index as number"
+                                        :highlighted="highlightedTableauIndices.includes(index)"
+                                        highlightType="cast"
+                                        @mousedown.prevent
+                                        @click="onClick"
+                                    />
                                 </div>
-                            </div>
-            
-                            <div class="tableau">
-                                <CardStack
-                                    v-for="(cards, index) in tableau"
-                                    :key="index"
-                                    :cards="cards"
-                                    :name="AREAS.Tableau"
-                                    layout="vertical"
-                                    :selectedCard="selectedCard"
-                                    :arrayIndex="index as number"
-                                    :highlighted="highlightedTableauIndices.includes(index)"
-                                    highlightType="cast"
-                                    @mousedown.prevent
-                                    @click="onClick"
-                                />
-                            </div>
                             </template>
-                            <template v-else>
-                                <!-- Map is open: no combat UI shown -->
-                            </template>
-                        </div>
-            
-                        <div class="combat-right">
+                        </template>
+
+                        <template #right>
                             <template v-if="isInEvent">
                                 <h1>Event</h1>
                                 <div class="event-name-panel" v-if="eventState.currentEvent.value">
@@ -354,51 +353,51 @@
                                 <h1 v-if="isInCombat">Enemy</h1>
                                 <CombatantInfo v-if="isInCombat" :combatant="enemy" variant="enemy" />
                             </template>
-                        </div>
-                    </div>
-            
-                    <div v-if="!isBackAtCampOpen" class="combat-bottom">
-                        <template v-if="isInEvent">
-                            <div class="event-choices-area">
-                                <div v-if="!eventResultMessage" class="event-choices">
+                        </template>
+
+                        <template #bottom>
+                            <template v-if="isInEvent">
+                                <div class="event-choices-area">
+                                    <div v-if="!eventResultMessage" class="event-choices">
+                                        <button
+                                            v-for="(option, index) in eventState.currentEvent.value?.options ?? []"
+                                            :key="index"
+                                            type="button"
+                                            class="event-choice"
+                                            :disabled="eventIsResolving"
+                                            @click="eventState.resolveChoice(option)"
+                                        >
+                                            {{ eventState.choiceLabel(option) }}
+                                        </button>
+                                    </div>
+                                    <div v-else class="event-result">
+                                        <p class="event-result-message">{{ eventResultMessage }}</p>
+                                    </div>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <div v-if="isInCombat" class="cards-hand">
+                                    <CardStack
+                                        :cards="hand.cards"
+                                        :name="AREAS.Hand"
+                                        layout="horizontal"
+                                        :selectedCard="selectedCard"
+                                        @click="onClick"
+                                    />
+                                </div>
+                                <div v-if="isInCombat" class="combat-bottom-buttons">
                                     <button
-                                        v-for="(option, index) in eventState.currentEvent.value?.options ?? []"
-                                        :key="index"
+                                        v-if="!combat.isProcessingTurn"
+                                        id="end-turn-button"
                                         type="button"
-                                        class="event-choice"
-                                        :disabled="eventIsResolving"
-                                        @click="eventState.resolveChoice(option)"
+                                        @click="combat.endTurn"
                                     >
-                                        {{ eventState.choiceLabel(option) }}
+                                        End Turn
                                     </button>
                                 </div>
-                                <div v-else class="event-result">
-                                    <p class="event-result-message">{{ eventResultMessage }}</p>
-                                </div>
-                            </div>
+                            </template>
                         </template>
-                        <template v-else>
-                            <div v-if="isInCombat" class="cards-hand">
-                                <CardStack
-                                    :cards="hand.cards"
-                                    :name="AREAS.Hand"
-                                    layout="horizontal"
-                                    :selectedCard="selectedCard"
-                                    @click="onClick"
-                                />
-                            </div>
-                            <div v-if="isInCombat" class="combat-bottom-buttons">
-                                <button
-                                    v-if="!combat.isProcessingTurn"
-                                    id="end-turn-button"
-                                    type="button"
-                                    @click="combat.endTurn"
-                                >
-                                    End Turn
-                                </button>
-                            </div>
-                        </template>
-                    </div>
+                    </GameLayout>
                 </div>
             </div>
         </div>
@@ -428,35 +427,11 @@
     transform-origin: center center;
 }
 
-.combat-top {
-    display: flex;
-    flex-direction: row;
-    height: 860px;
-}
-
-.combat-right, .combat-left {
-    background-color: lightblue;
-    width: 260px;
+.game-screen {
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    min-height: 0;
-}
-
-.combat-middle {
-    background-color: lightgreen;
-    width: 1400px;
-    display: flex;
-    flex-direction: column;
-}
-
-.combat-bottom {
-    background-color: pink;
-    height: 220px;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
 }
 
 .combat-bottom-buttons {
