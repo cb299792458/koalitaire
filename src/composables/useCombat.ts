@@ -231,16 +231,16 @@ export class Combat {
         // Open enemy defeated modal first; level is advanced when user clicks Continue.
         // Use combat.originalPlayer (not this.player) so we always pass the actual persistent player, not the combat copy.
         const persistentPlayer = this.originalPlayer ?? this.player;
-        openModal('cardReward', { 
+        openModal('cardReward', {
             title: 'Enemy Defeated',
             player: persistentPlayer,
             onContinue: () => {
                 if (this.onEnemyDefeatedContinue) {
                     this.onEnemyDefeatedContinue();
                 }
-                return false // Don't emit close; we've opened backAtCamp modal
-            }
-        }, true, true);
+                return false; // Don't emit close; we've opened backAtCamp modal
+            },
+        }, { keepOpen: true, transparentOverlay: true });
         
         if (this.onEnemyDefeated) {
             this.onEnemyDefeated();

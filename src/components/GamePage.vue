@@ -38,7 +38,7 @@
                 closeModal()
                 startCombatForPlayer(player, row, col)
             },
-        }, keepOpen)
+        }, { keepOpen })
     }
 
     combat.onEnemyDefeatedContinue = () => {
@@ -86,7 +86,7 @@
                     eventState.onEventContinue()
                     return false
                 },
-            }, true, true)
+            }, { keepOpen: true, transparentOverlay: true })
         }
     })
 
@@ -216,7 +216,7 @@
                     openMapDeckForPlayer(newPlayer)
                     return false
                 },
-            }, true)
+            }, { keepOpen: true })
         }
         updateScale()
         window.addEventListener('resize', updateScale)

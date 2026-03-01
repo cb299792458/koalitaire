@@ -1,13 +1,20 @@
+const SOUNDS_DIR = '/sounds';
+
+function soundUrl(name: string, ext: string): string {
+    return `${SOUNDS_DIR}/${name}.${ext}`;
+}
+
+function createAudio(name: string, ext: string = 'wav'): HTMLAudioElement {
+    return new Audio(soundUrl(name, ext));
+}
+
 /**
  * Play a sound from the public/sounds directory.
  * @param name - Filename without extension (e.g. 'mana' for mana.wav)
  * @param ext - File extension. Defaults to 'wav'.
  */
 export function playSound(name: string, ext: string = 'wav'): void {
-    const audio = new Audio(`/sounds/${name}.${ext}`);
-    audio.play().catch(() => {
-        // Ignore autoplay policy errors
-    });
+    createAudio(name, ext).play().catch(() => {});
 }
 
 /**
@@ -15,10 +22,10 @@ export function playSound(name: string, ext: string = 'wav'): void {
  * Use when you need to wait before proceeding (e.g. to avoid overlapping sounds).
  */
 export function playSoundAndWait(name: string, ext: string = 'wav'): Promise<void> {
+    const audio = createAudio(name, ext);
     return new Promise((resolve) => {
-        const audio = new Audio(`/sounds/${name}.${ext}`);
         audio.addEventListener('ended', () => resolve());
-        audio.addEventListener('error', () => resolve()); // Don't block on load/play errors
+        audio.addEventListener('error', () => resolve());
         audio.play().catch(() => resolve());
     });
 }

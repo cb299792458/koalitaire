@@ -8,18 +8,25 @@ import BackAtCampModal from '../components/Modals/BackAtCampModal.vue'
 
 export type ModalName = 'compost' | 'trash' | 'start' | 'message' | 'cardReward' | 'confirmNoReshuffles' | 'backAtCamp'
 
-interface ModalState {
-    currentModal: {
-        name: ModalName
-        component: any
-        props?: Record<string, any>
-        keepOpen?: boolean
-        transparentOverlay?: boolean
-    } | null
+export interface OpenModalOptions {
+    keepOpen?: boolean
+    transparentOverlay?: boolean
 }
 
-// Map of modal names to components
-const modals: Record<ModalName, any> = {
+interface ModalInstance {
+    name: ModalName
+    component: unknown
+    /** Modal-specific props; typed loosely so consumers can pass them to modal components. */
+    props: Record<string, any>
+    keepOpen?: boolean
+    transparentOverlay?: boolean
+}
+
+interface ModalState {
+    currentModal: ModalInstance | null
+}
+
+const modals: Record<ModalName, unknown> = {
     compost: markRaw(CardListModal),
     trash: markRaw(CardListModal),
     start: markRaw(StartModal),
@@ -29,23 +36,29 @@ const modals: Record<ModalName, any> = {
     backAtCamp: markRaw(BackAtCampModal),
 }
 
-// Reactive state for the current modal
-const state = reactive<ModalState>({
-    currentModal: null,
-})
+const state = reactive<ModalState>({ currentModal: null })
 
-// Open a modal by name, optionally passing props
-export function openModal(name: ModalName, props: Record<string, any> = {}, keepOpen?: boolean, transparentOverlay?: boolean) {
+export function openModal(
+    name: ModalName,
+    props: Record<string, any> = {},
+    options?: OpenModalOptions
+) {
     const component = modals[name]
     if (component) {
-        state.currentModal = { name, component, props, keepOpen, transparentOverlay }
+        state.currentModal = {
+            name,
+            component,
+            props,
+            keepOpen: options?.keepOpen,
+            transparentOverlay: options?.transparentOverlay,
+        }
     } else {
         console.warn(`Modal "${name}" does not exist.`)
     }
 }
 
 export function openMessageModal(message: string, keepOpen?: boolean) {
-    openModal('message', { message }, keepOpen)
+    openModal('message', { message }, { keepOpen })
 }
 
 // Close the current modal
