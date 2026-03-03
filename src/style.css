@@ -33,3 +33,27 @@ html, body {
     0%, 100% { background-color: transparent; }
     50% { background-color: rgba(0, 180, 0, 0.3); }
 }
+
+/* Playing card suit symbols: larger and consistent (block ♠, mana ♦, health ♥, damage ♣) */
+.suit-symbol {
+    display: inline-block;
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.suit-symbol--block {
+    color: #666;
+    transform: rotate(180deg);
+}
+
+.suit-symbol--mana-diamonds {
+    color: #2a7fff;
+}
+
+.suit-symbol--health {
+    color: #c22;
+}
+
+.suit-symbol--damage {
+    color: #2d7a2d;
+}

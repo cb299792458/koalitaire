@@ -16,6 +16,7 @@
     import { hasChosenCharacterRef } from '../composables/useCombat'
     import EventView from './EventView.vue'
     import GameLayout from './GameLayout.vue'
+    import { formatStatSymbols } from '../utils/damageSymbol'
 
     const scenario = makeScenario()
     const modalState = useModalState()
@@ -269,7 +270,7 @@
                                         </div>
                                         <div class="compost-wrapper">
                                             <div v-if="manaDiamondsCost !== null" class="mana-diamonds-cost">
-                                                -{{ manaDiamondsCost }} mana diamonds
+                                                <span class="suit-symbol suit-symbol--mana-diamonds" title="Mana Diamonds: Used to pay the difference when casting cards.">♦</span> −{{ manaDiamondsCost }}
                                             </div>
                                             <div v-if="showCastSpellText" class="cast-spell-text">
                                                 Cast Spell
@@ -366,11 +367,11 @@
                                             :disabled="eventIsResolving"
                                             @click="eventState.resolveChoice(option)"
                                         >
-                                            {{ eventState.choiceLabel(option) }}
+                                            <span v-html="formatStatSymbols(eventState.choiceLabel(option))"></span>
                                         </button>
                                     </div>
                                     <div v-else class="event-result">
-                                        <p class="event-result-message">{{ eventResultMessage }}</p>
+                                        <p class="event-result-message" v-html="eventResultMessage ? formatStatSymbols(eventResultMessage) : ''"></p>
                                     </div>
                                 </div>
                             </template>

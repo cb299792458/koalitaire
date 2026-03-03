@@ -8,6 +8,7 @@
     import { SpellCard } from '../models/Card'
     import type { SpellCardParams } from '../models/Card'
     import GameLayout from './GameLayout.vue'
+    import { formatStatSymbols } from '../utils/damageSymbol'
 
     const town = useTown()
     const modalState = useModalState()
@@ -213,7 +214,7 @@
                             />
                             <div v-else class="town-location-content">
                                 <h2 class="town-location-name">{{ locationLabel }}</h2>
-                                <p class="town-location-description">{{ locationWelcomeMessage }}</p>
+                                <p class="town-location-description" v-html="formatStatSymbols(locationWelcomeMessage)"></p>
                                 <div class="town-choices">
                                     <template v-if="currentLocation === 'inn'">
                                         <button

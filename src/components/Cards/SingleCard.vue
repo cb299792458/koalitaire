@@ -4,6 +4,7 @@
     import { type SpellCard } from '../../models/Card';
     import { getKeywordExplanation } from '../../game/keywords';
     import { suitIconMap, suitClassMap } from '../../utils/suitAssets';
+    import { formatStatSymbols } from '../../utils/damageSymbol';
 
     const { card, selectedCard } = defineProps<{
         card: Card,
@@ -163,7 +164,7 @@
                                 <img :src="artworkSrc" :alt="spellCard.name" class="card-artwork" />
                             </div>
                             <div class="spell-card-bottom">
-                                <p class="card-description spell-card-description">{{ spellCard.description }}</p>
+                                <p class="card-description spell-card-description" v-html="formatStatSymbols(spellCard.description)"></p>
                                 <p v-if="Number.isFinite(spellCard.charges)" class="spell-card-charges">{{ spellCard.charges }} {{ spellCard.charges === 1 ? 'charge' : 'charges' }}</p>
                             </div>
                         </div>
@@ -188,9 +189,7 @@
                 </div>
                 <div class="card-tooltip-title">{{ tooltipTitle }}</div>
                 <template v-if="keywordExplanations.length">
-                    <div v-for="item in keywordExplanations" :key="item.id" class="card-tooltip-keyword">
-                        {{ item.text }}
-                    </div>
+                    <div v-for="item in keywordExplanations" :key="item.id" class="card-tooltip-keyword" v-html="formatStatSymbols(item.text)"></div>
                 </template>
                 <div v-if="card.flavorText" class="card-tooltip-flavor">{{ card.flavorText }}</div>
             </div>
@@ -214,7 +213,7 @@
                 />
             </div>
             <div class="spell-card-bottom">
-                <p class="card-description spell-card-description">{{ spellCard.description }}</p>
+                <p class="card-description spell-card-description" v-html="formatStatSymbols(spellCard.description)"></p>
                 <p v-if="Number.isFinite(spellCard.charges)" class="spell-card-charges">{{ spellCard.charges }} {{ spellCard.charges === 1 ? 'charge' : 'charges' }}</p>
             </div>
         </div>

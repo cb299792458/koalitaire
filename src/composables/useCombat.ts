@@ -184,7 +184,7 @@ export class Combat {
         if (!this.player || !this.enemy) return;
 
         for (const summon of this.player.summons) {
-            this.enemy.takeDamage(summon.power);
+            this.enemy.takeDamage(summon.damage);
             summon.effect(this);
             this.notify();
             await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each summon

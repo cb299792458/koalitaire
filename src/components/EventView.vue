@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useEvent } from '../composables/useEvent';
+import { formatStatSymbols } from '../utils/damageSymbol';
 
 const { currentEvent } = useEvent();
 </script>
 
 <template>
     <div v-if="currentEvent" class="event-view">
-        <p class="event-description">{{ currentEvent.description }}</p>
+        <p class="event-description" v-html="formatStatSymbols(currentEvent.description)"></p>
     </div>
 </template>
 

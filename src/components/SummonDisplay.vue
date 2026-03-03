@@ -1,6 +1,7 @@
 <script setup lang="ts">
     import { computed, ref } from 'vue'
     import type Summon from '../models/Summon'
+    import { formatStatSymbols } from '../utils/damageSymbol'
 
     defineProps<{
         summon: Summon
@@ -58,9 +59,11 @@
         @mouseleave="onMouseLeave"
     >
         <span class="summon-name">{{ summon.name }}</span>
-        <span class="summon-description">{{ summon.description }}</span>
-        <span class="summon-hp">{{ summon.hp }} / {{ summon.maxhp }}</span>
-        <span v-if="summon.power > 0" class="summon-power">⚔ {{ summon.power }}</span>
+        <span class="summon-description" v-html="formatStatSymbols(summon.description)"></span>
+        <span class="summon-stats">
+            <span v-if="summon.damage" class="suit-symbol suit-symbol--damage" title="♣ Dealt to the enemy by this summon each turn.">♣</span><span v-if="summon.damage" class="summon-num"> {{ summon.damage }} </span>
+            <span class="suit-symbol suit-symbol--health" title="♥ When this reaches 0, the summon is removed.">♥</span> <span class="summon-num">{{ summon.hp }}</span>
+        </span>
         <Teleport to="body">
             <div
                 ref="tooltipRef"
@@ -96,14 +99,12 @@
         font-style: italic;
     }
 
-    .summon-hp {
-        color: #333;
-        font-size: 11px;
+    .summon-stats {
+        font-size: 14px;
     }
 
-    .summon-power {
-        color: #555;
-        font-size: 11px;
+    .summon-num {
+        color: #000;
     }
 
     .cursor-tooltip {

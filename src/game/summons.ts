@@ -10,20 +10,19 @@ export interface SummonTemplate {
     description: string;
     /** Tooltip on hover. Defaults to description if not set. */
     tooltip?: string;
-    maxhp: number;
-    power: number;
+    hp: number;
+    damage: number;
     race: Race;
     effect?: (combat: Combat) => void;
 }
 
-// Helper function to create a summon instance (starts at max hp)
 export function createSummon(template: SummonTemplate): Summon {
     return new Summon({
         name: template.name,
         description: template.description,
         tooltip: template.tooltip,
-        maxhp: template.maxhp,
-        power: template.power,
+        hp: template.hp,
+        damage: template.damage,
         race: template.race,
         effect: template.effect ?? (() => {}),
     });
@@ -34,16 +33,16 @@ export const summons: Record<string, SummonTemplate> = {
     collaborator: {
         name: "Koalaborator",
         description: "Does nothing.",
-        maxhp: 1,
-        power: 0,
+        hp: 1,
+        damage: 0,
         race: Race.Koala,
         tooltip: "A koala guard, fiercely loyal to Prince Koa, but not particularly fierce in any other regard.",
     },
     warKoala: {
         name: "Loyal War Koala",
         description: "Deals damage equal to the number of koala summons each turn.",
-        maxhp: 5,
-        power: 0,
+        hp: 5,
+        damage: 0,
         race: Race.Koala,
         effect: (combat: Combat) => {
             const dmg = koalaCount(combat);
@@ -54,8 +53,8 @@ export const summons: Record<string, SummonTemplate> = {
     wallKoala: {
         name: "Royal Wall Koala",
         description: "Grants block equal to the number of koala summons each turn.",
-        maxhp: 5,
-        power: 0,
+        hp: 5,
+        damage: 0,
         race: Race.Koala,
         effect: (combat: Combat) => {
             const block = koalaCount(combat);
@@ -68,8 +67,8 @@ export const summons: Record<string, SummonTemplate> = {
     fireSpirit: {
         name: "Fire Salamander",
         description: "Deals 2 damage to the enemy each turn.",
-        maxhp: 3,
-        power: 2,
+        hp: 3,
+        damage: 2,
         race: Race.Salamander,
         effect: (combat: Combat) => {
             combat.enemy?.takeDamage(2);
@@ -78,8 +77,8 @@ export const summons: Record<string, SummonTemplate> = {
     charLizard: {
         name: "Char Lizard",
         description: "A powerful fire-breathing salamander.",
-        maxhp: 20,
-        power: 4,
+        hp: 20,
+        damage: 4,
         race: Race.Salamander,
         tooltip: "Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.",
     },
@@ -88,8 +87,8 @@ export const summons: Record<string, SummonTemplate> = {
     stoneGolem: {
         name: "Stone Wombat",
         description: "Grants 4 block each turn.",
-        maxhp: 8,
-        power: 0,
+        hp: 8,
+        damage: 0,
         race: Race.Wombat,
         effect: (combat: Combat) => {
             combat.player?.gainBlock(4);
@@ -100,8 +99,8 @@ export const summons: Record<string, SummonTemplate> = {
     bladeFamiliar: {
         name: "Blade Quokka",
         description: "Deals 5 damage to the enemy each turn.",
-        maxhp: 4,
-        power: 5,
+        hp: 4,
+        damage: 5,
         race: Race.Quokka,
         effect: (combat: Combat) => {
             combat.enemy?.takeDamage(5);
@@ -112,8 +111,8 @@ export const summons: Record<string, SummonTemplate> = {
     healingTide: {
         name: "Healing Platypus",
         description: "Restores 3 health each turn.",
-        maxhp: 5,
-        power: 0,
+        hp: 5,
+        damage: 0,
         race: Race.Platypus,
         effect: (combat: Combat) => {
             combat.player?.gainHealth(3);
@@ -122,8 +121,8 @@ export const summons: Record<string, SummonTemplate> = {
     attackaQuacka: {
         name: "Attacker Quacker",
         description: "An aggressive platypus with a lot of energy and power, but on the highway to hell.",
-        maxhp: 1,
-        power: 5,
+        hp: 1,
+        damage: 5,
         race: Race.Quokka,
         tooltip: "For those about to block (we salute you)",
     },
@@ -131,8 +130,8 @@ export const summons: Record<string, SummonTemplate> = {
     rat: {
         name: "Rat",
         description: "A rude little rat that likes to bite.",
-        maxhp: 1,
-        power: 1,
+        hp: 1,
+        damage: 1,
         race: Race.Rat,
         tooltip: "A rude little rat that likes to bite.",
     },
@@ -141,8 +140,8 @@ export const summons: Record<string, SummonTemplate> = {
     forestGuardian: {
         name: "Forest Guardian",
         description: "Grants 3 block and deals 2 damage to the enemy each turn.",
-        maxhp: 10,
-        power: 2,
+        hp: 10,
+        damage: 2,
         race: Race.FlyingSquirrel,
         effect: (combat: Combat) => {
             combat.player?.gainBlock(3);

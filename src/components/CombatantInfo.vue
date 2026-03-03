@@ -5,6 +5,7 @@
     import FloatingNumber from './FloatingNumber.vue'
     import SummonDisplay from './SummonDisplay.vue'
     import useDamageNumbers, { getFlashClassForLatest } from '../composables/useDamageNumbers'
+    import { formatStatSymbols } from '../utils/damageSymbol'
 
     const props = withDefaults(
         defineProps<{
@@ -101,10 +102,10 @@
                 </div>
             </Teleport>
         </div>
-        <p>Health: {{ combatant.health }} / {{ combatant.maxHealth }}</p>
-        <p>Block: {{ combatant.block }}</p>
+        <p><span class="suit-symbol suit-symbol--health" title="♥ Your life total. At 0 you're defeated.">♥</span> {{ combatant.health }} / {{ combatant.maxHealth }}</p>
+        <p><span class="suit-symbol suit-symbol--block" title="♠ Absorbs incoming ♣ before health.">♠</span> {{ combatant.block }}</p>
         <template v-if="isPlayer">
-            <p>Mana Diamonds: {{ (combatant as Player).manaDiamonds }}</p>
+            <p><span class="suit-symbol suit-symbol--mana-diamonds" title="♦ Used to pay the difference when casting cards.">♦</span> {{ (combatant as Player).manaDiamonds }}</p>
             <p>Appeal: {{ (combatant as Player).appeal }}</p>
             <p>Attack: {{ (combatant as Player).attack }}</p>
             <p>Armor: {{ combatant.armor }}</p>
@@ -122,7 +123,7 @@
                     v-for="(action, index) in (combatant as Enemy).impendingActions"
                     :key="index"
                 >
-                    {{ action.name }}: {{ action.description }}
+                    {{ action.name }}: <span v-html="formatStatSymbols(action.description)"></span>
                 </p>
             </div>
         </template>
@@ -192,4 +193,5 @@
         margin: 0 0 4px 0;
         font-size: 14px;
     }
-</style>
+
+    </style>

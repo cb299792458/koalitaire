@@ -155,16 +155,15 @@ const koalitionVictory = {
     rank: 6,
     suit: Suit.Metal,
     name: 'Koalition Victory',
-    description: 'Summons 3 koalas, then fully heals all koala summons and grants them +1 power and +5 hp.',
+    description: 'Summons 3 koalas, then grants all koala summons +1 power and +5 hp.',
     keywords: [Keyword.Summon],
     effect: (combat: Combat) => {
         const { player } = combat;
         for (let i = 0; i < 3; i++) addSummon(combat, 'collaborator');
         if (!player) return;
         player.summons.filter((summon) => summon.race === Race.Koala).forEach((summon) => {
-            summon.maxhp += 5;
-            summon.hp = summon.maxhp;
-            summon.power++;
+            summon.hp += 5;
+            summon.damage++;
         });
     },
 }

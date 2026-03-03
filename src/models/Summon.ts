@@ -16,9 +16,8 @@ export interface SummonParams {
     description: string;
     /** Tooltip text on hover. Defaults to description if not set. */
     tooltip?: string;
-    maxhp: number;
-    hp?: number; // defaults to maxhp if omitted
-    power: number;
+    hp: number;
+    damage: number;
     race: Race;
     effect?: (combat: Combat) => void;
 }
@@ -28,20 +27,18 @@ class Summon {
     description: string;
     /** Tooltip text on hover. Defaults to description if not set. */
     tooltip: string;
-    maxhp: number;
     hp: number;
-    power: number;
+    damage: number;
     race: Race;
     effect: (combat: Combat) => void;
 
     constructor(params: SummonParams) {
-        const { name, description, maxhp, power, race } = params;
+        const { name, description, hp, damage, race } = params;
         this.name = name;
         this.description = description;
         this.tooltip = params.tooltip ?? description;
-        this.maxhp = maxhp;
-        this.hp = params.hp ?? maxhp;
-        this.power = power;
+        this.hp = hp;
+        this.damage = damage;
         this.race = race;
         this.effect = params.effect ?? (() => {});
     }
