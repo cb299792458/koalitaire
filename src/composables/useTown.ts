@@ -2,7 +2,6 @@ import { ref, type Ref } from 'vue';
 import type Player from '../models/Player';
 import { SpellCard } from '../models/Card';
 import type { SpellCardParams } from '../models/Card';
-import { generalCards } from '../game/cards/generalCards';
 
 export const STAT_STORE_IDS = ['attackStore', 'armorStore', 'acumenStore', 'agilityStore', 'appealStore'] as const;
 export type StatStoreId = typeof STAT_STORE_IDS[number];
@@ -24,10 +23,6 @@ const isInTownRef = ref(false);
 const innUsedThisVisitRef = ref(false);
 const bloodbankUseCountRef = ref(0);
 const statUpgradeCountsRef = ref<Record<StatStoreId, number>>({ ...INITIAL_STAT_UPGRADE_COUNTS });
-/** Card names purchased at the store this visit (one of each per visit). */
-const storePurchasedCardNamesRef = ref<Set<string>>(new Set());
-/** Five random cards offered at the store this visit. */
-const storeCardsRef = ref<SpellCardParams[]>([]);
 
 export interface TraderOffer {
     playerCard: SpellCard;
@@ -107,13 +102,11 @@ export function useTown(): {
     getBytecoinPrice: (level: number) => number;
     buyBytecoin: () => void;
     sellBytecoin: () => void;
-    storeCards: Ref<SpellCardParams[]>;
-    refreshStoreCards: () => void;
+    storeCards: SpellCardParams[];
     getStoreCardPrice: () => number;
     traderOffers: Ref<TraderOffer[]>;
     refreshTraderOffers: () => void;
     doTrade: (slotIndex: number) => void;
-    isStoreCardPurchased: (cardName: string) => boolean;
     canBuyStoreCard: (cardName: string) => boolean;
     buyStoreCard: (cardParams: SpellCardParams) => void;
 } {
@@ -128,8 +121,6 @@ export function useTown(): {
             isInTownRef.value = true;
             innUsedThisVisitRef.value = false;
             bloodbankUseCountRef.value = 0;
-            storePurchasedCardNamesRef.value = new Set();
-            storeCardsRef.value = [];
             statUpgradeCountsRef.value = { ...INITIAL_STAT_UPGRADE_COUNTS };
         },
         leaveTown() {
@@ -197,27 +188,23 @@ export function useTown(): {
             p.bytecoins -= 1;
             p.koallarbucks += price;
         },
-        storeCards: storeCardsRef,
-        refreshStoreCards() {
-            storeCardsRef.value = pickRandom([...generalCards], 5);
+        get storeCards() {
+            return playerRef.value?.townStoreCards ?? [];
         },
         getStoreCardPrice: () => STORE_CARD_PRICE,
-        isStoreCardPurchased(cardName: string) {
-            return storePurchasedCardNamesRef.value.has(cardName);
-        },
         canBuyStoreCard(cardName: string) {
             const p = playerRef.value;
             if (!p) return false;
-            if (storePurchasedCardNamesRef.value.has(cardName)) return false;
-            return p.koallarbucks >= STORE_CARD_PRICE;
+            return p.koallarbucks >= STORE_CARD_PRICE && p.townStoreCards.some(c => c.name === cardName);
         },
         buyStoreCard(cardParams: SpellCardParams) {
             const p = playerRef.value;
             if (!p) return;
-            if (storePurchasedCardNamesRef.value.has(cardParams.name)) return;
+            const idx = p.townStoreCards.findIndex(c => c.name === cardParams.name);
+            if (idx === -1) return;
             if (p.koallarbucks < STORE_CARD_PRICE) return;
             p.koallarbucks -= STORE_CARD_PRICE;
-            storePurchasedCardNamesRef.value = new Set(storePurchasedCardNamesRef.value).add(cardParams.name);
+            p.townStoreCards.splice(idx, 1);
             p.collection.push(createSpellCardFromParams(cardParams));
             p.spellDeck.push(true);
         },
@@ -229,12 +216,11 @@ export function useTown(): {
                 return;
             }
             const spellCards = p.collection.filter((_, i) => p.spellDeck[i]);
-            const playerCards = pickRandom(spellCards, 3);
-            const generalCardsPicked = pickRandom([...generalCards], 3);
+            const playerCards = pickRandom(spellCards, Math.min(3, p.townTraderCards.length));
             const offers: TraderOffer[] = [];
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < playerCards.length && i < p.townTraderCards.length; i++) {
                 const pc = playerCards[i];
-                const gc = generalCardsPicked[i];
+                const gc = p.townTraderCards[i];
                 if (pc && gc) {
                     pc.revealed = true;
                     offers.push({ playerCard: pc, generalCard: gc });
@@ -253,6 +239,9 @@ export function useTown(): {
             if (cardIndex === -1) return;
 
             p.collection[cardIndex] = createSpellCardFromParams(generalCard);
+
+            const traderIdx = p.townTraderCards.findIndex(c => c.name === generalCard.name);
+            if (traderIdx !== -1) p.townTraderCards.splice(traderIdx, 1);
 
             offers.splice(slotIndex, 1);
             traderOffersRef.value = offers;

@@ -112,7 +112,6 @@
 
     function onPlaceClick(placeId: (typeof townPlaces)[number]['id']) {
         currentLocation.value = placeId
-        if (placeId === 'store') town.refreshStoreCards()
         if (placeId === 'trader') town.refreshTraderOffers()
     }
 
@@ -139,6 +138,15 @@
         if (!p || bloodbankAtLimit.value) return false
         return p.health > bloodbankHpCost.value
     })
+
+    const bloodbankLoading = ref(false)
+    async function sellBloodWithDelay() {
+        if (bloodbankLoading.value || !canSellBlood.value) return
+        bloodbankLoading.value = true
+        await new Promise(resolve => setTimeout(resolve, 800))
+        town.sellBloodAtBloodbank()
+        bloodbankLoading.value = false
+    }
 
     const STAT_STORE_LABELS: Record<StatStoreId, string> = {
         attackStore: 'Attack',
@@ -175,7 +183,7 @@
     )
 
     const storeDisplayCards = computed(() =>
-        town.storeCards.value.map((params) => ({
+        (player.value?.townStoreCards ?? []).map((params) => ({
             params,
             displayCard: spellCardFromParams(params),
         }))
@@ -230,10 +238,13 @@
                                         <button
                                             type="button"
                                             class="town-choice-button"
-                                            :disabled="!canSellBlood"
-                                            @click="town.sellBloodAtBloodbank"
+                                            :disabled="!canSellBlood || bloodbankLoading"
+                                            @click="sellBloodWithDelay"
                                         >
-                                            <template v-if="bloodbankAtLimit">Already donated {{ town.getBloodbankMaxPerVisit() }} times this visit</template>
+                                            <template v-if="bloodbankLoading">
+                                                <span class="loading-spinner"></span> Donating...
+                                            </template>
+                                            <template v-else-if="bloodbankAtLimit">Already donated {{ town.getBloodbankMaxPerVisit() }} times this visit</template>
                                             <template v-else>Sell blood (−{{ bloodbankHpCost }} HP, +{{ bloodbankKoallarbucksReward }} 💵)</template>
                                         </button>
                                     </template>
@@ -252,7 +263,7 @@
                                                         :disabled="!town.canBuyStoreCard(params.name)"
                                                         @click="town.buyStoreCard(params)"
                                                     >
-                                                        {{ town.isStoreCardPurchased(params.name) ? 'Sold' : `Buy (${town.getStoreCardPrice()} 💵)` }}
+                                                        Buy ({{ town.getStoreCardPrice() }} 💵)
                                                     </button>
                                                 </div>
                                             </div>
@@ -435,7 +446,6 @@
         color: #f0e6d3;
         border: 2px solid #3d6b4a;
         border-radius: 8px;
-        cursor: pointer;
         text-align: left;
     }
 
@@ -488,7 +498,6 @@
         color: #f0e6d3;
         border: 2px solid #3d6b4a;
         border-radius: 6px;
-        cursor: pointer;
         opacity: 0;
         transition: opacity 0.2s ease;
         z-index: 10;
@@ -500,10 +509,6 @@
 
     .town-store-buy-button:hover:not(:disabled) {
         background-color: #5a9c69;
-    }
-
-    .town-store-buy-button:disabled {
-        cursor: not-allowed;
     }
 
     .town-store-card-display:hover .town-store-buy-button:disabled {
@@ -577,7 +582,6 @@
         color: #f0e6d3;
         border: 2px solid #3d6b4a;
         border-radius: 8px;
-        cursor: pointer;
     }
 
     .town-choice-button:hover:not(:disabled) {
@@ -586,7 +590,6 @@
 
     .town-choice-button:disabled {
         opacity: 0.6;
-        cursor: not-allowed;
     }
 
     .leave-town-button {
@@ -596,7 +599,6 @@
         color: #f0e6d3;
         border: none;
         border-radius: 8px;
-        cursor: pointer;
         width: 200px;
         height: 100px;
         margin: 10px;
@@ -604,5 +606,21 @@
 
     .leave-town-button:hover {
         background-color: #5a9c69;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(240, 230, 211, 0.3);
+        border-top-color: #f0e6d3;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-right: 4px;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
     }
 </style>

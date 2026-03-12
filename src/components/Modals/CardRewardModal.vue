@@ -129,7 +129,6 @@ h2 {
     border: 3px solid transparent;
     border-radius: 8px;
     background: none;
-    cursor: pointer;
     transition: border-color 0.2s, transform 0.15s;
 }
 
@@ -149,7 +148,6 @@ h2 {
     color: white;
     border: none;
     border-radius: 8px;
-    cursor: pointer;
     transition: background 0.2s;
 }
 

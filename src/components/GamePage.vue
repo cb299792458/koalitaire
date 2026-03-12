@@ -76,6 +76,7 @@
     const eventStat = computed(() => eventState.lastStat.value)
     const eventResultMessage = computed(() => eventState.resultMessage.value)
     const eventIsResolving = computed(() => eventState.isResolving.value)
+    const isProcessing = computed(() => combat.isProcessingTurn || eventIsResolving.value)
 
     watch(eventResultMessage, (msg) => {
         if (msg && isInEvent.value) {
@@ -238,6 +239,7 @@
                 <div
                     v-if="!isBackAtCampOpen"
                     class="game-screen"
+                    :class="{ 'cursor-wait': isProcessing }"
                     @click="onClick({ card: null, area: AREAS.Board, cardIndex: -1 })"
                 >
                     <GameLayout>
@@ -314,7 +316,7 @@
                                             <button
                                                 type="button"
                                                 class="move-to-mana-button"
-                                                :disabled="!canMoveToManaPools"
+                                                :disabled="!canMoveToManaPools || isProcessing || combat.isMovingToMana"
                                                 @click="onMoveToManaClick"
                                             >Auto Mana</button>
                                         </div>
@@ -449,7 +451,6 @@
     background-color: #f0f0f0;
     border: none;
     border-radius: 10px;
-    cursor: pointer;
 }
 
 .cards-top {
@@ -572,14 +573,12 @@
     border-radius: 6px;
     border: 1px solid #888;
     background: #f0f0f0;
-    cursor: pointer;
     height: fit-content;
     width: fit-content;
 }
 
 .move-to-mana-button:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
 }
 
 .tableau {
@@ -713,7 +712,6 @@
     background: #e8e8e8;
     border: 2px solid #ccc;
     border-radius: 8px;
-    cursor: pointer;
     transition: background 0.2s, border-color 0.2s;
 }
 
@@ -723,7 +721,6 @@
 }
 
 .event-choice:disabled {
-    cursor: not-allowed;
     opacity: 0.7;
 }
 

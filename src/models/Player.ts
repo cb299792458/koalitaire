@@ -41,6 +41,11 @@ export interface PlayerParams {
     collection: SpellCard[];
     /** Per-suit count of mana cards to bring to combat. For Koa, starts at 6 per suit. */
     manaDeck: ManaCardsBySuit;
+
+    /** Pre-generated store cards (set at run start, not per visit). */
+    townStoreCards?: SpellCardParams[];
+    /** Pre-generated trader cards (set at run start, not per visit). */
+    townTraderCards?: SpellCardParams[];
 }
 
 function defaultManaCards(countPerSuit: number): ManaCardsBySuit {
@@ -58,6 +63,11 @@ function spellCardsFromParams(params: SpellCardParams[]): SpellCard[] {
         p.keywords,
         p.flavorText
     ));
+}
+
+function pickRandom<T>(array: T[], count: number): T[] {
+    const shuffled = [...array].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, Math.min(count, array.length));
 }
 
 class Player extends Combatant {
@@ -88,11 +98,16 @@ class Player extends Combatant {
     /** Per-suit count of mana cards to bring to combat. */
     manaDeck: ManaCardsBySuit;
 
+    /** Pre-generated store cards (set at run start). */
+    townStoreCards: SpellCardParams[];
+    /** Pre-generated trader cards (set at run start). */
+    townTraderCards: SpellCardParams[];
+
     /** Reference to the original player when this is a combat copy; used to sync HP at combat end. */
     originalPlayer?: Player;
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck } = params;
+        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck, townStoreCards, townTraderCards } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.handSize = handSize;
@@ -109,6 +124,9 @@ class Player extends Combatant {
         this.collection = [...collection];
         this.spellDeck = collection.map(() => true);
         this.manaDeck = { ...manaDeck };
+
+        this.townStoreCards = townStoreCards ?? pickRandom([...generalCards], 5);
+        this.townTraderCards = townTraderCards ?? pickRandom([...generalCards], 3);
     }
 
     /** Build the full combat deck from spell cards (where spellDeck is true) plus mana cards. */
@@ -184,6 +202,8 @@ class Player extends Combatant {
                 card.flavorText
             )),
             manaDeck: { ...this.manaDeck },
+            townStoreCards: [...this.townStoreCards],
+            townTraderCards: [...this.townTraderCards],
         });
         playerCopy.spellDeck = [...this.spellDeck];
         playerCopy.level = this.level;

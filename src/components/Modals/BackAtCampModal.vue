@@ -164,9 +164,9 @@
                         <div
                             v-for="(entry, col) in rowEntries"
                             :key="col"
-                            class="diamond-card"
+                            class="diamond-card clickable"
                             :class="{
-                                'diamond-card--clickable': isNextOption(row, col),
+                                'disabled': !isNextOption(row, col),
                                 'diamond-card--current': row === props.player.scenarioRow && col === props.player.scenarioColumn,
                             }"
                             @click="isNextOption(row, col) && goToEntry(row, col)"
@@ -200,7 +200,7 @@
                         <label
                             v-for="(card, index) in props.player.collection"
                             :key="index"
-                            class="spell-card-cell"
+                            class="spell-card-cell clickable"
                         >
                             <div class="spell-card-preview">
                                 <SingleCard :card="card" />
@@ -291,7 +291,6 @@
         background: #e0e0e0;
         border: none;
         border-radius: 6px;
-        cursor: pointer;
         transition: background 0.2s;
     }
 
@@ -379,12 +378,11 @@
         transform: scale(1.05);
     }
 
-    .diamond-card--clickable {
-        cursor: pointer;
+    .diamond-card:not(.disabled) {
         background-color: #faf5e0;
     }
 
-    .diamond-card--clickable:hover {
+    .diamond-card:not(.disabled):hover {
         border-color: #4CAF50;
         box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
     }
@@ -429,11 +427,7 @@
         box-sizing: border-box;
     }
 
-    .map-card--clickable {
-        cursor: pointer;
-    }
-
-    .map-card--clickable:hover {
+    .map-card:not(.disabled):hover {
         border-color: #4CAF50;
         box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
     }
@@ -496,7 +490,6 @@
         color: #333;
         border: none;
         border-radius: 6px;
-        cursor: pointer;
         transition: background 0.2s;
     }
 
@@ -520,7 +513,6 @@
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        cursor: pointer;
     }
 
     .spell-card-preview {
@@ -540,7 +532,6 @@
         right: 8px;
         width: 24px;
         height: 24px;
-        cursor: pointer;
         z-index: 1;
     }
 
@@ -596,7 +587,6 @@
         color: #333;
         border: none;
         border-radius: 6px;
-        cursor: pointer;
         transition: background 0.2s;
     }
 
@@ -606,7 +596,6 @@
 
     .mana-stepper-button:disabled {
         opacity: 0.5;
-        cursor: not-allowed;
     }
 
     .mana-value {

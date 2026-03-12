@@ -133,7 +133,7 @@
 
 <template>
     <div
-        class="card-view"
+        class="card-view clickable"
         :class="{
             selected: selectedCard === card,
             [card?.animation]: !!animation
@@ -264,7 +264,6 @@
     align-items: flex-start;
     border-radius: 10px;
     border: 1px solid black;
-    cursor: pointer;
     overflow: hidden;
     box-sizing: border-box;
     font-size: 12px;

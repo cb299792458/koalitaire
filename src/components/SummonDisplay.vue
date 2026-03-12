@@ -86,7 +86,6 @@
         background: rgba(0, 0, 0, 0.1);
         border-radius: 6px;
         font-size: 12px;
-        cursor: default;
     }
 
     .summon-name {

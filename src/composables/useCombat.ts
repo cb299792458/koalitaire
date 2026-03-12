@@ -33,6 +33,7 @@ export class Combat {
     tableau: Tableau;
     manaPools: ManaPools;
     isProcessingTurn: boolean;
+    isMovingToMana: boolean;
     reshuffles: number;
     
     /** Set to player.level at start of each combat; delayed callbacks check this to no-op if combat changed. */
@@ -60,6 +61,7 @@ export class Combat {
         this.hand = new Hand();
         this.tableau = new Tableau(this.player.columnCount);
         this.isProcessingTurn = false;
+        this.isMovingToMana = false;
         this.reshuffles = 2;
         
         this.manaPools = new ManaPools();
@@ -645,6 +647,9 @@ export class Combat {
      * until no more cards can be moved. Each card is animated with a short delay between moves.
      */
     moveAllPossibleToManaPools(): void {
+        if (this.isMovingToMana) return;
+        this.isMovingToMana = true;
+        this.notify();
         this.scheduleNextMoveToMana();
     }
 
@@ -653,7 +658,11 @@ export class Combat {
 
     private scheduleNextMoveToMana(): void {
         const movable = this.getCardsMovableToManaPools();
-        if (movable.length === 0) return;
+        if (movable.length === 0) {
+            this.isMovingToMana = false;
+            this.notify();
+            return;
+        }
         const card = movable[0]!;
         playSound('mana');
         card.animateMoveToMana();

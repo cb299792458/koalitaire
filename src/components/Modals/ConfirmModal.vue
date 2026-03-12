@@ -62,7 +62,6 @@ function confirm() {
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
         border-radius: 8px;
-        cursor: pointer;
         transition: background 0.2s;
     }
 

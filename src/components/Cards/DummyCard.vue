@@ -24,7 +24,7 @@ const highlightClass = computed(() =>
 
 <template>
     <div
-        class="card-stack-empty"
+        class="card-stack-empty clickable"
         :class="highlightClass"
         :style="style"
         @click.stop="emit('click')"
@@ -54,7 +54,6 @@ const highlightClass = computed(() =>
     align-items: center;
     border-radius: 10px;
     border: 1px solid black;
-    cursor: pointer;
     overflow: hidden;
     box-sizing: border-box;
 }

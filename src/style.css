@@ -4,6 +4,30 @@ html, body {
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
+    cursor: default;
+}
+
+/* Clickable elements: pointer normally, wait when loading, not-allowed when disabled */
+.clickable,
+button,
+input[type="checkbox"],
+input[type="radio"],
+label {
+    cursor: pointer;
+}
+
+.clickable.disabled,
+.clickable:disabled,
+button:disabled,
+input:disabled {
+    cursor: not-allowed;
+}
+
+.cursor-wait .clickable,
+.cursor-wait button,
+.cursor-wait input,
+.cursor-wait label {
+    cursor: wait;
 }
 
 /* Shared container flash animations (CombatantInfo) */

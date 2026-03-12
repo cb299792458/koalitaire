@@ -33,7 +33,7 @@
             <div
                 v-for="character in characters"
                 :key="character.name"
-                class="character-item"
+                class="character-item clickable"
                 @click="selectCharacter(character.params)"
             >
                 <img :src="character.params.portrait" alt="Character Portrait" height="100px"/>
@@ -70,7 +70,6 @@
     padding: 1rem;
     border: 2px solid #ccc;
     border-radius: 8px;
-    cursor: pointer;
     transition: background 0.2s, border-color 0.2s;
 }
 
