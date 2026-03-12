@@ -20,19 +20,19 @@ const debugKill = {
     },
 };
 
-const debugHeal = {
-    rank: 0,
-    suit: Suit.Koala,
-    name: 'Debug Heal',
-    description: 'Fully heals the player. (Debug)',
-    keywords: [Keyword.Heal],
-    effect: (combat: Combat) => {
-        const { player } = combat;
-        if (player) player.gainHealth(player.maxHealth);
-    },
-};
+// const debugHeal = {
+//     rank: 0,
+//     suit: Suit.Koala,
+//     name: 'Debug Heal',
+//     description: 'Fully heals the player. (Debug)',
+//     keywords: [Keyword.Heal],
+//     effect: (combat: Combat) => {
+//         const { player } = combat;
+//         if (player) player.gainHealth(player.maxHealth);
+//     },
+// };
 
 export const debugCards = [
     debugKill,
-    debugHeal,
+    // debugHeal,
 ];

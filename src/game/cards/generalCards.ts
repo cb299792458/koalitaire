@@ -186,19 +186,19 @@ const summonAttackaQuacka = {
     effect: (combat: Combat) => addSummon(combat, 'attackaQuacka'),
 }
 
-const shinzouWoSasageyo = {
+const sasageyo = {
     rank: 5,
     suit: Suit.Metal,
-    name: 'Shinzou wo Sasageyo',
-    description: 'Remove all your Koala summons. Deal 10 damage to the enemy for each.',
+    name: 'Sasageyo',
+    description: 'Remove all your Koala summons. Deal 3 damage to the enemy for each of their hp.',
     keywords: [Keyword.Attack, Keyword.Summon],
     flavorText: 'Sasageyo! Sasageyo! Shinzou wo Sasageyo!',
     effect: (combat: Combat) => {
         const { player, enemy } = combat;
         const koalas = player?.summons.filter((s) => s.race === Race.Koala) ?? [];
-        const count = koalas.length;
+        const damage = koalas.reduce((acc, koala) => acc + (koala.hp ?? 0), 0) * 3;
+        enemy.takeDamage(damage);
         if (player) player.summons = player.summons.filter((s) => s.race !== Race.Koala);
-        if (count > 0 && enemy) enemy.takeDamage(10 * count);
     },
 };
 
@@ -246,6 +246,6 @@ export const generalCards = [
     summonCharLizard,
     summonAttackaQuacka,
     despertaFerro,
-    shinzouWoSasageyo,
+    sasageyo,
     thunderstruck,
 ];

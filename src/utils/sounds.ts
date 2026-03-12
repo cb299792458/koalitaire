@@ -29,3 +29,10 @@ export function playSoundAndWait(name: string, ext: string = 'wav'): Promise<voi
         audio.play().catch(() => resolve());
     });
 }
+
+/**
+ * Play the button click sound.
+ */
+export function playButtonClick(): void {
+    playSound('select');
+}
