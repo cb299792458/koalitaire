@@ -5,7 +5,7 @@
 <template>
     <div class="message-modal">
         <h2>Message</h2>
-        <p>{{ message }}</p>
+        <p class="message-modal__body">{{ message }}</p>
     </div>
 </template>
 
@@ -20,5 +20,10 @@
     max-width: 50%;
     gap: 1rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.message-modal__body {
+    white-space: pre-line;
+    text-align: center;
 }
 </style>

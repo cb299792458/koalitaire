@@ -103,9 +103,11 @@
             </Teleport>
         </div>
         <p><span class="suit-symbol suit-symbol--health" title="♥ Your life total. At 0 you're defeated.">♥</span> {{ combatant.health }} / {{ combatant.maxHealth }}</p>
-        <p><span class="suit-symbol suit-symbol--block" title="♠ Absorbs incoming ♣ before health.">♠</span> {{ combatant.block }}</p>
+        <p v-if="isPlayer"><span class="suit-symbol suit-symbol--mana-diamonds" title="♦ Mana Diamonds: Used to pay the difference when casting cards.">♦</span> {{ (combatant as Player).manaDiamonds }}</p>
+        <p><span title="When you would take damage, ignore it completely and lose 1 dodge instead. Checked before block.">Dodge:</span> {{ combatant.dodge }}</p>
+        <p><span title="Absorbs incoming damage before health.">Block:</span> {{ combatant.block }}</p>
+        <p class="combatant-info__stats-gap"></p>
         <template v-if="isPlayer">
-            <p><span class="suit-symbol suit-symbol--mana-diamonds" title="♦ Used to pay the difference when casting cards.">♦</span> {{ (combatant as Player).manaDiamonds }}</p>
             <p>Appeal: {{ (combatant as Player).appeal }}</p>
             <p>Attack: {{ (combatant as Player).attack }}</p>
             <p>Armor: {{ combatant.armor }}</p>
@@ -172,6 +174,12 @@
 
     .cursor-tooltip--visible {
         opacity: 1;
+    }
+
+    .combatant-info__stats-gap {
+        margin-top: 0.5em;
+        height: 0;
+        overflow: hidden;
     }
 
     .combatant-info__actions {

@@ -324,9 +324,9 @@
 }
 
 .card-view.move-to-mana {
-    animation: move-to-mana-pulse 0.35s ease;
+    animation: move-to-mana-pulse 0.22s ease;
     z-index: 1000;
-    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
 }
 
 .card-view.draw {

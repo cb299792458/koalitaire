@@ -54,22 +54,22 @@
 
     const townPlaces = [
         // always present
-        { id: 'inn', label: 'Waldorf Australia', welcomeMessage: "Welcome to the Waldorf Australia. Come on in, we're not chockers yet!" },
-        { id: 'store', label: 'Wentworth\'s Five and Dime', welcomeMessage: "Welcome to Wentworth's Five and Dime. It's just a name ya bogan, our cards are market prices." },
+        { id: 'inn', label: 'Inn', welcomeMessage: "Welcome to the Waldorf Australia. Come on in, we're not chockers yet!" },
+        { id: 'store', label: 'Card Store', welcomeMessage: "Welcome to Wentworth's Five and Dime. It's just a name ya bogan, our cards are market prices." },
 
         // choose 4 at random
-        // { id: 'bloodbank', label: 'Southern Red Cross', welcomeMessage: "We've been having a bit of a shortage of blood lately, please give today at the Southern Red Cross." },
-        { id: 'stockMarket', label: 'Redwall Street', welcomeMessage: "Welcome to Redwall Street. We only deal in real bytecoins, give 'em a bite for yourself." },
-        { id: 'trader', label: 'Tradies', welcomeMessage: "G'day mate! We tradies are just looking to swap a few cards after some hard yakka, fair dinkum."},
-        { id: 'attackStore', label: 'Arsenal FU', welcomeMessage: "Ello gov'nor, how's your mother! Arsenal For You at your service — 'ave a butcher's and see wot tickles yer fancy!"},
-        { id: 'armorStore', label: 'Block Booster', welcomeMessage: "Looking to armor up? Make it a Block Booster knight." },
-        { id: 'acumenStore', label: 'Waverly Place Library', welcomeMessage: "Name's Bobst. Wanna see this rabbit do a Harold Holt? No worries mate, she'll be apples." },
-        { id: 'agilityStore', label: 'The Arcade Pyre', welcomeMessage: "Come on in and play games all night long to improve your reflexes. Sleeping is giving in, have a white monster and wake up." },
-        { id: 'appealStore', label: 'Nobody Beats the Rizz', welcomeMessage: "Don't be a dag, I'll teach you how to rizz up any sheila before smoko." },
+        { id: 'bloodbank', label: 'Blood Bank', welcomeMessage: "We've been having a bit of a shortage of blood lately, please give today at the Southern Red Cross." },
+        { id: 'stockMarket', label: 'Stock Market', welcomeMessage: "Welcome to Redwall Street. We only deal in real bytecoins, give 'em a bite for yourself." },
+        { id: 'trader', label: 'Trade Cards', welcomeMessage: "G'day mate! We tradies are just looking to swap a few cards after some hard yakka, fair dinkum."},
+        { id: 'attackStore', label: 'Attack Store', welcomeMessage: "Ello gov'nor, how's your mother! Arsenal For You at your service — 'ave a butcher's and see wot tickles yer fancy!"},
+        { id: 'armorStore', label: 'Armor Store', welcomeMessage: "Looking to armor up? Make it a Block Booster knight." },
+        { id: 'acumenStore', label: 'Acumen Store', welcomeMessage: "Name's Bobst. Wanna see this rabbit do a Harold Holt? No worries mate, she'll be apples." },
+        { id: 'agilityStore', label: 'Agility Store', welcomeMessage: "Come on in and play games all night long to improve your reflexes. Sleeping is giving in, have a white monster and wake up." },
+        { id: 'appealStore', label: 'Appeal Store', welcomeMessage: "Don't be a dag, I'll teach you how to rizz up any sheila before smoko." },
     ] as const;
 
     const FIXED_PLACE_IDS = ['inn', 'store'] as const;
-    const OTHER_PLACE_IDS = [/* 'bloodbank', */ 'stockMarket', 'trader', 'attackStore', 'armorStore', 'acumenStore', 'agilityStore', 'appealStore'] as const;
+    const OTHER_PLACE_IDS = ['bloodbank', 'stockMarket', 'trader', 'attackStore', 'armorStore', 'acumenStore', 'agilityStore', 'appealStore'] as const;
 
     type TownPlaceId = typeof townPlaces[number]['id'];
 

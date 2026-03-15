@@ -24,6 +24,8 @@ export interface PlayerParams {
     handSize?: number;
     /** Number of tableau columns. Defaults to 6. */
     columnCount?: number;
+    /** Number of free cell (hand) slots. Defaults to 1. */
+    handSlotCount?: number;
     /** Mana diamonds at the start of combat. Defaults to 0. */
     startingManaDiamonds?: number;
 
@@ -80,6 +82,7 @@ class Player extends Combatant {
 
     handSize: number;
     columnCount: number;
+    handSlotCount: number;
     startingManaDiamonds: number;
 
     appeal: number;
@@ -107,11 +110,12 @@ class Player extends Combatant {
     originalPlayer?: Player;
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, handSize = 5, columnCount = 6, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck, townStoreCards, townTraderCards } = params;
+        const { name, portrait, tooltip, handSize = 5, columnCount = 6, handSlotCount = 1, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck, townStoreCards, townTraderCards } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.handSize = handSize;
         this.columnCount = columnCount;
+        this.handSlotCount = handSlotCount;
         this.startingManaDiamonds = startingManaDiamonds;
         this.appeal = appeal;
         this.attack = attack;
@@ -182,6 +186,7 @@ class Player extends Combatant {
             tooltip: this.tooltip,
             handSize: this.handSize,
             columnCount: this.columnCount,
+            handSlotCount: this.handSlotCount,
             startingManaDiamonds: this.startingManaDiamonds,
             appeal: this.appeal,
             attack: this.attack,
@@ -211,6 +216,7 @@ class Player extends Combatant {
         playerCopy.scenarioColumn = this.scenarioColumn;
         playerCopy.health = this.health;
         playerCopy.manaDiamonds = this.startingManaDiamonds;
+        playerCopy.dodge = this.dodge;
         playerCopy.block = this.block;
         playerCopy.bytecoins = this.bytecoins;
         return playerCopy;
@@ -225,7 +231,7 @@ export const koaParams: PlayerParams = {
     tooltip: "Crown Prince Koa XIII of Koala Lumpur",
 
     handSize: 5,
-    columnCount: 7,
+    columnCount: 8,
 
     appeal: 5,
     attack: 3,
@@ -248,7 +254,8 @@ export const testCharacterParams: PlayerParams = {
     portrait: platypusPortrait,
 
     handSize: Infinity,
-    columnCount: 1,
+    columnCount: 10,
+    handSlotCount: 10,
     startingManaDiamonds: 1000,
 
     appeal: 0,

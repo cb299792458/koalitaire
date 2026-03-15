@@ -13,12 +13,10 @@
     import type Player from '../models/Player'
     import { useTown } from '../composables/useTown'
     import { useEvent } from '../composables/useEvent'
-    import { hasChosenCharacterRef } from '../composables/useCombat'
+    import { hasChosenCharacterRef, combatRef, scenarioRef } from '../composables/useCombat'
     import EventView from './EventView.vue'
     import GameLayout from './GameLayout.vue'
     import { formatStatSymbols } from '../utils/damageSymbol'
-
-    const scenario = makeScenario()
     const modalState = useModalState()
     const town = useTown()
     const eventState = useEvent()
@@ -29,12 +27,18 @@
     function openMapDeckForPlayer(p: Player, keepOpen = true) {
         const nextOptions = getNextRowOptions(p.scenarioRow, p.scenarioColumn)
         if (nextOptions.length === 0) {
-            openMessageModal('You Win!')
+            openMessageModal(`🐨 You Win! 🐨
+
+            You defeated your dad and brought democratic socialism to Koala Lumpur!
+            All of the remaining monarchs and billionaires have been put to executed,
+            and all the animals live in harmony after the abject failure of capitalism.
+
+            `)
             return
         }
         openModal('backAtCamp', {
             player: p,
-            scenario,
+            scenario: scenarioRef.value ?? [],
             onContinue: (player: Player, row: number, col: number) => {
                 closeModal()
                 startCombatForPlayer(player, row, col)
@@ -50,15 +54,31 @@
     const player = computed(() =>
         isInEvent.value ? eventState.player.value : combat.player
     )
-    const enemy = computed(() => combat.enemy)
+    const enemy = computed(() => combatRef.value?.enemy)
 
     const deck = combat.deck
     const compost = combat.compost
     const trash = combat.trash
-    const hand = combat.hand
-    const tableau = computed(() => combat.tableau.getCardsArrays())
+
+    /** Cards for hand slot i (one card or empty). Uses current combat hand so it updates after start(). */
+    function getHandSlotCards(slotIndex: number): Card[] {
+        const hand = combatRef.value?.hand
+        if (!hand) return []
+        const card = hand.getSlot(slotIndex)
+        return card ? [card] : []
+    }
+
+    /** Empty free cell is only clickable when a valid card can be placed there. */
+    function isHandSlotClickable(slotIndex: number): boolean {
+        const hand = combatRef.value?.hand
+        if (hand?.getSlot(slotIndex) != null) return true
+        return combat.canPlaceSelectedInHandSlot(slotIndex)
+    }
+    const tableau = computed(() => combatRef.value?.tableau.getCardsArrays() ?? [])
     const manaPools = combat.manaPools
-    const selectedCard = computed(() => combat.selectedCard)
+    const selectedCard = computed(() => combatRef.value?.selectedCard ?? null)
+    /** Number of hand (free cell) slots to show; from current player so it updates when starting combat. */
+    const handSlotCount = computed(() => Math.max(1, combatRef.value?.player?.handSlotCount ?? 1))
 
     const allManaPoolCounts = computed(() =>
         combat.manaPools.pools().map((pool) => pool.cards.length)
@@ -66,6 +86,53 @@
     const canMoveToManaPools = computed(
         () => combat.getCardsMovableToManaPools().length > 0
     )
+
+    /** Index of the mana pool being hovered (0–4), or null when not over a pool. */
+    const hoveredManaPoolIndex = ref<number | null>(null)
+    /** Cards that could be burned to the currently hovered mana pool only. */
+    const cardsThatCouldBeBurnedToHoveredPool = computed(() => {
+        const index = hoveredManaPoolIndex.value
+        if (index == null || index < 0 || index >= Suits.length) return []
+        const suit = Suits[index]
+        if (suit == null) return []
+        const pool = combat.manaPools.getPool(suit)
+        if (!pool) return []
+        const out: Card[] = []
+        for (const column of combat.tableau.getColumns()) {
+            for (const card of column.cards) {
+                if (!card.revealed || card.isSpell || card.suit !== suit) continue
+                if (pool.hasEnoughManaForBurn(card.rank)) out.push(card)
+            }
+        }
+        const hand = combatRef.value?.hand
+        if (hand) {
+            for (const card of hand.cards) {
+                if (!card.revealed || card.isSpell || card.suit !== suit) continue
+                if (pool.hasEnoughManaForBurn(card.rank)) out.push(card)
+            }
+        }
+        return out
+    })
+    /** Indices of cards in this tableau column that could be burned to the hovered pool. */
+    function getTableauColumnManaHighlightIndices(columnIndex: number): number[] {
+        const columns = combat.tableau.getColumns()
+        const col = columns[columnIndex]
+        if (!col) return []
+        const set = new Set(cardsThatCouldBeBurnedToHoveredPool.value)
+        const indices: number[] = []
+        col.cards.forEach((card, i) => {
+            if (set.has(card)) indices.push(i)
+        })
+        return indices
+    }
+    function isTableauColumnMovableToMana(columnIndex: number): boolean {
+        return getTableauColumnManaHighlightIndices(columnIndex).length > 0
+    }
+    function isHandSlotMovableToMana(slotIndex: number): boolean {
+        const hand = combatRef.value?.hand
+        const card = hand?.getSlot(slotIndex)
+        return card != null && cardsThatCouldBeBurnedToHoveredPool.value.includes(card)
+    }
 
     const isInEvent = computed(() => eventState.isInEvent.value)
     const isBackAtCampOpen = computed(() => modalState.currentModal?.name === 'backAtCamp')
@@ -76,7 +143,7 @@
     const eventStat = computed(() => eventState.lastStat.value)
     const eventResultMessage = computed(() => eventState.resultMessage.value)
     const eventIsResolving = computed(() => eventState.isResolving.value)
-    const isProcessing = computed(() => combat.isProcessingTurn || eventIsResolving.value)
+    const isProcessing = computed(() => (combatRef.value?.isProcessingTurn ?? false) || eventIsResolving.value)
 
     watch(eventResultMessage, (msg) => {
         if (msg && isInEvent.value) {
@@ -92,11 +159,10 @@
         }
     })
 
-    const deckCount = computed(() => combat.deck.cards.length)
-    const reshuffles = computed(() => combat.reshuffles)
-    const compostCount = computed(() => combat.compost.cards.length)
-    const hasTrashCards = computed(() => combat.trash.cards.length > 0)
-    const trashCount = computed(() => combat.trash.cards.length)
+    const deckCount = computed(() => combatRef.value?.deck.cards.length ?? 0)
+    const compostCount = computed(() => combatRef.value?.compost.cards.length ?? 0)
+    const hasTrashCards = computed(() => (combatRef.value?.trash.cards.length ?? 0) > 0)
+    const trashCount = computed(() => combatRef.value?.trash.cards.length ?? 0)
     
     const isCompostHighlighted = computed(() => {
         const card = selectedCard.value
@@ -127,7 +193,7 @@
 
         void allManaPoolCounts.value
 
-        const handIndex = combat.hand.cards.indexOf(card)
+        const handIndex = combat.hand.getSlotIndex(card)
         if (handIndex === -1) {
             const columns = combat.tableau.getColumns()
             const isLastInTableau = columns.some(
@@ -147,7 +213,7 @@
     async function startCombatForPlayer(newPlayer: Player, overrideRow?: number, overrideCol?: number) {
         const rowIdx = overrideRow ?? newPlayer.scenarioRow
         const colIdx = overrideCol ?? newPlayer.scenarioColumn
-        const row = scenario[rowIdx]
+        const row = (scenarioRef.value ?? [])[rowIdx]
         const entry = row?.[colIdx] as ScenarioEntry | undefined
         if (!entry) return
 
@@ -214,6 +280,7 @@
         if (!hasChosenCharacterRef.value) {
             openModal('start', {
                 onSelect: (newPlayer: Player) => {
+                    scenarioRef.value = makeScenario()
                     hasChosenCharacterRef.value = true
                     openMapDeckForPlayer(newPlayer)
                     return false
@@ -260,19 +327,19 @@
                             <template v-else-if="isInCombat">
                                 <div class="cards-top">
                                     <div class="cards-top-left">
-                                        <div class="deck-wrapper">
+                                        <div class="deck-wrapper pile-slot-area">
                                             <CardStack
                                                 :cards="deck.cards"
                                                 :name="AREAS.Deck"
                                                 layout="pile"
+                                                customLabel="Deck"
                                                 @click="onClick"
                                             />
-                                            <div class="deck-count">{{ deckCount }} cards</div>
-                                            <div class="deck-reshuffles">Reshuffles: {{ reshuffles }}</div>
+                                            <div class="pile-slot-count">{{ deckCount }} cards</div>
                                         </div>
-                                        <div class="compost-wrapper">
+                                        <div class="compost-wrapper pile-slot-area">
                                             <div v-if="manaDiamondsCost !== null" class="mana-diamonds-cost">
-                                                <span class="suit-symbol suit-symbol--mana-diamonds" title="Mana Diamonds: Used to pay the difference when casting cards.">♦</span> −{{ manaDiamondsCost }}
+                                                <span class="suit-symbol suit-symbol--mana-diamonds" title="♦ Mana Diamonds: Used to pay the difference when casting cards.">♦</span> −{{ manaDiamondsCost }}
                                             </div>
                                             <div v-if="showCastSpellText" class="cast-spell-text">
                                                 Cast Spell
@@ -285,7 +352,7 @@
                                                 customLabel="Compost"
                                                 @click="onClick"
                                             />
-                                            <div class="compost-count">{{ compostCount }} cards</div>
+                                            <div class="pile-slot-count">{{ compostCount }} cards</div>
                                         </div>
                                         <div class="trash-wrapper" :class="{ 'trash-wrapper--empty': !hasTrashCards }">
                                             <CardStack
@@ -298,7 +365,10 @@
                                         </div>
                                     </div>
                                     <div class="cards-top-right">
-                                        <div class="mana-pools">
+                                        <div
+                                            class="mana-pools"
+                                            @mouseleave="hoveredManaPoolIndex = null"
+                                        >
                                             <CardStack
                                                 v-for="([_suit, manaPool], index) in manaPools.entries()"
                                                 :key="index"
@@ -308,6 +378,7 @@
                                                 :selectedCard="selectedCard"
                                                 :highlighted="highlightedManaPoolIndex === index"
                                                 highlightType="burn"
+                                                @mouseenter="hoveredManaPoolIndex = index"
                                                 @mousedown.prevent
                                                 @click="onClick"
                                             />
@@ -331,8 +402,9 @@
                                         layout="vertical"
                                         :selectedCard="selectedCard"
                                         :arrayIndex="index as number"
-                                        :highlighted="highlightedTableauIndices.includes(index)"
-                                        highlightType="cast"
+                                        :highlighted="(hoveredManaPoolIndex != null && !selectedCard && isTableauColumnMovableToMana(index)) || (!!selectedCard && highlightedTableauIndices.includes(index))"
+                                        :highlightedIndices="(hoveredManaPoolIndex != null && !selectedCard) ? getTableauColumnManaHighlightIndices(index) : undefined"
+                                        :highlightType="(hoveredManaPoolIndex != null && !selectedCard) ? 'burn' : 'cast'"
                                         @mousedown.prevent
                                         @click="onClick"
                                     />
@@ -353,7 +425,7 @@
                             </template>
                             <template v-else>
                                 <h1 v-if="isInCombat">Enemy</h1>
-                                <CombatantInfo v-if="isInCombat" :combatant="enemy" variant="enemy" />
+                                <CombatantInfo v-if="isInCombat" :combatant="(enemy ?? null) as Player | Enemy | null" variant="enemy" />
                             </template>
                         </template>
 
@@ -379,13 +451,24 @@
                             </template>
                             <template v-else>
                                 <div v-if="isInCombat" class="cards-hand">
-                                    <CardStack
-                                        :cards="hand.cards"
-                                        :name="AREAS.Hand"
-                                        layout="horizontal"
-                                        :selectedCard="selectedCard"
-                                        @click="onClick"
-                                    />
+                                    <div
+                                        v-for="slotIndex in handSlotCount"
+                                        :key="slotIndex - 1"
+                                        :class="{ 'hand-slot--no-click': !isHandSlotClickable(slotIndex - 1) }"
+                                        class="hand-slot-wrapper"
+                                    >
+                                        <CardStack
+                                            :cards="getHandSlotCards(slotIndex - 1)"
+                                            :name="AREAS.Hand"
+                                            layout="pile"
+                                            :selectedCard="selectedCard"
+                                            :arrayIndex="slotIndex - 1"
+                                            :highlighted="hoveredManaPoolIndex != null && !selectedCard && isHandSlotMovableToMana(slotIndex - 1)"
+                                            highlightType="burn"
+                                            customLabel="Free Cell"
+                                            @click="onClick"
+                                        />
+                                    </div>
                                 </div>
                                 <div v-if="isInCombat" class="combat-bottom-buttons">
                                     <button
@@ -442,6 +525,9 @@
     align-items: center;
     gap: 12px;
     margin-right: 10px;
+    min-width: 220px;
+    min-height: 120px;
+    flex-shrink: 0;
 }
 
 #end-turn-button {
@@ -470,23 +556,39 @@
     gap: 12px;
 }
 
-.deck-wrapper {
+/* Shared layout for deck and compost so they align and look the same when empty */
+.pile-slot-area {
     position: relative;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    min-width: 120px;
-    padding-left: 10px;
+    width: 140px;
+    min-width: 140px;
+    min-height: 220px;
+    padding: 0 10px;
+    flex-shrink: 0;
 }
 
-.deck-wrapper > :deep(.card-stack) {
+.pile-slot-area > :deep(.card-stack) {
     flex-shrink: 0;
     margin: 6px;
+    width: 120px;
+    min-width: 120px;
+    height: 168px;
+    min-height: 168px;
 }
 
-.deck-wrapper > :deep(.card-stack.pile .card-view) {
+.pile-slot-area > :deep(.card-stack.pile .card-view),
+.pile-slot-area > :deep(.card-stack.pile .card-stack-empty) {
     margin: 0;
+}
+
+.pile-slot-area > .pile-slot-count {
+    flex-shrink: 0;
+    min-height: 1.5em;
+    line-height: 1.5;
+    text-align: center;
 }
 
 .trash-wrapper {
@@ -534,14 +636,21 @@
     justify-content: space-evenly;
     min-width: max-content;
     width: 100%;
+    min-height: 200px;
     padding: 8px;
     border-radius: 6px;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
+/* Slightly larger than card (120x168) so borders/shadows aren't clipped */
 .mana-pools :deep(.card-stack) {
-    max-width: 100%;
-    overflow: hidden;
+    flex-shrink: 0;
+    width: 126px;
+    min-width: 126px;
+    height: 176px;
+    min-height: 176px;
+    overflow: visible;
     position: relative;
     border-radius: 6px;
     display: flex;
@@ -549,10 +658,25 @@
     align-items: center;
 }
 
+/* Empty mana pool placeholder: same size as real cards (DummyCard has margin by default) */
+.mana-pools :deep(.card-stack .card-stack-empty) {
+    margin: 0;
+    width: 120px;
+    height: 168px;
+    min-width: 120px;
+    min-height: 168px;
+}
+
 .mana-pools :deep(.card-stack .mana-pool-pile-slot) {
     position: relative;
-    width: 120px;
+    width: 126px;
+    min-width: 126px;
+    height: 176px;
+    min-height: 176px;
     aspect-ratio: 5 / 7;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .mana-pools :deep(.card-stack .mana-pool-pile-slot .card-view) {
@@ -592,41 +716,63 @@
 
 .cards-hand {
     display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    min-height: 200px;
+}
+
+/* Hand slots: same size as mana pool slots (4 fixed slots) */
+.hand-slot-wrapper {
+    flex-shrink: 0;
+}
+
+.hand-slot--no-click {
+    pointer-events: none;
+    cursor: default;
+}
+
+.cards-hand :deep(.card-stack) {
+    flex-shrink: 0;
+    width: 126px;
+    min-width: 126px;
+    height: 176px;
+    min-height: 176px;
+    overflow: visible;
+    position: relative;
+    border-radius: 6px;
+    display: flex;
     justify-content: center;
     align-items: center;
-    width: 40%;
-    height: 100%;
 }
 
-.compost-wrapper {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    flex-shrink: 0;
+.cards-hand :deep(.card-stack .card-stack-empty) {
+    margin: 0;
+    width: 120px;
+    height: 168px;
     min-width: 120px;
-    padding-right: 8px;
+    min-height: 168px;
 }
 
-.compost-wrapper > :deep(.card-stack) {
-    flex-shrink: 0;
-    width: 120px !important;
-    margin: 6px;
-}
-
-.compost-wrapper > :deep(.card-stack.pile .card-view),
-.compost-wrapper > :deep(.card-stack.pile .card-stack-empty) {
+.cards-hand :deep(.card-stack.pile .card-view) {
     margin: 0;
 }
 
-.compost-wrapper > :deep(.card-stack.pile) {
-    width: 120px !important;
+/* When hand slot has a card, the inner wrapper needs to size/center like mana pool slot */
+.cards-hand :deep(.card-stack > div:not(.card-stack-empty)) {
+    position: relative;
+    width: 126px;
+    min-width: 126px;
+    height: 176px;
+    min-height: 176px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.compost-wrapper > .compost-count {
-    flex-shrink: 0;
-}
 
 .mana-diamonds-cost {
     position: absolute;

@@ -12,9 +12,12 @@ function createAudio(name: string, ext: string = 'wav'): HTMLAudioElement {
  * Play a sound from the public/sounds directory.
  * @param name - Filename without extension (e.g. 'mana' for mana.wav)
  * @param ext - File extension. Defaults to 'wav'.
+ * @param volume - Volume from 0 to 1. Defaults to 1.
  */
-export function playSound(name: string, ext: string = 'wav'): void {
-    createAudio(name, ext).play().catch(() => {});
+export function playSound(name: string, ext: string = 'wav', volume: number = 1): void {
+    const audio = createAudio(name, ext);
+    audio.volume = Math.max(0, Math.min(1, volume));
+    audio.play().catch(() => {});
 }
 
 /**

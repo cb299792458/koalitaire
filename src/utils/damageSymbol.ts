@@ -1,5 +1,5 @@
 /**
- * Replaces "damage" with green club (♣) and "block" with upside-down spade (♠) in displayed text.
+ * Replaces "damage" with green club (♣) in displayed text. "block" is left as the word.
  * Returns HTML string; use with v-html. Escapes existing HTML in the text.
  */
 function escapeHtml(s: string): string {
@@ -11,17 +11,13 @@ function escapeHtml(s: string): string {
 }
 
 const DAMAGE_SYMBOL = '<span class="suit-symbol suit-symbol--damage">♣</span>';
-const BLOCK_SYMBOL = '<span class="suit-symbol suit-symbol--block">♠</span>';
+const MANA_DIAMOND_SYMBOL = '<span class="suit-symbol suit-symbol--mana-diamonds" title="♦ Mana Diamonds">♦</span>';
 
-/** Replaces "damage" with ♣ and "block" with ♠. Use with v-html. */
+/** Replaces "damage" with ♣, "mana diamonds" / "mana diamond" with ♦. Use with v-html. */
 export function formatStatSymbols(text: string): string {
     const escaped = escapeHtml(text);
     return escaped
-        .replace(/\bblock\b/gi, BLOCK_SYMBOL)
-        .replace(/\bdamage\b/gi, DAMAGE_SYMBOL);
-}
-
-/** @deprecated Use formatStatSymbols for both damage and block. */
-export function textWithDamageSymbol(text: string): string {
-    return formatStatSymbols(text);
+        .replace(/\bdamage\b/gi, DAMAGE_SYMBOL)
+        .replace(/\bmana diamonds\b/gi, MANA_DIAMOND_SYMBOL)
+        .replace(/\bmana diamond\b/gi, MANA_DIAMOND_SYMBOL);
 }

@@ -79,7 +79,7 @@ class Card {
     }
 
     animateMoveToMana(): void {
-        scheduleAnimation(this, 'move-to-mana', 350);
+        scheduleAnimation(this, 'move-to-mana', 220);
     }
 }
 

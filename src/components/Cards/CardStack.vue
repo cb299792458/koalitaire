@@ -14,6 +14,8 @@ const props = defineProps<{
     selectedCard?: Card | null;
     arrayIndex?: number;
     highlighted?: boolean;
+    /** When set, highlight these card indices (0-based) instead of only the last card. */
+    highlightedIndices?: number[];
     highlightType?: 'burn' | 'cast';
     customLabel?: string;
 }>();
@@ -44,7 +46,11 @@ const isManaPoolPile = computed(
 );
 
 function shouldShowHighlight(index: number): boolean {
-    if (!props.highlighted || index !== props.cards.length - 1) return false;
+    if (!props.highlighted) return false;
+    if (props.highlightedIndices && props.highlightedIndices.length > 0) {
+        return props.highlightedIndices.includes(index);
+    }
+    if (index !== props.cards.length - 1) return false;
     if (props.name === AREAS.ManaPools) return true;
     return props.layout === 'vertical' || !props.layout || props.layout === 'pile';
 }

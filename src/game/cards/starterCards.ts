@@ -8,7 +8,7 @@ const shot = {
     suit: Suit.Wood,
     name: 'Shot',
     description: 'Deals 5 ranged damage.',
-    keywords: [Keyword.Ranged],
+    keywords: [Keyword.Ranged, Keyword.Charges],
     effect: (combat: Combat) => {
         const { enemy } = combat;
         enemy.takeDamage(5, [DamageType.Ranged]);
@@ -60,10 +60,11 @@ const study = {
     rank: 4,
     suit: Suit.Water,
     name: 'Study',
-    description: 'Draw 3 cards.',
-    keywords: [Keyword.Draw],
+    description: 'Gain 3 mana diamonds.',
+    keywords: [Keyword.ManaDiamond],
     effect: (combat: Combat) => {
-        combat.drawCards(3, true);
+        const { player } = combat;
+        player.manaDiamonds += 3;
     },
     flavorText: "What I should have been doing instead of making this game.",
 }

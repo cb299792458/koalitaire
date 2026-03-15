@@ -14,6 +14,8 @@ export default abstract class Combatant {
     tooltip: string;
     health: number;
     maxHealth: number;
+    /** When > 0, one instance of damage is ignored and dodge is reduced by 1. Checked before block. */
+    dodge: number = 0;
     block: number = 0;
     armor: number;
     summons: Summon[] = [];
@@ -78,6 +80,12 @@ export default abstract class Combatant {
             damageToCombatant = remaining;
         } else if (isBackstab && this.summons.length === 0) {
             damageToCombatant = effectiveDamage * 2;
+        }
+
+        // Dodge: if combatant has dodge, ignore this damage and consume 1 dodge
+        if (this.dodge > 0) {
+            this.dodge -= 1;
+            return;
         }
 
         let remainingDamage = damageToCombatant;

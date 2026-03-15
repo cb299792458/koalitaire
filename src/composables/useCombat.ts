@@ -14,8 +14,9 @@ import ManaPools from '../models/ManaPools';
 
 // Types & Constants
 import { AREAS, type Area } from '../models/Areas';
-import { openModal, closeModal } from '../stores/modalStore';
+import { openModal } from '../stores/modalStore';
 import { playSound } from '../utils/sounds';
+import type { ScenarioEntry } from '../game/makeScenario';
 
 export class Combat {
     // Game entities
@@ -34,8 +35,7 @@ export class Combat {
     manaPools: ManaPools;
     isProcessingTurn: boolean;
     isMovingToMana: boolean;
-    reshuffles: number;
-    
+
     /** Set to player.level at start of each combat; delayed callbacks check this to no-op if combat changed. */
     private level: number = 0;
     /** Resolves when current turn processing (endTurn, etc.) finishes. */
@@ -62,8 +62,7 @@ export class Combat {
         this.tableau = new Tableau(this.player.columnCount);
         this.isProcessingTurn = false;
         this.isMovingToMana = false;
-        this.reshuffles = 2;
-        
+
         this.manaPools = new ManaPools();
     }
 
@@ -93,8 +92,10 @@ export class Combat {
             this.deck.clear();
             this.compost.clear();
             this.trash.clear();
-            this.hand.clear();
             this.manaPools.clear();
+            if (this.player) {
+                this.hand = new Hand(this.player.handSlotCount);
+            }
             
             // Reset game state
             if (this.player) {
@@ -102,14 +103,13 @@ export class Combat {
                 this.deck.initialize(deckCards);
             }
 
-            this.reshuffles = 2;
-
             this.initializeTableau();
             await this.shuffleDeck();
             this.dealTableau();
             
             // Reset player state
             if (this.player) {
+                this.player.dodge = 0;
                 this.player.block = 0;
                 this.player.manaDiamonds = this.player.startingManaDiamonds;
             }
@@ -129,7 +129,10 @@ export class Combat {
         this.drawCards(this.player?.handSize ?? 5);
 
         if (!this.player) return;
+        this.player.dodge = 0;
         this.player.block = 0;
+        // Free cells (hand) persist; do not clear or draw into them
+        this.drawCards(this.player.handSize ?? 0, true);
         
         if (!this.enemy) return;
         this.enemy.loadActions(this.enemy.actions);
@@ -147,27 +150,17 @@ export class Combat {
         });
         this.notify();
 
-        // Discard hand into compost at start of end turn
-        const handCards = [...this.hand.cards];
-        for (const card of handCards) {
-            this.moveCardToArea(card, AREAS.Compost);
-        }
+        // Free cells (hand) are not shuffled; leave them as-is.
 
-        // If deck is empty and no reshuffles left, show confirmation before proceeding
-        if (this.deck.isEmpty() && this.reshuffles === 0) {
-            openModal('confirmNoReshuffles', {
-                message: 'Are you sure? You have no reshuffles left, this will empty your mana pool and redeal the entire deck.',
-                onConfirm: () => {
-                    closeModal();
-                    this.executeRedealAndFinishTurn();
-                },
-            });
-            this.isProcessingTurn = false;
-            this.processingTurnResolve?.();
-            this.processingTurnResolve = null;
-            this.notify();
-            return;
+        // Tableau + compost → deck (mana pools left unchanged), shuffle, redeal tableau
+        for (const column of this.tableau.getColumns()) {
+            this.deck.addCards([...column.cards]);
+            column.cards = [];
         }
+        this.compost.recycleInto(this.deck);
+        await this.deck.shuffle();
+        this.dealTableau();
+        this.notify();
 
         try {
             await this.runRestOfTurn();
@@ -196,6 +189,7 @@ export class Combat {
             return;
         }
 
+        this.enemy.dodge = 0;
         this.enemy.block = 0;
         await this.enemy.executeActions(this.player, this);
         if (this.enemy.health <= 0) {
@@ -203,10 +197,9 @@ export class Combat {
             return;
         }
 
-        if (this.deck.isEmpty() && this.reshuffles > 0) {
+        if (this.deck.isEmpty()) {
             this.compost.recycleInto(this.deck);
             await this.deck.shuffle();
-            this.reshuffles -= 1;
         }
 
         this.startTurn();
@@ -246,44 +239,6 @@ export class Combat {
         
         if (this.onEnemyDefeated) {
             this.onEnemyDefeated();
-        }
-    }
-
-    /**
-     * Called when player confirms "no reshuffles" popup: gather all cards into deck,
-     * shuffle, reset tableau and redeal, set reshuffles to 2, then run the rest of end turn.
-     */
-    async executeRedealAndFinishTurn(): Promise<void> {
-        if (!this.player || !this.enemy) return;
-
-        this.isProcessingTurn = true;
-        this.processingTurnPromise = new Promise<void>(resolve => {
-            this.processingTurnResolve = resolve;
-        });
-        this.notify();
-        try {
-            // Hand was already discarded to compost at start of endTurn
-            for (const column of this.tableau.getColumns()) {
-                this.compost.addCards([...column.cards]);
-                column.cards = [];
-            }
-            for (const pool of this.manaPools.pools()) {
-                this.compost.addCards([...pool.cards]);
-                pool.clear();
-            }
-            this.compost.recycleInto(this.deck);
-            await this.deck.shuffle();
-            this.tableau.clear();
-            this.dealTableau();
-            this.reshuffles = 2;
-            this.notify();
-
-            await this.runRestOfTurn();
-        } finally {
-            this.isProcessingTurn = false;
-            this.processingTurnResolve?.();
-            this.processingTurnResolve = null;
-            this.notify();
         }
     }
 
@@ -402,9 +357,18 @@ export class Combat {
             case AREAS.Deck:
                 break;
 
-            case AREAS.Hand:
+            case AREAS.Hand: {
+                // Empty slot: only accept placement of a valid card; otherwise do nothing (not clickable)
+                if (!clickedCard && clickIndex !== undefined) {
+                    if (this.selectedCard && this.canPlaceSelectedInHandSlot(clickIndex)) {
+                        this.placeSelectedCardInHandSlot(clickIndex);
+                    }
+                    break;
+                }
+                // Clicked a card in hand: select/deselect
                 this.isCardSelection(clickedCard);
                 break;
+            }
 
             case AREAS.Tableau:
                 // Try to place the selected card first
@@ -482,7 +446,7 @@ export class Combat {
         if (!this.selectedCard || !this.canBurnSelectedCard()) return;
 
         const selectedCard = this.selectedCard;
-        playSound('mana');
+        playSound('mana', 'wav', 0.45);
         selectedCard.animateBurn();
         this.runAfterDelay(1200, () => {
             this.moveCardToArea(selectedCard, AREAS.ManaPools);
@@ -625,7 +589,7 @@ export class Combat {
 
     /**
      * Returns all cards that can be moved to any pile in manaPools.
-     * Checks the bottom card in each tableau column and each card in the player's hand.
+     * Checks the top card of each tableau column and each card in the player's hand.
      */
     getCardsMovableToManaPools(): Card[] {
         const candidates: Card[] = [];
@@ -643,6 +607,27 @@ export class Combat {
     }
 
     /**
+     * Returns all cards that could be burned to mana (revealed, not spell, pool has enough)
+     * regardless of position. Used for hover highlight so any such card is highlighted.
+     */
+    getCardsThatCouldBeBurnedToMana(): Card[] {
+        const out: Card[] = [];
+        for (const column of this.tableau.getColumns()) {
+            for (const card of column.cards) {
+                if (!card.revealed || card.isSpell) continue;
+                const pool = this.manaPools.getPool(card.suit);
+                if (pool && pool.hasEnoughManaForBurn(card.rank)) out.push(card);
+            }
+        }
+        for (const card of this.hand.cards) {
+            if (!card.revealed || card.isSpell) continue;
+            const pool = this.manaPools.getPool(card.suit);
+            if (pool && pool.hasEnoughManaForBurn(card.rank)) out.push(card);
+        }
+        return out;
+    }
+
+    /**
      * Repeatedly moves cards from tableau bottoms and hand to their matching mana pools
      * until no more cards can be moved. Each card is animated with a short delay between moves.
      */
@@ -653,7 +638,7 @@ export class Combat {
         this.scheduleNextMoveToMana();
     }
 
-    private static readonly MOVE_TO_MANA_ANIMATION_MS = 400;
+    private static readonly MOVE_TO_MANA_ANIMATION_MS = 250;
     private static readonly MOVE_TO_MANA_GAP_MS = 120;
 
     private scheduleNextMoveToMana(): void {
@@ -664,7 +649,7 @@ export class Combat {
             return;
         }
         const card = movable[0]!;
-        playSound('mana');
+        playSound('mana', 'wav', 0.45);
         card.animateMoveToMana();
         this.notify();
         this.runAfterDelay(Combat.MOVE_TO_MANA_ANIMATION_MS, () => {
@@ -708,6 +693,68 @@ export class Combat {
         return validColumns;
     }
 
+    /**
+     * Whether the selected card can be placed in the given hand (free cell) slot.
+     * Slot must be empty. Only top card of tableau column, card in hand, or top of mana pool can move to hand.
+     */
+    canPlaceSelectedInHandSlot(slotIndex: number): boolean {
+        if (!this.selectedCard || !this.selectedCard.revealed) return false;
+        if (slotIndex < 0 || slotIndex >= this.hand.getSlotCount()) return false;
+        if (this.hand.getSlot(slotIndex) != null) return false;
+
+        const card = this.selectedCard;
+        if (this.hand.getSlotIndex(card) !== -1) return true;
+        if (this.isTopCardOfManaPool(card)) return true;
+        const { tableauIndex, tableauJndex } = this.getCardIndices(card);
+        if (tableauIndex !== -1) {
+            const col = this.tableau.getColumn(tableauIndex);
+            if (col && tableauJndex === col.size() - 1) return true;
+        }
+        return false;
+    }
+
+    private placeSelectedCardInHandSlot(slotIndex: number): void {
+        const selectedCard = this.selectedCard;
+        if (!selectedCard || !this.canPlaceSelectedInHandSlot(slotIndex)) return;
+
+        playSound('move');
+        selectedCard.animateTableauMove();
+        this.runAfterDelay(450, () => {
+            if (!this.canPlaceSelectedInHandSlot(slotIndex)) return;
+            const card = this.selectedCard;
+            if (!card) return;
+
+            const handIndex = this.hand.getSlotIndex(card);
+            if (handIndex !== -1) {
+                this.hand.setSlot(handIndex, undefined);
+                this.hand.setSlot(slotIndex, card);
+            } else if (this.isTopCardOfManaPool(card)) {
+                const pool = this.manaPools.getPool(card.suit);
+                if (pool) {
+                    pool.removeCard(card);
+                    card.revealed = true;
+                    this.hand.setSlot(slotIndex, card);
+                }
+            } else {
+                const { tableauIndex, tableauJndex } = this.getCardIndices(card);
+                if (tableauIndex !== -1) {
+                    const column = this.tableau.getColumn(tableauIndex);
+                    if (column && tableauJndex === column.size() - 1) {
+                        column.remove(card);
+                        if (column.cards.length > 0) {
+                            const lastCard = column.cards[column.cards.length - 1];
+                            if (lastCard) lastCard.revealed = true;
+                        }
+                        card.revealed = true;
+                        this.hand.setSlot(slotIndex, card);
+                    }
+                }
+            }
+            this.setSelectedCard(null);
+            this.notify();
+        });
+    }
+
     // ==================== Tableau Placement ====================
 
     private placeSelectedCardInTableau(clickedCard: Card | null, clickIndex?: number, clickJndex?: number): void {
@@ -724,13 +771,14 @@ export class Combat {
         }
 
         // Move card from hand, mana pool, or tableau
-        const handIndex = this.hand.cards.indexOf(selectedCard);
+        const handIndex = this.hand.getSlotIndex(selectedCard);
         if (handIndex !== -1) {
-            // Move from hand
+            // Move from hand (free cell)
             playSound('move');
             selectedCard.animateTableauMove();
             this.runAfterDelay(450, () => {
-                this.hand.cards.splice(handIndex, 1);
+                this.hand.setSlot(handIndex, undefined);
+                selectedCard.revealed = true; // Tableau is always face up
                 clickedColumn.add(selectedCard);
                 this.setSelectedCard(null);
                 this.notify();
@@ -745,6 +793,7 @@ export class Combat {
             selectedCard.animateTableauMove();
             this.runAfterDelay(450, () => {
                 pool.removeCard(selectedCard);
+                selectedCard.revealed = true; // Tableau is always face up
                 clickedColumn.add(selectedCard);
                 this.setSelectedCard(null);
                 this.notify();
@@ -774,10 +823,11 @@ export class Combat {
             selectedCard.animateTableauMove();
             this.runAfterDelay(450, () => {
                 const cardsToMove = selectedCardColumn.cards.slice(selectedCardJndex);
+                for (const c of cardsToMove) c.revealed = true; // Tableau is always face up
                 clickedColumn.cards.push(...cardsToMove);
                 selectedCardColumn.cards.splice(selectedCardJndex, cardsToMove.length);
 
-                // Reveal the last card in the column if it exists
+                // Reveal the new top of the source column (tableau always face up)
                 if (selectedCardColumn.cards.length > 0) {
                     const lastCard = selectedCardColumn.cards[selectedCardColumn.cards.length - 1];
                     if (lastCard) lastCard.revealed = true;
@@ -801,7 +851,7 @@ export class Combat {
     private getCardIndices(card: Card | null): { handIndex: number; tableauIndex: number; tableauJndex: number } {
         if (!card) return { handIndex: -1, tableauIndex: -1, tableauJndex: -1 };
 
-        const handIndex = this.hand.cards.indexOf(card);
+        const handIndex = this.hand.getSlotIndex(card);
         const tableauIndex = this.tableau.getColumns().findIndex(col => col.cards.includes(card));
         let tableauJndex = -1;
         
@@ -828,7 +878,7 @@ export class Combat {
         
         // Remove card from current location
         if (handIndex !== -1) {
-            this.hand.cards.splice(handIndex, 1);
+            this.hand.setSlot(handIndex, undefined);
         } else if (tableauIndex !== -1) {
             const tableauColumn = this.tableau.getColumn(tableauIndex);
             if (tableauColumn && tableauJndex !== -1) {
@@ -878,10 +928,14 @@ export class Combat {
 
 // ==================== Composable ====================
 
-const combatRef = ref<Combat | null>(null);
+/** Ref to combat instance; triggerRef(combatRef) after mutating state so Vue computeds that read it re-run. */
+export const combatRef = ref<Combat | null>(null);
 
 /** Persists across GamePage mount/unmount so we only show the start modal once. */
 export const hasChosenCharacterRef = ref(false);
+
+/** Scenario is set once when the player chooses their character and does not change until page refresh. */
+export const scenarioRef = ref<ScenarioEntry[][] | null>(null);
 
 export function useCombat(): Combat {
     if (!combatRef.value) {

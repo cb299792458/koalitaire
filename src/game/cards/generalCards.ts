@@ -67,17 +67,6 @@ const shieldBash = {
     },
 }
 
-const bill = {
-    rank: 1,
-    suit: Suit.Water,
-    name: 'Bill',
-    description: 'Draw 2 cards',
-    keywords: [Keyword.Draw],
-    effect: (combat: Combat) => {
-        combat.drawCards(2, true);
-    },
-}
-
 const wrath = {
     rank: 3,
     suit: Suit.Fire,
@@ -235,7 +224,6 @@ export const generalCards = [
     manaBurn,
     summonKoallaborator,
     shieldBash,
-    bill,
     wrath,
     bde,
     regenerate,

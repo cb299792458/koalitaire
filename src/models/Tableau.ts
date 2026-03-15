@@ -33,23 +33,23 @@ class Tableau {
     }
 
     /**
-     * Deal the tableau from the draw pile.
-     * Column 0 gets 0 cards, column 1 gets 1, column 2 gets 2, etc. The last card in each column is revealed.
+     * Deal the entire draw pile evenly into all columns (round-robin). Deck is left empty.
+     * All tableau cards are dealt face up.
      */
     deal(drawPile: DrawPile): void {
-        for (let i = 0; i < this.columns.length; i++) {
-            const column = this.columns[i];
-            if (!column) continue;
-
+        for (const column of this.columns) {
             column.cards = [];
-            for (let j = 0; j < i; j++) {
-                const card = drawPile.draw();
-                if (card) {
-                    column.add(card);
-                }
-            }
-            const lastCard = column.cards[column.size() - 1];
-            if (lastCard) lastCard.revealed = true;
+        }
+        let col = 0;
+        const numCols = this.columns.length;
+        if (numCols === 0) return;
+        for (;;) {
+            const card = drawPile.draw();
+            if (!card) break;
+            card.revealed = true;
+            const column = this.columns[col];
+            if (column) column.add(card);
+            col = (col + 1) % numCols;
         }
     }
 
