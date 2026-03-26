@@ -58,7 +58,7 @@ export class Combat {
         this.deck = new DrawPile();
         this.compost = new CompostPile();
         this.trash = new TrashPile();
-        this.hand = new Hand();
+        this.hand = new Hand(this.player.handSlotCount);
         this.tableau = new Tableau(this.player.columnCount);
         this.isProcessingTurn = false;
         this.isMovingToMana = false;
@@ -942,6 +942,8 @@ export function useCombat(): Combat {
         const defaultPlayer = new Player({
             name: '',
             portrait: '',
+            columnCount: 1,
+            handSlotCount: 1,
             appeal: 0,
             attack: 0,
             armor: 0,

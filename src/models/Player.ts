@@ -22,10 +22,10 @@ export interface PlayerParams {
 
     /** Number of cards to draw at the start of each turn. Use Infinity to draw the whole deck. Defaults to 5. */
     handSize?: number;
-    /** Number of tableau columns. Defaults to 6. */
-    columnCount?: number;
-    /** Number of free cell (hand) slots. Defaults to 1. */
-    handSlotCount?: number;
+    /** Number of tableau columns (layout is per character, e.g. Koa). */
+    columnCount: number;
+    /** Number of free cell (hand) slots. */
+    handSlotCount: number;
     /** Mana diamonds at the start of combat. Defaults to 0. */
     startingManaDiamonds?: number;
 
@@ -110,7 +110,7 @@ class Player extends Combatant {
     originalPlayer?: Player;
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, handSize = 5, columnCount = 6, handSlotCount = 1, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck, townStoreCards, townTraderCards } = params;
+        const { name, portrait, tooltip, handSize = 5, columnCount, handSlotCount, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck, townStoreCards, townTraderCards } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.handSize = handSize;
@@ -223,7 +223,7 @@ class Player extends Combatant {
     }
 }
 
-const koaSpellCards = spellCardsFromParams(starterCards as SpellCardParams[]);
+const koaSpellCards = spellCardsFromParams(starterCards);
 
 export const koaParams: PlayerParams = {
     name: "Koa XIII",
@@ -231,7 +231,8 @@ export const koaParams: PlayerParams = {
     tooltip: "Crown Prince Koa XIII of Koala Lumpur",
 
     handSize: 5,
-    columnCount: 8,
+    columnCount: 6,
+    handSlotCount: 3,
 
     appeal: 5,
     attack: 3,
@@ -247,7 +248,7 @@ export const koaParams: PlayerParams = {
     manaDeck: defaultManaCards(6),
 };
 
-const testSpellCards = spellCardsFromParams([...generalCards, ...debugCards] as SpellCardParams[]);
+const testSpellCards = spellCardsFromParams([...generalCards, ...debugCards]);
 
 export const testCharacterParams: PlayerParams = {
     name: "DJ Testo",

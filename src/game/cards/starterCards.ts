@@ -1,9 +1,10 @@
 import type { Combat } from "../../composables/useCombat";
+import type { SpellCardParams } from "../../models/Card";
 import { Suit } from "../../models/Suit";
 import { DamageType } from "../../models/DamageType";
 import { Keyword } from "../keywords";
 
-const shot = {
+const shot: SpellCardParams = {
     rank: 3,
     suit: Suit.Wood,
     name: 'Shot',
@@ -17,7 +18,7 @@ const shot = {
     charges: 3,
 }
 
-const scorch = {
+const scorch: SpellCardParams = {
     rank: 5,
     suit: Suit.Fire,
     name: 'Scorch',
@@ -30,7 +31,7 @@ const scorch = {
     flavorText: "Ow! Fire hot! -Leela; Fire indeed hot! -The Professy",
 }
 
-const shield = {
+const shield: SpellCardParams = {
     rank: 2,
     suit: Suit.Earth,
     name: 'Shield',
@@ -43,7 +44,7 @@ const shield = {
     flavorText: "Tha block is hot (as well)! -Weezy",
 }
 
-const slash = {
+const slash: SpellCardParams = {
     rank: 1,
     suit: Suit.Metal,
     name: 'Slash',
@@ -56,7 +57,7 @@ const slash = {
     flavorText: "Flea and Ozzie would be proud.",
 }
 
-const study = {
+const study: SpellCardParams = {
     rank: 4,
     suit: Suit.Water,
     name: 'Study',
@@ -69,7 +70,7 @@ const study = {
     flavorText: "What I should have been doing instead of making this game.",
 }
 
-export const starterCards = [
+export const starterCards: SpellCardParams[] = [
     shot,
     shot,
     scorch,

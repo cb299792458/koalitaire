@@ -1,4 +1,5 @@
 import type { Combat } from "../../composables/useCombat";
+import type { SpellCardParams } from "../../models/Card";
 import { Suit } from "../../models/Suit";
 import type ManaPool from "../../models/ManaPool";
 import { addSummon } from "../summons";
@@ -6,7 +7,7 @@ import { Keyword } from "../keywords";
 import { Race } from "../../models/Summon";
 import { DamageType } from "../../models/DamageType";
 
-const parry = {
+const parry: SpellCardParams = {
     rank: 1,
     suit: Suit.Wood,
     name: 'Parry the Platypus',
@@ -18,7 +19,7 @@ const parry = {
     },
 }
 
-const sparkRitual = {
+const sparkRitual: SpellCardParams = {
     rank: 1,
     suit: Suit.Fire,
     name: 'Spark Ritual',
@@ -30,7 +31,7 @@ const sparkRitual = {
     },
 }
 
-const manaBurn = {
+const manaBurn: SpellCardParams = {
     rank: 3,
     suit: Suit.Fire,
     name: 'Mana Burn',
@@ -46,7 +47,7 @@ const manaBurn = {
     },
 }
 
-export const summonKoallaborator = {
+export const summonKoallaborator: SpellCardParams = {
     rank: 1,
     suit: Suit.Metal,
     name: 'Koallaborator',
@@ -55,7 +56,7 @@ export const summonKoallaborator = {
     effect: (combat: Combat) => addSummon(combat, 'collaborator'),
 }
 
-const shieldBash = {
+const shieldBash: SpellCardParams = {
     rank: 2,
     suit: Suit.Earth,
     name: 'Shield Bash',
@@ -67,7 +68,7 @@ const shieldBash = {
     },
 }
 
-const wrath = {
+const wrath: SpellCardParams = {
     rank: 3,
     suit: Suit.Fire,
     name: 'Great Barrier Wrath',
@@ -80,7 +81,7 @@ const wrath = {
     },
 }
 
-const bde = {
+const bde: SpellCardParams = {
     rank: 6,
     suit: Suit.Earth,
     name: 'Big Dig Energy',
@@ -93,7 +94,7 @@ const bde = {
     },
 }
 
-const regenerate = {
+const regenerate: SpellCardParams = {
     rank: 4,
     suit: Suit.Fire,
     name: 'Regenerate',
@@ -106,7 +107,7 @@ const regenerate = {
     charges: 1,
 }
 
-const koality = {
+const koality: SpellCardParams = {
     rank: 2,
     suit: Suit.Metal,
     name: 'A Chance to Show His Quality',
@@ -122,7 +123,7 @@ const koality = {
     charges: 1,
 }
 
-const summonWarKoala = {
+const summonWarKoala: SpellCardParams = {
     rank: 3,
     suit: Suit.Metal,
     name: 'Loyal War Koala',
@@ -131,7 +132,7 @@ const summonWarKoala = {
     effect: (combat: Combat) => addSummon(combat, 'warKoala'),
 }
 
-const summonWallKoala = {
+const summonWallKoala: SpellCardParams = {
     rank: 3,
     suit: Suit.Earth,
     name: 'Royal Wall Koala',
@@ -140,7 +141,7 @@ const summonWallKoala = {
     effect: (combat: Combat) => addSummon(combat, 'wallKoala'),
 }
 
-const koalitionVictory = {
+const koalitionVictory: SpellCardParams = {
     rank: 6,
     suit: Suit.Metal,
     name: 'Koalition Victory',
@@ -157,7 +158,7 @@ const koalitionVictory = {
     },
 }
 
-const summonCharLizard = {
+const summonCharLizard: SpellCardParams = {
     rank: 6,
     suit: Suit.Fire,
     name: 'Char Lizard',
@@ -166,7 +167,7 @@ const summonCharLizard = {
     effect: (combat: Combat) => addSummon(combat, 'charLizard'),
 }
 
-const summonAttackaQuacka = {
+const summonAttackaQuacka: SpellCardParams = {
     rank: 3,
     suit: Suit.Metal,
     name: 'Summon Attacker Quacker',
@@ -175,7 +176,7 @@ const summonAttackaQuacka = {
     effect: (combat: Combat) => addSummon(combat, 'attackaQuacka'),
 }
 
-const sasageyo = {
+const sasageyo: SpellCardParams = {
     rank: 5,
     suit: Suit.Metal,
     name: 'Sasageyo',
@@ -191,7 +192,7 @@ const sasageyo = {
     },
 };
 
-const despertaFerro = {
+const despertaFerro: SpellCardParams = {
     rank: 4,
     suit: Suit.Metal,
     name: 'Desperta Ferro',
@@ -204,7 +205,7 @@ const despertaFerro = {
     },
 };
 
-const thunderstruck = {
+const thunderstruck: SpellCardParams = {
     rank: 4,
     suit: Suit.Fire,
     name: 'Thunderstruck',
@@ -218,7 +219,7 @@ const thunderstruck = {
     flavorText: "You've been thunderstruck!",
 }
 
-export const generalCards = [
+export const generalCards: SpellCardParams[] = [
     parry,
     sparkRitual,
     manaBurn,
