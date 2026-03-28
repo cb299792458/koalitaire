@@ -126,17 +126,13 @@ export class Combat {
     // ==================== Turn Management ====================
 
     startTurn(): void {
-        this.drawCards(this.player?.handSize ?? 5);
-
         if (!this.player) return;
         this.player.dodge = 0;
         this.player.block = 0;
-        // Free cells (hand) persist; do not clear or draw into them
-        this.drawCards(this.player.handSize ?? 0, true);
-        
+
         if (!this.enemy) return;
         this.enemy.loadActions(this.enemy.actions);
-        
+
         this.notify();
     }
 
@@ -242,35 +238,7 @@ export class Combat {
         }
     }
 
-    // ==================== Card Drawing & Deck Management ====================
-
-    drawCards(count: number = 5, keepHand: boolean = false): void {
-        // Move all cards from hand to compost
-        if (!keepHand) {
-            this.compost.addCards([...this.hand.cards]);
-            this.hand.clear();
-        }
-
-        // Draw cards and add to hand synchronously so hand state is correct before any timeouts run.
-        // (Stale timeouts from a previous combat would otherwise add old cards to the new hand.)
-        const drawnCards = this.deck.drawMultiple(count);
-        for (const card of drawnCards) {
-            if (!card) continue;
-            card.revealed = true;
-            this.hand.addCard(card);
-        }
-        this.notify();
-
-        // Stagger draw animations only (no state changes in timeouts)
-        for (let i = 0; i < drawnCards.length; i++) {
-            const card = drawnCards[i];
-            if (!card) continue;
-            this.runAfterDelay(i * 100, () => {
-                playSound('draw');
-                card.animateDraw();
-            });
-        }
-    }
+    // ==================== Deck Management ====================
 
     async shuffleDeck(): Promise<void> {
         await this.deck.shuffle();
