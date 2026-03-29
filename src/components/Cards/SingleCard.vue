@@ -551,7 +551,7 @@
 .spell-card-top {
     display: flex;
     justify-content: flex-start;
-    align-items: center;
+    align-items: flex-start;
     width: calc(100% - 6px);
     max-width: calc(100% - 6px);
     gap: 2px;
@@ -569,7 +569,16 @@
 }
 
 .spell-card-rank {
+    /* Monospace so each rank glyph (A, 2–6, T, J, …) shares one column width; proportional 1ch was narrower than bold A and clipped under .spell-card-top overflow:hidden */
+    font-family: ui-monospace, 'Cascadia Mono', 'Consolas', 'Segoe UI Mono', monospace;
     font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1ch;
+    min-width: 1ch;
+    flex-shrink: 0;
+    text-align: center;
 }
 
 .spell-card-name {
