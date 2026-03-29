@@ -42,8 +42,6 @@ export interface PlayerParams {
     /** Per-suit count of mana cards to bring to combat. For Koa, starts at 6 per suit. */
     manaDeck: ManaCardsBySuit;
 
-    /** Pre-generated store cards (set at run start, not per visit). */
-    townStoreCards?: SpellCardParams[];
     /** Pre-generated trader cards (set at run start, not per visit). */
     townTraderCards?: SpellCardParams[];
 }
@@ -98,8 +96,6 @@ class Player extends Combatant {
     /** Per-suit count of mana cards to bring to combat. */
     manaDeck: ManaCardsBySuit;
 
-    /** Pre-generated store cards (set at run start). */
-    townStoreCards: SpellCardParams[];
     /** Pre-generated trader cards (set at run start). */
     townTraderCards: SpellCardParams[];
 
@@ -107,7 +103,7 @@ class Player extends Combatant {
     originalPlayer?: Player;
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, columnCount, handSlotCount, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck, townStoreCards, townTraderCards } = params;
+        const { name, portrait, tooltip, columnCount, handSlotCount, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck, townTraderCards } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.columnCount = columnCount;
@@ -125,7 +121,6 @@ class Player extends Combatant {
         this.spellDeck = collection.map(() => true);
         this.manaDeck = { ...manaDeck };
 
-        this.townStoreCards = townStoreCards ?? pickRandom([...generalCards], 5);
         this.townTraderCards = townTraderCards ?? pickRandom([...generalCards], 3);
     }
 
@@ -202,7 +197,6 @@ class Player extends Combatant {
                 card.flavorText
             )),
             manaDeck: { ...this.manaDeck },
-            townStoreCards: [...this.townStoreCards],
             townTraderCards: [...this.townTraderCards],
         });
         playerCopy.spellDeck = [...this.spellDeck];

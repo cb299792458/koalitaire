@@ -8,7 +8,7 @@
     import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
     import { openModal, closeModal, useModalState, openMessageModal } from '../stores/modalStore'
     import CombatantInfo from './CombatantInfo.vue'
-    import Enemy from '../models/Enemy'
+    import type Enemy from '../models/Enemy'
     import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario'
     import type Player from '../models/Player'
     import { useTown } from '../composables/useTown'
@@ -228,17 +228,17 @@
         }
         if ('elite' in entry && entry.elite) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new Enemy(entry.elite))
+            await combat.start(newPlayer, new entry.elite())
             return
         }
         if ('boss' in entry && entry.boss) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new Enemy(entry.boss))
+            await combat.start(newPlayer, new entry.boss())
             return
         }
         if ('enemy' in entry && entry.enemy) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new Enemy(entry.enemy))
+            await combat.start(newPlayer, new entry.enemy())
         }
     }
     

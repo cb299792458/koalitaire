@@ -2,6 +2,8 @@ import { ref, type Ref } from 'vue';
 import type Player from '../models/Player';
 import { SpellCard } from '../models/Card';
 import type { SpellCardParams } from '../models/Card';
+import { generalCards } from '../game/cards/generalCards';
+import { starterCards } from '../game/cards/starterCards';
 
 export const STAT_STORE_IDS = ['attackStore', 'armorStore', 'acumenStore', 'agilityStore', 'appealStore'] as const;
 export type StatStoreId = typeof STAT_STORE_IDS[number];
@@ -22,6 +24,10 @@ const playerRef = ref<Player | null>(null);
 const isInTownRef = ref(false);
 const innUsedThisVisitRef = ref(false);
 const bloodbankUseCountRef = ref(0);
+/** One 5-card booster per town visit. */
+const storeBooster5AvailableRef = ref(true);
+/** One 10-card booster per town visit. */
+const storeBooster10AvailableRef = ref(true);
 const statUpgradeCountsRef = ref<Record<StatStoreId, number>>({ ...INITIAL_STAT_UPGRADE_COUNTS });
 
 export interface TraderOffer {
@@ -46,7 +52,11 @@ function pickRandom<T>(array: T[], count: number): T[] {
     return shuffled.slice(0, Math.min(count, array.length));
 }
 
-const STORE_CARD_PRICE = 10;
+const BOOSTER_CARD_POOL = [...generalCards, ...starterCards] as SpellCardParams[];
+const BOOSTER_PACK_5_SIZE = 5;
+const BOOSTER_PACK_5_PRICE = 30;
+const BOOSTER_PACK_10_SIZE = 10;
+const BOOSTER_PACK_10_PRICE = 50;
 
 /** HP cost per bloodbank donation: 25% of max HP, rounded down. */
 function getBloodbankHpCost(maxHealth: number): number {
@@ -87,6 +97,8 @@ export function useTown(): {
     isInTown: Ref<boolean>;
     innUsedThisVisit: Ref<boolean>;
     bloodbankUseCount: Ref<number>;
+    storeBooster5Available: Ref<boolean>;
+    storeBooster10Available: Ref<boolean>;
     statUpgradeCounts: Ref<Record<StatStoreId, number>>;
     enterTown: (player: Player) => void;
     leaveTown: () => void;
@@ -102,25 +114,29 @@ export function useTown(): {
     getBytecoinPrice: (level: number) => number;
     buyBytecoin: () => void;
     sellBytecoin: () => void;
-    storeCards: SpellCardParams[];
-    getStoreCardPrice: () => number;
+    getBoosterPack5Price: () => number;
+    getBoosterPack10Price: () => number;
+    canBuyBoosterPack: (size: 5 | 10) => boolean;
+    buyBoosterPack: (size: 5 | 10) => void;
     traderOffers: Ref<TraderOffer[]>;
     refreshTraderOffers: () => void;
     doTrade: (slotIndex: number) => void;
-    canBuyStoreCard: (cardName: string) => boolean;
-    buyStoreCard: (cardParams: SpellCardParams) => void;
 } {
     return {
         player: playerRef as Ref<Player | null>,
         isInTown: isInTownRef,
         innUsedThisVisit: innUsedThisVisitRef,
         bloodbankUseCount: bloodbankUseCountRef,
+        storeBooster5Available: storeBooster5AvailableRef,
+        storeBooster10Available: storeBooster10AvailableRef,
         enterTown(player: Player) {
             // Same reference as combat.player when entering from scenario; stat upgrades persist into next combat.
             playerRef.value = player;
             isInTownRef.value = true;
             innUsedThisVisitRef.value = false;
             bloodbankUseCountRef.value = 0;
+            storeBooster5AvailableRef.value = true;
+            storeBooster10AvailableRef.value = true;
             statUpgradeCountsRef.value = { ...INITIAL_STAT_UPGRADE_COUNTS };
         },
         leaveTown() {
@@ -188,25 +204,37 @@ export function useTown(): {
             p.bytecoins -= 1;
             p.koallarbucks += price;
         },
-        get storeCards() {
-            return playerRef.value?.townStoreCards ?? [];
-        },
-        getStoreCardPrice: () => STORE_CARD_PRICE,
-        canBuyStoreCard(cardName: string) {
+        getBoosterPack5Price: () => BOOSTER_PACK_5_PRICE,
+        getBoosterPack10Price: () => BOOSTER_PACK_10_PRICE,
+        canBuyBoosterPack(size: 5 | 10) {
             const p = playerRef.value;
             if (!p) return false;
-            return p.koallarbucks >= STORE_CARD_PRICE && p.townStoreCards.some(c => c.name === cardName);
+            if (size === 5) {
+                if (!storeBooster5AvailableRef.value) return false;
+                return p.koallarbucks >= BOOSTER_PACK_5_PRICE;
+            }
+            if (!storeBooster10AvailableRef.value) return false;
+            return p.koallarbucks >= BOOSTER_PACK_10_PRICE;
         },
-        buyStoreCard(cardParams: SpellCardParams) {
+        buyBoosterPack(size: 5 | 10) {
             const p = playerRef.value;
             if (!p) return;
-            const idx = p.townStoreCards.findIndex(c => c.name === cardParams.name);
-            if (idx === -1) return;
-            if (p.koallarbucks < STORE_CARD_PRICE) return;
-            p.koallarbucks -= STORE_CARD_PRICE;
-            p.townStoreCards.splice(idx, 1);
-            p.collection.push(createSpellCardFromParams(cardParams));
-            p.spellDeck.push(true);
+            const count = size === 5 ? BOOSTER_PACK_5_SIZE : BOOSTER_PACK_10_SIZE;
+            const price = size === 5 ? BOOSTER_PACK_5_PRICE : BOOSTER_PACK_10_PRICE;
+            if (size === 5) {
+                if (!storeBooster5AvailableRef.value) return;
+            } else {
+                if (!storeBooster10AvailableRef.value) return;
+            }
+            if (p.koallarbucks < price) return;
+            const paramsList = pickRandom(BOOSTER_CARD_POOL, count);
+            p.koallarbucks -= price;
+            if (size === 5) storeBooster5AvailableRef.value = false;
+            else storeBooster10AvailableRef.value = false;
+            for (const params of paramsList) {
+                p.collection.push(createSpellCardFromParams(params));
+                p.spellDeck.push(true);
+            }
         },
         traderOffers: traderOffersRef,
         refreshTraderOffers() {

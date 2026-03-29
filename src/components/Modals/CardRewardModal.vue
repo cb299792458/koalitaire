@@ -10,9 +10,9 @@ import { starterCards } from '../../game/cards/starterCards';
 const props = withDefaults(defineProps<{
     /** Modal title (e.g. "Enemy Defeated" or "Event Complete") */
     title?: string;
-    /** Player to add chosen card to. Required for card reward UI. */
+    /** Player to add reward cards to. Required for card reward UI. */
     player?: Player | null;
-    /** Called when a card is chosen or Skip is clicked. Return false to prevent closing. */
+    /** Called when Accept is clicked. Return false to prevent closing. */
     onContinue?: () => void | boolean;
 }>(), {
     title: 'Card Reward',
@@ -27,6 +27,8 @@ const REWARD_COUNT = 3;
 
 const displayCards = ref<SpellCard[]>([]);
 const rewardParams = ref<SpellCardParams[]>([]);
+/** Per reward card: include in combat deck when accepting. */
+const includeInDeck = ref<boolean[]>([false, false, false]);
 
 function createSpellCardFromParams(params: SpellCardParams): SpellCard {
     return new SpellCard(
@@ -54,15 +56,21 @@ onMounted(() => {
         card.revealed = true;
         return card;
     });
+    includeInDeck.value = params.map(() => false);
 });
 
-function selectCard(index: number) {
-    const params = rewardParams.value[index];
-    if (!props.player || !params) return;
-
-    const spellCard = createSpellCardFromParams(params);
-    props.player.collection.push(spellCard);
-    props.player.spellDeck.push(true);
+function accept() {
+    if (!props.player) {
+        finish();
+        return;
+    }
+    for (let i = 0; i < rewardParams.value.length; i++) {
+        const params = rewardParams.value[i];
+        if (!params) continue;
+        const spellCard = createSpellCardFromParams(params);
+        props.player.collection.push(spellCard);
+        props.player.spellDeck.push(includeInDeck.value[i] ?? false);
+    }
     finish();
 }
 
@@ -71,6 +79,11 @@ function finish() {
         emit('close');
     }
 }
+
+function toggleIncludeInDeck(index: number) {
+    const cur = includeInDeck.value[index];
+    includeInDeck.value[index] = !cur;
+}
 </script>
 
 <template>
@@ -78,17 +91,32 @@ function finish() {
         <div class="modal-content">
             <h2>{{ title }}</h2>
             <div class="card-rewards">
-                <button
+                <div
                     v-for="(card, index) in displayCards"
                     :key="index"
-                    type="button"
-                    class="card-reward-slot"
-                    @click="selectCard(index)"
+                    class="card-reward-column"
                 >
-                    <SingleCard :card="card" />
-                </button>
+                    <div
+                        class="card-reward-card-hit"
+                        role="button"
+                        tabindex="0"
+                        @click="toggleIncludeInDeck(index)"
+                        @keydown.enter.prevent="toggleIncludeInDeck(index)"
+                        @keydown.space.prevent="toggleIncludeInDeck(index)"
+                    >
+                        <SingleCard :card="card" />
+                    </div>
+                    <label class="deck-checkbox-label">
+                        <input
+                            v-model="includeInDeck[index]"
+                            type="checkbox"
+                            class="deck-checkbox"
+                        />
+                        <span>Add to deck</span>
+                    </label>
+                </div>
             </div>
-            <button type="button" class="skip-button" @click="finish">Skip</button>
+            <button type="button" class="accept-button" @click="accept">Accept</button>
         </div>
     </div>
 </template>
@@ -109,6 +137,7 @@ function finish() {
     text-align: center;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     min-width: 400px;
+    max-width: min(960px, 95vw);
 }
 
 h2 {
@@ -119,43 +148,71 @@ h2 {
 
 .card-rewards {
     display: flex;
-    gap: 1rem;
+    gap: 1.25rem;
     justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
     margin-bottom: 2rem;
 }
 
-.card-reward-slot {
-    padding: 0;
-    border: 3px solid transparent;
+.card-reward-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.card-reward-card-hit {
+    cursor: pointer;
     border-radius: 8px;
-    background: none;
-    transition: border-color 0.2s, transform 0.15s;
+    transition: box-shadow 0.15s;
 }
 
-.card-reward-slot:hover {
-    border-color: #4CAF50;
-    transform: scale(1.05);
+.card-reward-card-hit:focus {
+    outline: 2px solid #4caf50;
+    outline-offset: 4px;
 }
 
-.card-reward-slot:active {
-    transform: scale(0.98);
+.card-reward-card-hit:focus:not(:focus-visible) {
+    outline: none;
 }
 
-.skip-button {
+.card-reward-card-hit:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.deck-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+}
+
+.deck-checkbox {
+    width: 1.1rem;
+    height: 1.1rem;
+    cursor: pointer;
+}
+
+.accept-button {
     padding: 1rem 2rem;
     font-size: 1.2rem;
-    background: #9e9e9e;
+    background: #4caf50;
     color: white;
     border: none;
     border-radius: 8px;
     transition: background 0.2s;
+    cursor: pointer;
 }
 
-.skip-button:hover {
-    background: #757575;
+.accept-button:hover {
+    background: #43a047;
 }
 
-.skip-button:active {
-    background: #616161;
+.accept-button:active {
+    background: #388e3c;
 }
 </style>

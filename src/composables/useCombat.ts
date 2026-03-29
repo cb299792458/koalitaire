@@ -4,7 +4,7 @@ import { ref, triggerRef, toRaw } from 'vue';
 import Card, { SpellCard } from '../models/Card';
 import { Suit, Suits } from '../models/Suit';
 import Player from '../models/Player';
-import Enemy from '../models/Enemy';
+import Enemy, { PlaceholderEnemy } from '../models/Enemy';
 import DrawPile from '../models/DrawPile';
 import CompostPile from '../models/CompostPile';
 import TrashPile from '../models/TrashPile';
@@ -17,6 +17,7 @@ import { AREAS, type Area } from '../models/Areas';
 import { openModal } from '../stores/modalStore';
 import { playSound } from '../utils/sounds';
 import type { ScenarioEntry } from '../game/makeScenario';
+import { CombatEventBus } from '../game/combatEvents';
 
 export class Combat {
     // Game entities
@@ -42,6 +43,9 @@ export class Combat {
     private processingTurnResolve: (() => void) | null = null;
     private processingTurnPromise: Promise<void> = Promise.resolve();
     
+    /** Typed pub/sub for triggers (per combat instance). */
+    readonly events: CombatEventBus;
+
     // Observer pattern
     listeners: Set<() => void>;
     
@@ -49,9 +53,14 @@ export class Combat {
     onEnemyDefeated?: () => void;
     onEnemyDefeatedContinue?: () => void;
 
+    /** Unsubscribe for built-in listeners (re-registered after each combat start). */
+    private lifecycleUnsubscribe: (() => void) | null = null;
+
     constructor(player: Player, enemy: Enemy) {
         this.player = player;
         this.enemy = enemy;
+        this.events = new CombatEventBus();
+        this.registerCombatLifecycleListeners();
         this.listeners = new Set();
         
         this.selectedCard = null;
@@ -82,6 +91,8 @@ export class Combat {
         });
         
         try {
+            this.events.clear();
+            this.registerCombatLifecycleListeners();
             this.originalPlayer = player;
             this.player = player.copy();
             this.level = player.level; // Invalidate any pending delayed callbacks from previous combat
@@ -113,9 +124,10 @@ export class Combat {
                 this.player.block = 0;
                 this.player.manaDiamonds = this.player.startingManaDiamonds;
             }
-            
-            this.startTurn();
-            
+
+            await this.events.emit({ type: 'combatStarted' });
+            await this.startTurn();
+
             this.notify();
         } finally {
             this.processingTurnResolve?.();
@@ -125,14 +137,45 @@ export class Combat {
 
     // ==================== Turn Management ====================
 
-    startTurn(): void {
-        if (!this.player) return;
-        this.player.dodge = 0;
-        this.player.block = 0;
+    /**
+     * Tableau + compost → deck (mana pools unchanged), shuffle, redeal tableau.
+     * Subscribed to {@link CombatEvent} `playerTurnEnded` in {@link registerCombatLifecycleListeners}.
+     */
+    private async recycleTableauAndCompostIntoDeck(): Promise<void> {
+        for (const column of this.tableau.getColumns()) {
+            this.deck.addCards([...column.cards]);
+            column.cards = [];
+        }
+        this.compost.recycleInto(this.deck);
+        await this.deck.shuffle();
+        this.dealTableau();
+        this.notify();
+    }
 
-        if (!this.enemy) return;
-        this.enemy.loadActions(this.enemy.actions);
+    /**
+     * Built-in turn rules on the event bus (registered first after {@link CombatEventBus.clear}).
+     * `playerTurnStarted`: reset dodge/block, refresh enemy actions, then external listeners run.
+     * `playerTurnEnded`: recycle tableau/compost into deck and redeal, then external listeners run.
+     */
+    private registerCombatLifecycleListeners(): void {
+        this.lifecycleUnsubscribe?.();
+        this.lifecycleUnsubscribe = this.events.subscribe((event) => {
+            if (event.type === "playerTurnStarted") {
+                if (!this.player || !this.enemy) return;
+                this.player.dodge = 0;
+                this.player.block = 0;
+                this.enemy.loadActions(this.enemy.actions);
+                return;
+            }
+            if (event.type === "playerTurnEnded") {
+                return this.recycleTableauAndCompostIntoDeck();
+            }
+        });
+    }
 
+    async startTurn(): Promise<void> {
+        if (!this.player || !this.enemy) return;
+        await this.events.emit({ type: 'playerTurnStarted' });
         this.notify();
     }
 
@@ -147,16 +190,8 @@ export class Combat {
         this.notify();
 
         // Free cells (hand) are not shuffled; leave them as-is.
-
-        // Tableau + compost → deck (mana pools left unchanged), shuffle, redeal tableau
-        for (const column of this.tableau.getColumns()) {
-            this.deck.addCards([...column.cards]);
-            column.cards = [];
-        }
-        this.compost.recycleInto(this.deck);
-        await this.deck.shuffle();
-        this.dealTableau();
-        this.notify();
+        // Turn lifecycle handling (tableau recycle, etc.) is in registerCombatLifecycleListeners.
+        await this.events.emit({ type: 'playerTurnEnded' });
 
         try {
             await this.runRestOfTurn();
@@ -198,7 +233,7 @@ export class Combat {
             await this.deck.shuffle();
         }
 
-        this.startTurn();
+        await this.startTurn();
     }
     
     checkEnemyDeath(): boolean {
@@ -432,52 +467,60 @@ export class Combat {
         selectedCard.animate();
         
         this.runAfterDelay(selectedCard.animationTime, () => {
-            if (!this.player || !this.enemy) return;
-            
-            // Calculate and remove mana diamonds needed
-            const manaPool = this.manaPools.getPool(selectedCard.suit);
-            if (selectedCard.suit === Suit.Koala) {
-                if (selectedCard.rank > 0) {
-                    this.player.manaDiamonds -= selectedCard.rank;
-                    if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
-                }
-            } else if (manaPool) {
-                const manaDiamondsNeeded = selectedCard.rank - manaPool.cards.length;
-                if (manaDiamondsNeeded > 0) {
-                    this.player.manaDiamonds -= manaDiamondsNeeded;
-                    if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
-                }
-                const cardsToDiscard = manaPool.cards.slice(-selectedCard.rank);
-                for (const card of cardsToDiscard) {
-                    this.moveCardToArea(card, AREAS.Compost);
-                }
-            }
+            void (async () => {
+                if (!this.player || !this.enemy) return;
 
-            // Trigger spell card effect if it's a spell card
-            if (selectedCard.isSpell) {
-                const spellCard = selectedCard as SpellCard;
-                spellCard.effect(this);
-            }
+                // Calculate and remove mana diamonds needed
+                const manaPool = this.manaPools.getPool(selectedCard.suit);
+                if (selectedCard.suit === Suit.Koala) {
+                    if (selectedCard.rank > 0) {
+                        this.player.manaDiamonds -= selectedCard.rank;
+                        if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
+                    }
+                } else if (manaPool) {
+                    const manaDiamondsNeeded = selectedCard.rank - manaPool.cards.length;
+                    if (manaDiamondsNeeded > 0) {
+                        this.player.manaDiamonds -= manaDiamondsNeeded;
+                        if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
+                    }
+                    const cardsToDiscard = manaPool.cards.slice(-selectedCard.rank);
+                    for (const card of cardsToDiscard) {
+                        this.moveCardToArea(card, AREAS.Compost);
+                    }
+                }
 
-            // Move the card: if it has finite charges, decrement; when charges hits 0, trash instead of compost
-            if (selectedCard.isSpell) {
-                const spellCard = selectedCard as SpellCard;
-                if (Number.isFinite(spellCard.charges)) {
-                    spellCard.charges = (spellCard.charges ?? 0) - 1;
-                    if (spellCard.charges <= 0) {
-                        this.moveCardToArea(selectedCard, AREAS.Trash);
+                // Trigger spell card effect if it's a spell card
+                if (selectedCard.isSpell) {
+                    const spellCard = selectedCard as SpellCard;
+                    spellCard.effect(this);
+                    await this.events.emit({
+                        type: 'spellCast',
+                        spellName: spellCard.name,
+                        suit: spellCard.suit,
+                        rank: spellCard.rank,
+                    });
+                }
+
+                // Move the card: if it has finite charges, decrement; when charges hits 0, trash instead of compost
+                if (selectedCard.isSpell) {
+                    const spellCard = selectedCard as SpellCard;
+                    if (Number.isFinite(spellCard.charges)) {
+                        spellCard.charges = (spellCard.charges ?? 0) - 1;
+                        if (spellCard.charges <= 0) {
+                            this.moveCardToArea(selectedCard, AREAS.Trash);
+                        } else {
+                            this.moveCardToArea(selectedCard, AREAS.Compost);
+                        }
                     } else {
                         this.moveCardToArea(selectedCard, AREAS.Compost);
                     }
                 } else {
                     this.moveCardToArea(selectedCard, AREAS.Compost);
                 }
-            } else {
-                this.moveCardToArea(selectedCard, AREAS.Compost);
-            }
 
-            if (this.checkEnemyDeath()) return;
-            this.notify();
+                if (this.checkEnemyDeath()) return;
+                this.notify();
+            })();
         });
         
         this.setSelectedCard(null);
@@ -923,12 +966,7 @@ export function useCombat(): Combat {
             collection: [],
             manaDeck: {},
         });
-        const defaultEnemy = new Enemy({
-            name: '',
-            portrait: '',
-            health: 0,
-            makeDeck: () => []
-        });
+        const defaultEnemy = new PlaceholderEnemy();
         
         const combat = new Combat(defaultPlayer, defaultEnemy);
 

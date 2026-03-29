@@ -182,18 +182,14 @@
         () => (unref(player)?.bytecoins ?? 0) >= 1
     )
 
-    const storeDisplayCards = computed(() =>
-        (player.value?.townStoreCards ?? []).map((params) => ({
-            params,
-            displayCard: spellCardFromParams(params),
-        }))
-    )
-
     const traderGeneralDisplayCards = computed(() =>
         town.traderOffers.value.map((offer) =>
             spellCardFromParams(offer.generalCard)
         )
     )
+
+    const booster5InStock = computed(() => town.storeBooster5Available.value)
+    const booster10InStock = computed(() => town.storeBooster10Available.value)
 </script>
 
 <template>
@@ -249,23 +245,36 @@
                                         </button>
                                     </template>
                                     <template v-else-if="currentLocation === 'store'">
-                                        <div class="town-store-cards">
-                                            <div
-                                                v-for="{ params, displayCard } in storeDisplayCards"
-                                                :key="params.name"
-                                                class="town-store-card"
-                                            >
-                                                <div class="town-store-card-display">
-                                                    <SingleCard :card="displayCard" />
-                                                    <button
-                                                        type="button"
-                                                        class="town-store-buy-button"
-                                                        :disabled="!town.canBuyStoreCard(params.name)"
-                                                        @click="town.buyStoreCard(params)"
-                                                    >
-                                                        Buy ({{ town.getStoreCardPrice() }} 💵)
-                                                    </button>
+                                        <div class="town-store-boosters">
+                                            <div class="town-store-booster">
+                                                <div class="town-store-booster-info">
+                                                    <span class="town-store-booster-title">5-card booster pack</span>
+                                                    <span class="town-store-booster-detail">Five random spell cards added to your collection and deck.</span>
                                                 </div>
+                                                <button
+                                                    type="button"
+                                                    class="town-choice-button town-store-booster-buy"
+                                                    :disabled="!town.canBuyBoosterPack(5)"
+                                                    @click="town.buyBoosterPack(5)"
+                                                >
+                                                    <template v-if="!booster5InStock">Sold out this visit</template>
+                                                    <template v-else>Buy ({{ town.getBoosterPack5Price() }} 💵)</template>
+                                                </button>
+                                            </div>
+                                            <div class="town-store-booster">
+                                                <div class="town-store-booster-info">
+                                                    <span class="town-store-booster-title">10-card booster pack</span>
+                                                    <span class="town-store-booster-detail">Ten random spell cards added to your collection and deck.</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    class="town-choice-button town-store-booster-buy"
+                                                    :disabled="!town.canBuyBoosterPack(10)"
+                                                    @click="town.buyBoosterPack(10)"
+                                                >
+                                                    <template v-if="!booster10InStock">Sold out this visit</template>
+                                                    <template v-else>Buy ({{ town.getBoosterPack10Price() }} 💵)</template>
+                                                </button>
                                             </div>
                                         </div>
                                     </template>
@@ -467,52 +476,51 @@
         gap: 12px;
     }
 
-    .town-store-cards {
+    .town-store-boosters {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: stretch;
+        max-width: 520px;
+        margin: 0 auto;
+    }
+
+    .town-store-booster {
         display: flex;
         flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
         gap: 16px;
-        justify-content: center;
-        align-items: flex-start;
+        padding: 16px 20px;
+        background-color: rgba(0, 0, 0, 0.08);
+        border-radius: 10px;
+        border: 2px solid rgba(61, 107, 74, 0.35);
     }
 
-    .town-store-card {
-        padding: 12px;
-        background-color: rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
+    .town-store-booster-info {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        text-align: left;
+        flex: 1;
+        min-width: 200px;
     }
 
-    .town-store-card-display {
-        position: relative;
-        transform: scale(0.9);
-        transform-origin: top center;
+    .town-store-booster-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #1a1a1a;
     }
 
-    .town-store-buy-button {
-        position: absolute;
-        bottom: 50%;
-        left: 50%;
-        transform: translate(-50%, 50%);
-        padding: 0.4rem 0.8rem;
-        font-size: 0.85rem;
-        background-color: #4a7c59;
-        color: #f0e6d3;
-        border: 2px solid #3d6b4a;
-        border-radius: 6px;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-        z-index: 10;
+    .town-store-booster-detail {
+        font-size: 0.95rem;
+        color: #333;
+        line-height: 1.35;
     }
 
-    .town-store-card-display:hover .town-store-buy-button {
-        opacity: 1;
-    }
-
-    .town-store-buy-button:hover:not(:disabled) {
-        background-color: #5a9c69;
-    }
-
-    .town-store-card-display:hover .town-store-buy-button:disabled {
-        opacity: 0.6;
+    .town-store-booster-buy {
+        flex-shrink: 0;
+        min-width: 200px;
     }
 
     .town-placeholder-msg {

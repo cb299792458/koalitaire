@@ -1,11 +1,18 @@
-import { type EnemyParams, platypusParams, dwambatParams, gnokkaParams, squirrelfParams, dingorcParams } from "../models/Enemy";
+import {
+    type EnemyConstructor,
+    DingorcEnemy,
+    DwambatEnemy,
+    GnokkaEnemy,
+    PlatypusEnemy,
+    SquirrelfEnemy,
+} from "../models/enemies";
 import type { Event } from "../models/Event";
 import { events } from "../models/Event";
 
 export type ScenarioEntry =
-    | { enemy: EnemyParams }
-    | { elite: EnemyParams }
-    | { boss: EnemyParams }
+    | { enemy: EnemyConstructor }
+    | { elite: EnemyConstructor }
+    | { boss: EnemyConstructor }
     | { town: true }
     | { event: Event }
     | null;
@@ -21,10 +28,10 @@ function pickRandomEvent(): Event {
 
 function pickRandomEntry(): NonNullable<ScenarioEntry> {
     const roll = Math.random();
-    if (roll < 0.25) return { enemy: platypusParams };
-    if (roll < 0.5) return { enemy: dwambatParams };
-    if (roll < 0.65) return { enemy: gnokkaParams };
-    if (roll < 0.8) return { elite: squirrelfParams };
+    if (roll < 0.25) return { enemy: PlatypusEnemy };
+    if (roll < 0.5) return { enemy: DwambatEnemy };
+    if (roll < 0.65) return { enemy: GnokkaEnemy };
+    if (roll < 0.8) return { elite: SquirrelfEnemy };
     if (roll < 0.9) return { town: true };
     return { event: pickRandomEvent() };
 }
@@ -39,7 +46,7 @@ export default function makeScenario(): ScenarioEntry[][] {
         if (row === 0) {
             rowEntries.push(null);
         } else if (row === ROW_COUNT - 1) {
-            rowEntries.push({ boss: dingorcParams });
+            rowEntries.push({ boss: DingorcEnemy });
         } else {
             for (let col = 0; col < length; col++) {
                 rowEntries.push(pickRandomEntry());
