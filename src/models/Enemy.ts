@@ -6,57 +6,7 @@ import type { Combat } from "../composables/useCombat";
 import useDamageNumbers from "../composables/useDamageNumbers";
 
 export type EnemyActionKey = keyof typeof enemyActions;
-
-/** Mutable state passed to `pickActions` each turn (e.g. sequential cursor). */
-export interface EnemyPickState {
-    sequenceIndex: number;
-}
-
-/**
- * Chooses which actions this enemy takes for the current turn.
- * Receives the deck from `makeDeck()`, how many slots to fill, and persistent state.
- */
-export type PickEnemyActions = (
-    deck: EnemyAction[],
-    count: number,
-    state: EnemyPickState
-) => EnemyAction[];
-
-/** Sample `count` actions from `deck` without replacement (same as the original enemy behavior). */
-export function pickRandomActions(
-    deck: EnemyAction[],
-    count: number,
-    _state: EnemyPickState
-): EnemyAction[] {
-    const copy = [...deck];
-    const out: EnemyAction[] = [];
-    for (let i = 0; i < count && copy.length > 0; i++) {
-        const randomIndex = Math.floor(Math.random() * copy.length);
-        const action = copy.splice(randomIndex, 1)[0];
-        if (action) out.push(action);
-    }
-    return out;
-}
-
-/**
- * Walk `deck` in order; `deck` is one cycle of the pattern and repeats forever.
- * Uses `state.sequenceIndex` as the cursor.
- */
-export function pickSequentialActions(
-    deck: EnemyAction[],
-    count: number,
-    state: EnemyPickState
-): EnemyAction[] {
-    if (deck.length === 0) return [];
-    const out: EnemyAction[] = [];
-    for (let i = 0; i < count; i++) {
-        const idx = state.sequenceIndex % deck.length;
-        const action = deck[idx];
-        if (action) out.push(action);
-        state.sequenceIndex += 1;
-    }
-    return out;
-}
+export type EnemyTurnActionGenerator = (actions: number) => EnemyAction[];
 
 /** Build one action instance from the shared action table. */
 export function enemyActionFromKey(key: string): EnemyAction {
@@ -66,7 +16,7 @@ export function enemyActionFromKey(key: string): EnemyAction {
     return new EnemyAction(name, description, effect);
 }
 
-/** Weighted bag of actions (order not meaningful with `pickRandomActions`). */
+/** Weighted bag of actions (order not meaningful with random action generators). */
 export function buildDeckFromCounts(
     cards: Partial<Record<EnemyActionKey, number>>
 ): EnemyAction[] {
@@ -79,47 +29,71 @@ export function buildDeckFromCounts(
     return deck;
 }
 
-/** One cycle of a pattern in order (use with `pickSequentialActions`). */
+/** One cycle of a pattern in order (use with a sequential action generator). */
 export function buildDeckFromPattern(keys: readonly EnemyActionKey[]): EnemyAction[] {
     return keys.map((key) => enemyActionFromKey(key));
 }
 
+/** Build a per-turn generator that samples actions randomly without replacement. */
+export function createRandomActionGenerator(makeDeck: () => EnemyAction[]): EnemyTurnActionGenerator {
+    const deck = makeDeck();
+    return (actions: number): EnemyAction[] => {
+        const copy = [...deck];
+        const out: EnemyAction[] = [];
+        for (let i = 0; i < actions && copy.length > 0; i++) {
+            const randomIndex = Math.floor(Math.random() * copy.length);
+            const action = copy.splice(randomIndex, 1)[0];
+            if (action) out.push(action);
+        }
+        return out;
+    };
+}
+
+/** Build a per-turn generator that walks a deck in order and repeats forever. */
+export function createSequentialActionGenerator(makeDeck: () => EnemyAction[]): EnemyTurnActionGenerator {
+    const deck = makeDeck();
+    let sequenceIndex = 0;
+    return (actions: number): EnemyAction[] => {
+        if (deck.length === 0) return [];
+        const out: EnemyAction[] = [];
+        for (let i = 0; i < actions; i++) {
+            const idx = sequenceIndex % deck.length;
+            const action = deck[idx];
+            if (action) out.push(action);
+            sequenceIndex += 1;
+        }
+        return out;
+    };
+}
+
 export interface EnemyParams {
     name: string;
-    portrait: string;
+    portrait?: string;
     /** Tooltip text on portrait hover. Defaults to name if not set. */
     tooltip?: string;
     health: number;
-    makeDeck: () => EnemyAction[];
-    /**
-     * How to fill the action bar each turn. Defaults to {@link pickRandomActions}.
-     * Use {@link pickSequentialActions} for a repeating pattern, or provide your own function.
-     */
-    pickActions?: PickEnemyActions;
+    /** Produces the exact action(s) this enemy will load for the current turn. */
+    generateTurnActions: EnemyTurnActionGenerator;
 }
 
 class Enemy extends Combatant {
-    deck: EnemyAction[];
     actions: number;
     impendingActions: EnemyAction[];
 
     attack: number;
 
-    private pickActions: PickEnemyActions;
-    private pickState: EnemyPickState;
+    private readonly generateTurnActions: EnemyTurnActionGenerator;
 
     protected constructor(enemyParams: EnemyParams) {
         super({
             name: enemyParams.name,
-            portrait: enemyParams.portrait,
+            portrait: enemyParams.portrait ?? "/unknown.jpg",
             health: enemyParams.health,
             armor: 0,
             tooltip: enemyParams.tooltip,
         });
 
-        this.pickActions = enemyParams.pickActions ?? pickRandomActions;
-        this.pickState = { sequenceIndex: 0 };
-        this.deck = enemyParams.makeDeck();
+        this.generateTurnActions = enemyParams.generateTurnActions;
         this.actions = 1;
         this.impendingActions = [];
 
@@ -131,8 +105,7 @@ class Enemy extends Combatant {
     }
 
     loadActions(actions: number): void {
-        if (this.deck.length === 0) return;
-        const chosen = this.pickActions(this.deck, actions, this.pickState);
+        const chosen = this.generateTurnActions(actions);
         this.impendingActions.push(...chosen);
     }
 
@@ -158,9 +131,8 @@ export class PlaceholderEnemy extends Enemy {
     constructor() {
         super({
             name: "",
-            portrait: "",
             health: 0,
-            makeDeck: () => [],
+            generateTurnActions: () => [],
         });
     }
 }

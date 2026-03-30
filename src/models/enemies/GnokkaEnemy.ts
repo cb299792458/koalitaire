@@ -1,13 +1,11 @@
-import Enemy, { buildDeckFromCounts } from "../Enemy";
-import gnokkaPortrait from "/player_portraits/gnokka.jpg";
+import Enemy, { buildDeckFromCounts, createRandomActionGenerator } from "../Enemy";
 
 export default class GnokkaEnemy extends Enemy {
     constructor() {
         super({
             name: "Gnokka",
-            portrait: gnokkaPortrait,
             health: 20,
-            makeDeck: () =>
+            generateTurnActions: createRandomActionGenerator(() =>
                 buildDeckFromCounts({
                     doNothing: 2,
                     weakMagicAttack: 3,
@@ -15,7 +13,8 @@ export default class GnokkaEnemy extends Enemy {
                     buff: 2,
                     summonRat: 2,
                     haste: 1,
-                }),
+                })
+            ),
         });
     }
 }

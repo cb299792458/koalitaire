@@ -1,10 +1,8 @@
 import {
+    ELITE_ENCOUNTER_ENEMIES,
+    RANDOM_ENCOUNTER_ENEMIES,
     type EnemyConstructor,
     DingorcEnemy,
-    DwambatEnemy,
-    GnokkaEnemy,
-    PlatypusEnemy,
-    SquirrelfEnemy,
 } from "../models/enemies";
 import type { Event } from "../models/Event";
 import { events } from "../models/Event";
@@ -26,12 +24,14 @@ function pickRandomEvent(): Event {
     return events[Math.floor(Math.random() * events.length)]!;
 }
 
+function pickRandomEnemyFrom(pool: EnemyConstructor[]): EnemyConstructor {
+    return pool[Math.floor(Math.random() * pool.length)]!;
+}
+
 function pickRandomEntry(): NonNullable<ScenarioEntry> {
     const roll = Math.random();
-    if (roll < 0.25) return { enemy: PlatypusEnemy };
-    if (roll < 0.5) return { enemy: DwambatEnemy };
-    if (roll < 0.65) return { enemy: GnokkaEnemy };
-    if (roll < 0.8) return { elite: SquirrelfEnemy };
+    if (roll < 0.65) return { enemy: pickRandomEnemyFrom(RANDOM_ENCOUNTER_ENEMIES) };
+    if (roll < 0.8) return { elite: pickRandomEnemyFrom(ELITE_ENCOUNTER_ENEMIES) };
     if (roll < 0.9) return { town: true };
     return { event: pickRandomEvent() };
 }

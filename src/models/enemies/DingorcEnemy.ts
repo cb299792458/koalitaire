@@ -1,13 +1,11 @@
-import Enemy, { buildDeckFromCounts } from "../Enemy";
-import dingorcPortrait from "/player_portraits/dingorc.jpg";
+import Enemy, { buildDeckFromCounts, createRandomActionGenerator } from "../Enemy";
 
 export default class DingorcEnemy extends Enemy {
     constructor() {
         super({
             name: "Dingorc",
-            portrait: dingorcPortrait,
             health: 35,
-            makeDeck: () =>
+            generateTurnActions: createRandomActionGenerator(() =>
                 buildDeckFromCounts({
                     doNothing: 1,
                     weakAttack: 2,
@@ -17,7 +15,8 @@ export default class DingorcEnemy extends Enemy {
                     heal: 3,
                     summonRat: 2,
                     haste: 2,
-                }),
+                })
+            ),
         });
     }
 }
