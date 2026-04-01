@@ -23,6 +23,25 @@ class EnemyAction {
 
 export default EnemyAction;
 
+export interface BuildAttackActionParams {
+    name: string;
+    damage: number;
+    damageTypes?: DamageType[];
+    description?: string;
+}
+
+/** Build a custom enemy attack action with optional damage types. */
+export function buildAttackAction(params: BuildAttackActionParams): EnemyAction {
+    const { name, damage, damageTypes = [], description } = params;
+    return new EnemyAction(
+        name,
+        description ?? `The enemy attacks you for ${damage} damage, plus its attack.`,
+        (enemy, player) => {
+            player.takeDamage(damage + enemy.attack, damageTypes);
+        }
+    );
+}
+
 const doNothing: EnemyActionParams = {
     name: "Do Nothing",
     description: "The enemy does nothing.",

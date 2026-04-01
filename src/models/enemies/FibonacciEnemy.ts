@@ -1,5 +1,5 @@
 import Enemy from "../Enemy";
-import EnemyAction from "../EnemyAction";
+import { buildAttackAction } from "../EnemyAction";
 
 export default class FibonacciEnemy extends Enemy {
     constructor() {
@@ -9,8 +9,8 @@ export default class FibonacciEnemy extends Enemy {
         super({
             name: "Fibonacci",
             health: 21,
-            generateTurnActions: (actions) => {
-                const turnActions: EnemyAction[] = [];
+            generateTurnActions: ({ actions }) => {
+                const turnActions = [];
 
                 for (let i = 0; i < actions; i++) {
                     const damage = previous;
@@ -19,13 +19,10 @@ export default class FibonacciEnemy extends Enemy {
                     current = next;
 
                     turnActions.push(
-                        new EnemyAction(
-                            "Fibonacci Strike",
-                            `The enemy attacks you for ${damage} damage, plus its attack.`,
-                            (enemy, player) => {
-                                player.takeDamage(damage + enemy.attack);
-                            }
-                        )
+                        buildAttackAction({
+                            name: "Fibonacci Strike",
+                            damage,
+                        })
                     );
                 }
 

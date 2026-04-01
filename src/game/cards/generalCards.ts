@@ -81,18 +81,18 @@ const wrath: SpellCardParams = {
     },
 }
 
-const bde: SpellCardParams = {
-    rank: 6,
-    suit: Suit.Earth,
-    name: 'Big Dig Energy',
-    description: 'Returns all mana cards from the compost to your hand.',
-    effect: (combat: Combat) => {
-        const { compost, hand } = combat;
-        const manaCards = compost.cards.filter((card) => !card.isSpell);
-        compost.cards = compost.cards.filter((card) => card.isSpell);
-        manaCards.forEach((card) => hand.addCard(card));
-    },
-}
+// const bde: SpellCardParams = {
+//     rank: 6,
+//     suit: Suit.Earth,
+//     name: 'Big Dig Energy',
+//     description: 'Returns all mana cards from the compost to your hand.',
+//     effect: (combat: Combat) => {
+//         const { compost, hand } = combat;
+//         const manaCards = compost.cards.filter((card) => !card.isSpell);
+//         compost.cards = compost.cards.filter((card) => card.isSpell);
+//         manaCards.forEach((card) => hand.addCard(card));
+//     },
+// }
 
 const regenerate: SpellCardParams = {
     rank: 4,
@@ -226,7 +226,8 @@ export const generalCards: SpellCardParams[] = [
     summonKoallaborator,
     shieldBash,
     wrath,
-    bde,
+    // Temporarily disabled.
+    // bde,
     regenerate,
     koality,
     summonWarKoala,

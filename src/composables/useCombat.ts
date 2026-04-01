@@ -164,7 +164,7 @@ export class Combat {
                 if (!this.player || !this.enemy) return;
                 this.player.dodge = 0;
                 this.player.block = 0;
-                this.enemy.loadActions(this.enemy.actions);
+                this.enemy.loadActions(this.enemy.actions, this.player, this);
                 return;
             }
             if (event.type === "playerTurnEnded") {

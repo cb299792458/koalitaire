@@ -6,7 +6,15 @@ import type { Combat } from "../composables/useCombat";
 import useDamageNumbers from "../composables/useDamageNumbers";
 
 export type EnemyActionKey = keyof typeof enemyActions;
-export type EnemyTurnActionGenerator = (actions: number) => EnemyAction[];
+export interface EnemyTurnContext {
+    actions: number;
+    turnNumber: number;
+    enemy: Enemy;
+    player: Player;
+    combat: Combat;
+}
+
+export type EnemyTurnActionGenerator = (context: EnemyTurnContext) => EnemyAction[];
 
 /** Build one action instance from the shared action table. */
 export function enemyActionFromKey(key: string): EnemyAction {
@@ -37,7 +45,7 @@ export function buildDeckFromPattern(keys: readonly EnemyActionKey[]): EnemyActi
 /** Build a per-turn generator that samples actions randomly without replacement. */
 export function createRandomActionGenerator(makeDeck: () => EnemyAction[]): EnemyTurnActionGenerator {
     const deck = makeDeck();
-    return (actions: number): EnemyAction[] => {
+    return ({ actions }: EnemyTurnContext): EnemyAction[] => {
         const copy = [...deck];
         const out: EnemyAction[] = [];
         for (let i = 0; i < actions && copy.length > 0; i++) {
@@ -53,7 +61,7 @@ export function createRandomActionGenerator(makeDeck: () => EnemyAction[]): Enem
 export function createSequentialActionGenerator(makeDeck: () => EnemyAction[]): EnemyTurnActionGenerator {
     const deck = makeDeck();
     let sequenceIndex = 0;
-    return (actions: number): EnemyAction[] => {
+    return ({ actions }: EnemyTurnContext): EnemyAction[] => {
         if (deck.length === 0) return [];
         const out: EnemyAction[] = [];
         for (let i = 0; i < actions; i++) {
@@ -64,6 +72,24 @@ export function createSequentialActionGenerator(makeDeck: () => EnemyAction[]): 
         }
         return out;
     };
+}
+
+/** Compose many generators into one turn output. */
+export function combineActionGenerators(
+    ...generators: EnemyTurnActionGenerator[]
+): EnemyTurnActionGenerator {
+    return (context: EnemyTurnContext): EnemyAction[] =>
+        generators.flatMap((generator) => generator(context));
+}
+
+/** Branch between two generators based on live turn context. */
+export function conditionalActionGenerator(
+    predicate: (context: EnemyTurnContext) => boolean,
+    whenTrue: EnemyTurnActionGenerator,
+    whenFalse: EnemyTurnActionGenerator = () => []
+): EnemyTurnActionGenerator {
+    return (context: EnemyTurnContext): EnemyAction[] =>
+        (predicate(context) ? whenTrue : whenFalse)(context);
 }
 
 export interface EnemyParams {
@@ -81,6 +107,7 @@ class Enemy extends Combatant {
     impendingActions: EnemyAction[];
 
     attack: number;
+    turnNumber: number;
 
     private readonly generateTurnActions: EnemyTurnActionGenerator;
 
@@ -98,14 +125,22 @@ class Enemy extends Combatant {
         this.impendingActions = [];
 
         this.attack = 0;
+        this.turnNumber = 0;
     }
 
     protected addDamageNumber(amount: number, type: DamageNumberType): void {
         useDamageNumbers().addEnemyNumber(amount, type);
     }
 
-    loadActions(actions: number): void {
-        const chosen = this.generateTurnActions(actions);
+    loadActions(actions: number, player: Player, combat: Combat): void {
+        this.turnNumber += 1;
+        const chosen = this.generateTurnActions({
+            actions,
+            turnNumber: this.turnNumber,
+            enemy: this,
+            player,
+            combat,
+        });
         this.impendingActions.push(...chosen);
     }
 
