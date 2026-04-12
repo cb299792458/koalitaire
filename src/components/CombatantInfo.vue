@@ -20,7 +20,28 @@
     const CURSOR_OFFSET = 12
     const TOOLTIP_EDGE_PADDING = 20
     const TOOLTIP_DELAY = 800
-    const CARDIFACT_TOOLTIP_DELAY = 300
+    const INFO_TOOLTIP_DELAY = 300
+
+    /** Teleport tooltips for stats and cardifacts (native title is clipped by overflow). */
+    const statTooltips = {
+        health: 'Hearts: Current / Maximum Health',
+        manaDiamonds:
+            'Diamonds: Condensed mana, spent to cast a spell if you do not have enough mana cards in the corresponding pool.',
+        dodge: 'Dodge: Each point negates one incoming damage instance entirely, before block. Consumed when it stops a hit.',
+        block: 'Block: Absorbs incoming damage before it reduces health. Applied after dodge, but before damage to summons. Magic damage ignores block.',
+        appeal: 'Appeal: Charisma and Leadership.',
+        attackPlayer: 'Attack: Damage dealt by regular attacks.',
+        attackEnemy: 'Attack: Added to this enemy\'s damage when they use attack actions.',
+        armorPlayer: 'Armor: Constitution and Endurance.',
+        armorEnemy:
+            'Used by this enemy\'s actions (e.g. extra block); some enemy skills increase armor.',
+        agility: 'Agility: Dexterity and Speed.',
+        acumen: 'Acumen: Intelligence and Magical Knowledge.',
+        koallarbucks: 'Koallarbucks: The official currency of Straya',
+        appealEnemy: 'This enemy\'s appeal. Used by special actions or effects when relevant.',
+        agilityEnemy: 'This enemy\'s agility. Used by special actions or effects when relevant.',
+        acumenEnemy: 'This enemy\'s acumen. Used by special actions or effects when relevant.',
+    } as const
 
     const tooltipX = ref(0)
     const tooltipY = ref(0)
@@ -79,46 +100,46 @@
     )
 
     /** Same Teleport/fixed pattern as portrait — native `title` is clipped by overflow/transform. */
-    const cardifactTooltipX = ref(0)
-    const cardifactTooltipY = ref(0)
-    const cardifactTooltipRef = ref<HTMLElement | null>(null)
-    const cardifactTooltipText = ref<string | null>(null)
-    const showCardifactTooltip = ref(false)
-    let cardifactTooltipDelay: ReturnType<typeof setTimeout> | null = null
+    const infoTooltipX = ref(0)
+    const infoTooltipY = ref(0)
+    const infoTooltipRef = ref<HTMLElement | null>(null)
+    const infoTooltipText = ref<string | null>(null)
+    const showInfoTooltip = ref(false)
+    let infoTooltipDelay: ReturnType<typeof setTimeout> | null = null
 
-    const cardifactTooltipStyle = computed(() => {
-        const height = cardifactTooltipRef.value?.offsetHeight ?? 80
+    const infoTooltipStyle = computed(() => {
+        const height = infoTooltipRef.value?.offsetHeight ?? 80
         const wouldOverflowBottom =
-            cardifactTooltipY.value + height > window.innerHeight - TOOLTIP_EDGE_PADDING
+            infoTooltipY.value + height > window.innerHeight - TOOLTIP_EDGE_PADDING
         return {
-            left: `${cardifactTooltipX.value}px`,
+            left: `${infoTooltipX.value}px`,
             top: wouldOverflowBottom
-                ? `${cardifactTooltipY.value - height - TOOLTIP_EDGE_PADDING}px`
-                : `${cardifactTooltipY.value}px`,
+                ? `${infoTooltipY.value - height - TOOLTIP_EDGE_PADDING}px`
+                : `${infoTooltipY.value}px`,
         }
     })
 
-    function onCardifactTooltipMove(e: MouseEvent) {
-        cardifactTooltipX.value = e.clientX + CURSOR_OFFSET
-        cardifactTooltipY.value = e.clientY + CURSOR_OFFSET
+    function onInfoTooltipMove(e: MouseEvent) {
+        infoTooltipX.value = e.clientX + CURSOR_OFFSET
+        infoTooltipY.value = e.clientY + CURSOR_OFFSET
     }
 
-    function onCardifactTooltipEnter(e: MouseEvent, description: string) {
-        onCardifactTooltipMove(e)
-        cardifactTooltipDelay = setTimeout(() => {
-            cardifactTooltipText.value = description
-            showCardifactTooltip.value = true
-            cardifactTooltipDelay = null
-        }, CARDIFACT_TOOLTIP_DELAY)
+    function onInfoTooltipEnter(e: MouseEvent, text: string) {
+        onInfoTooltipMove(e)
+        infoTooltipDelay = setTimeout(() => {
+            infoTooltipText.value = text
+            showInfoTooltip.value = true
+            infoTooltipDelay = null
+        }, INFO_TOOLTIP_DELAY)
     }
 
-    function onCardifactTooltipLeave() {
-        if (cardifactTooltipDelay !== null) {
-            clearTimeout(cardifactTooltipDelay)
-            cardifactTooltipDelay = null
+    function onInfoTooltipLeave() {
+        if (infoTooltipDelay !== null) {
+            clearTimeout(infoTooltipDelay)
+            infoTooltipDelay = null
         }
-        showCardifactTooltip.value = false
-        cardifactTooltipText.value = null
+        showInfoTooltip.value = false
+        infoTooltipText.value = null
     }
 </script>
 
@@ -155,10 +176,41 @@
                 </div>
             </Teleport>
         </div>
-        <p><span class="suit-symbol suit-symbol--health" title="♥ Your life total. At 0 you're defeated.">♥</span> {{ combatant.health }} / {{ combatant.maxHealth }}</p>
-        <p v-if="isPlayer"><span class="suit-symbol suit-symbol--mana-diamonds" title="♦ Mana Diamonds: Used to pay the difference when casting cards.">♦</span> {{ (combatant as Player).manaDiamonds }}</p>
-        <p><span title="When you would take damage, ignore it completely and lose 1 dodge instead. Checked before block.">Dodge:</span> {{ combatant.dodge }}</p>
-        <p><span title="Absorbs incoming damage before health.">Block:</span> {{ combatant.block }}</p>
+        <p
+            class="combatant-info__stat-line"
+            @mouseenter="onInfoTooltipEnter($event, statTooltips.health)"
+            @mousemove="onInfoTooltipMove"
+            @mouseleave="onInfoTooltipLeave"
+        >
+            <span class="suit-symbol suit-symbol--health">♥</span> {{ combatant.health }} /
+            {{ combatant.maxHealth }}
+        </p>
+        <p
+            v-if="isPlayer"
+            class="combatant-info__stat-line"
+            @mouseenter="onInfoTooltipEnter($event, statTooltips.manaDiamonds)"
+            @mousemove="onInfoTooltipMove"
+            @mouseleave="onInfoTooltipLeave"
+        >
+            <span class="suit-symbol suit-symbol--mana-diamonds">♦</span>
+            {{ (combatant as Player).manaDiamonds }}
+        </p>
+        <p
+            class="combatant-info__stat-line"
+            @mouseenter="onInfoTooltipEnter($event, statTooltips.dodge)"
+            @mousemove="onInfoTooltipMove"
+            @mouseleave="onInfoTooltipLeave"
+        >
+            Dodge: {{ combatant.dodge }}
+        </p>
+        <p
+            class="combatant-info__stat-line"
+            @mouseenter="onInfoTooltipEnter($event, statTooltips.block)"
+            @mousemove="onInfoTooltipMove"
+            @mouseleave="onInfoTooltipLeave"
+        >
+            Block: {{ combatant.block }}
+        </p>
         <div
             v-if="isPlayer && playerCombatStatuses.length"
             class="combatant-info__statuses"
@@ -175,12 +227,54 @@
         </div>
         <p class="combatant-info__stats-gap"></p>
         <template v-if="isPlayer">
-            <p>Appeal: {{ (combatant as Player).appeal }}</p>
-            <p>Attack: {{ (combatant as Player).attack }}</p>
-            <p>Armor: {{ combatant.armor }}</p>
-            <p>Agility: {{ (combatant as Player).agility }}</p>
-            <p>Acumen: {{ (combatant as Player).acumen }}</p>
-            <p>{{ (combatant as Player).koallarbucks }} 💵</p>
+            <p
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.attackPlayer)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Attack: {{ (combatant as Player).attack }}
+            </p>
+            <p
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.armorPlayer)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Armor: {{ combatant.armor }}
+            </p>
+            <p
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.agility)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Agility: {{ (combatant as Player).agility }}
+            </p>
+            <p
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.acumen)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Acumen: {{ (combatant as Player).acumen }}
+            </p>
+            <p
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.appeal)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Appeal: {{ (combatant as Player).appeal }}
+            </p>
+            <p
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.koallarbucks)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                {{ (combatant as Player).koallarbucks }} 💵
+            </p>
             <p v-if="showBytecoins">Bytecoins: {{ (combatant as Player).bytecoins }}</p>
             <div v-if="playerCardifacts.length" class="combatant-info__cardifacts">
                 <h3>Cardifacts</h3>
@@ -189,9 +283,9 @@
                         v-for="c in playerCardifacts"
                         :key="c.id"
                         class="combatant-info__cardifact-item"
-                        @mouseenter="onCardifactTooltipEnter($event, c.description)"
-                        @mousemove="onCardifactTooltipMove"
-                        @mouseleave="onCardifactTooltipLeave"
+                        @mouseenter="onInfoTooltipEnter($event, c.description)"
+                        @mousemove="onInfoTooltipMove"
+                        @mouseleave="onInfoTooltipLeave"
                     >
                         {{ c.name }}
                     </li>
@@ -199,8 +293,51 @@
             </div>
         </template>
         <template v-else-if="isEnemy">
-            <p>Attack: {{ (combatant as Enemy).attack }}</p>
-            <p>Armor: {{ combatant.armor }}</p>
+            <p
+                v-if="(combatant as Enemy).attack !== 0"
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.attackEnemy)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Attack: {{ (combatant as Enemy).attack }}
+            </p>
+            <p
+                v-if="combatant.armor !== 0"
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.armorEnemy)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Armor: {{ combatant.armor }}
+            </p>
+            <p
+                v-if="(combatant as Enemy).agility !== 0"
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.agilityEnemy)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Agility: {{ (combatant as Enemy).agility }}
+            </p>
+            <p
+                v-if="(combatant as Enemy).acumen !== 0"
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.acumenEnemy)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Acumen: {{ (combatant as Enemy).acumen }}
+            </p>
+            <p
+                v-if="(combatant as Enemy).appeal !== 0"
+                class="combatant-info__stat-line"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.appealEnemy)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            >
+                Appeal: {{ (combatant as Enemy).appeal }}
+            </p>
             <div class="combatant-info__actions">
                 <p>Actions: {{ (combatant as Enemy).actions }}</p>
                 <p
@@ -221,13 +358,13 @@
         </div>
         <Teleport to="body">
             <div
-                v-if="cardifactTooltipText"
-                ref="cardifactTooltipRef"
+                v-if="infoTooltipText"
+                ref="infoTooltipRef"
                 class="cursor-tooltip"
-                :class="{ 'cursor-tooltip--visible': showCardifactTooltip }"
-                :style="cardifactTooltipStyle"
+                :class="{ 'cursor-tooltip--visible': showInfoTooltip }"
+                :style="infoTooltipStyle"
             >
-                {{ cardifactTooltipText }}
+                {{ infoTooltipText }}
             </div>
         </Teleport>
     </div>
@@ -310,6 +447,10 @@
         padding-left: 1.15rem;
         font-size: 13px;
         line-height: 1.45;
+    }
+
+    .combatant-info__stat-line {
+        cursor: help;
     }
 
     .combatant-info__cardifact-item {

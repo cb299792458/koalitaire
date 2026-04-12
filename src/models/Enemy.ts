@@ -100,6 +100,12 @@ export interface EnemyParams {
     health: number;
     /** Produces the exact action(s) this enemy will load for the current turn. */
     generateTurnActions: EnemyTurnActionGenerator;
+    /** Default 0. Shown in UI only when non-zero. */
+    attack?: number;
+    armor?: number;
+    appeal?: number;
+    agility?: number;
+    acumen?: number;
 }
 
 class Enemy extends Combatant {
@@ -107,6 +113,9 @@ class Enemy extends Combatant {
     impendingActions: EnemyAction[];
 
     attack: number;
+    appeal: number;
+    agility: number;
+    acumen: number;
     turnNumber: number;
 
     private readonly generateTurnActions: EnemyTurnActionGenerator;
@@ -116,7 +125,7 @@ class Enemy extends Combatant {
             name: enemyParams.name,
             portrait: enemyParams.portrait ?? "/unknown.jpg",
             health: enemyParams.health,
-            armor: 0,
+            armor: enemyParams.armor ?? 0,
             tooltip: enemyParams.tooltip,
         });
 
@@ -124,7 +133,10 @@ class Enemy extends Combatant {
         this.actions = 1;
         this.impendingActions = [];
 
-        this.attack = 0;
+        this.attack = enemyParams.attack ?? 0;
+        this.appeal = enemyParams.appeal ?? 0;
+        this.agility = enemyParams.agility ?? 0;
+        this.acumen = enemyParams.acumen ?? 0;
         this.turnNumber = 0;
     }
 
