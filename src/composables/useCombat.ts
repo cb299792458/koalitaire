@@ -20,6 +20,8 @@ import type { ScenarioEntry } from '../game/makeScenario';
 import { CombatEventBus, type DamagePayload } from '../game/combatEvents';
 import type { DamageType } from '../models/DamageType';
 
+export type DefeatRewardKind = 'cards' | 'relics';
+
 export class Combat {
     // Game entities
     player: Player;
@@ -57,6 +59,9 @@ export class Combat {
     /** Unsubscribe for built-in listeners (re-registered after each combat start). */
     private lifecycleUnsubscribe: (() => void) | null = null;
 
+    /** Reward shown after this fight ends (regular fights: cards; elites: relic / cardifact pick). */
+    private defeatRewardKind: DefeatRewardKind = 'cards';
+
     constructor(player: Player, enemy: Enemy) {
         this.player = player;
         this.enemy = enemy;
@@ -83,7 +88,11 @@ export class Combat {
      * The copy is used during combat so stat changes are not permanent.
      * HP changes are synced to the original at combat end.
      */
-    async start(player: Player, enemy: Enemy): Promise<void> {
+    async start(
+        player: Player,
+        enemy: Enemy,
+        opts?: { defeatReward?: DefeatRewardKind }
+    ): Promise<void> {
         // Wait for any in-progress turn processing (shuffle, dealing, etc.) to finish
         await this.processingTurnPromise;
         
@@ -92,6 +101,7 @@ export class Combat {
         });
         
         try {
+            this.defeatRewardKind = opts?.defeatReward ?? 'cards';
             this.events.clear();
             this.registerCombatLifecycleListeners();
             this.originalPlayer = player;
@@ -314,16 +324,33 @@ export class Combat {
 
         // Open enemy defeated modal first; level is advanced when user clicks Continue.
         // Use combat.originalPlayer (not this.player) so we always pass the actual persistent player, not the combat copy.
-        openModal('cardReward', {
-            title: 'Enemy Defeated',
-            player: persistentPlayer,
-            onContinue: () => {
-                if (this.onEnemyDefeatedContinue) {
-                    this.onEnemyDefeatedContinue();
-                }
-                return false; // Don't emit close; we've opened backAtCamp modal
-            },
-        }, { keepOpen: true, transparentOverlay: true });
+        const onContinue = () => {
+            if (this.onEnemyDefeatedContinue) {
+                this.onEnemyDefeatedContinue();
+            }
+            return false; // Don't emit close; we've opened backAtCamp modal
+        };
+        if (this.defeatRewardKind === 'relics') {
+            openModal(
+                'eliteRelicReward',
+                {
+                    title: 'Elite defeated',
+                    player: persistentPlayer,
+                    onContinue,
+                },
+                { keepOpen: true, transparentOverlay: true }
+            );
+        } else {
+            openModal(
+                'cardReward',
+                {
+                    title: 'Enemy Defeated',
+                    player: persistentPlayer,
+                    onContinue,
+                },
+                { keepOpen: true, transparentOverlay: true }
+            );
+        }
         
         if (this.onEnemyDefeated) {
             this.onEnemyDefeated();

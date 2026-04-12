@@ -1,7 +1,35 @@
 import Cardifact, { type CardifactContext } from "../../models/Cardifact";
 
+const BLOCK_TURN_1 = 5;
 const BLOCK_TURN_2 = 10;
 const BLOCK_TURN_3 = 15;
+
+function grantBlockOnNthPlayerTurn(ctx: CardifactContext, n: number, amount: number): void {
+    let turn = 0;
+    const unsub = ctx.events.subscribe((event) => {
+        if (event.type !== "playerTurnStarted") return;
+        turn += 1;
+        if (turn === n) {
+            ctx.player.gainBlock(amount);
+            unsub();
+        }
+    });
+}
+
+/** +Block on the first player turn of each combat only. */
+export class FirstTurnBlockCardifact extends Cardifact {
+    constructor() {
+        super({
+            id: "first_turn_block",
+            name: "Opening Ward",
+            description: `Gain ${BLOCK_TURN_1} Block on the first turn of each combat.`,
+        });
+    }
+
+    onCombatStart(ctx: CardifactContext): void {
+        grantBlockOnNthPlayerTurn(ctx, 1, BLOCK_TURN_1);
+    }
+}
 
 /** +Block at the start of the player's second turn each combat. */
 export class SecondTurnBlockCardifact extends Cardifact {
@@ -14,15 +42,7 @@ export class SecondTurnBlockCardifact extends Cardifact {
     }
 
     onCombatStart(ctx: CardifactContext): void {
-        let turn = 0;
-        const unsub = ctx.events.subscribe((event) => {
-            if (event.type !== "playerTurnStarted") return;
-            turn += 1;
-            if (turn === 2) {
-                ctx.player.block += BLOCK_TURN_2;
-                unsub();
-            }
-        });
+        grantBlockOnNthPlayerTurn(ctx, 2, BLOCK_TURN_2);
     }
 }
 
@@ -37,14 +57,6 @@ export class ThirdTurnBlockCardifact extends Cardifact {
     }
 
     onCombatStart(ctx: CardifactContext): void {
-        let turn = 0;
-        const unsub = ctx.events.subscribe((event) => {
-            if (event.type !== "playerTurnStarted") return;
-            turn += 1;
-            if (turn === 3) {
-                ctx.player.block += BLOCK_TURN_3;
-                unsub();
-            }
-        });
+        grantBlockOnNthPlayerTurn(ctx, 3, BLOCK_TURN_3);
     }
 }

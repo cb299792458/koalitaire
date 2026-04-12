@@ -6,8 +6,9 @@ import CardRewardModal from '../components/Modals/CardRewardModal.vue'
 import ConfirmModal from '../components/Modals/ConfirmModal.vue'
 import BackAtCampModal from '../components/Modals/BackAtCampModal.vue'
 import CardifactPickModal from '../components/Modals/CardifactPickModal.vue'
+import EliteRelicRewardModal from '../components/Modals/EliteRelicRewardModal.vue'
 
-export type ModalName = 'compost' | 'trash' | 'start' | 'message' | 'cardReward' | 'confirmNoReshuffles' | 'backAtCamp' | 'cardifactPick'
+export type ModalName = 'compost' | 'trash' | 'start' | 'message' | 'cardReward' | 'confirmNoReshuffles' | 'backAtCamp' | 'cardifactPick' | 'eliteRelicReward'
 
 export interface OpenModalOptions {
     keepOpen?: boolean
@@ -36,6 +37,7 @@ const modals: Record<ModalName, unknown> = {
     confirmNoReshuffles: markRaw(ConfirmModal),
     backAtCamp: markRaw(BackAtCampModal),
     cardifactPick: markRaw(CardifactPickModal),
+    eliteRelicReward: markRaw(EliteRelicRewardModal),
 }
 
 const state = reactive<ModalState>({ currentModal: null })

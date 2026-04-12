@@ -229,7 +229,7 @@
         }
         if ('elite' in entry && entry.elite) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new entry.elite())
+            await combat.start(newPlayer, new entry.elite(), { defeatReward: 'relics' })
             return
         }
         if ('boss' in entry && entry.boss) {
