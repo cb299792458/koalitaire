@@ -19,7 +19,7 @@ export interface SummonParams {
     hp: number;
     damage: number;
     race: Race;
-    effect?: (combat: Combat) => void;
+    effect?: (combat: Combat) => void | Promise<void>;
 }
 
 class Summon {
@@ -30,7 +30,7 @@ class Summon {
     hp: number;
     damage: number;
     race: Race;
-    effect: (combat: Combat) => void;
+    effect: (combat: Combat) => void | Promise<void>;
 
     constructor(params: SummonParams) {
         const { name, description, hp, damage, race } = params;

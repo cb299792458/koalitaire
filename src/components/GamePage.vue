@@ -5,12 +5,13 @@
     import { useCombat } from '../composables/useCombat'
     import { AREAS, type Area } from '../models/Areas'
     import ModalManager from './ModalManager.vue'
-    import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
+    import { onMounted, onBeforeUnmount, ref, watch, computed, nextTick } from 'vue'
     import { openModal, closeModal, useModalState, openMessageModal } from '../stores/modalStore'
     import CombatantInfo from './CombatantInfo.vue'
     import type Enemy from '../models/Enemy'
     import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario'
     import type Player from '../models/Player'
+    import type Cardifact from '../models/Cardifact'
     import { useTown } from '../composables/useTown'
     import { useEvent } from '../composables/useEvent'
     import { hasChosenCharacterRef, combatRef, scenarioRef } from '../composables/useCombat'
@@ -282,7 +283,13 @@
                 onSelect: (newPlayer: Player) => {
                     scenarioRef.value = makeScenario()
                     hasChosenCharacterRef.value = true
-                    openMapDeckForPlayer(newPlayer)
+                    openModal('cardifactPick', {
+                        onPick: (cardifact: Cardifact) => {
+                            newPlayer.addCardifact(cardifact)
+                            closeModal()
+                            nextTick(() => openMapDeckForPlayer(newPlayer))
+                        },
+                    }, { keepOpen: true })
                     return false
                 },
             }, { keepOpen: true })

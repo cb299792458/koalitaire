@@ -14,9 +14,9 @@ const debugKill = {
     name: 'Debug Kill',
     description: 'Kills the enemy. (Debug)',
     keywords: [Keyword.Magic, Keyword.Ranged],
-    effect: (combat: Combat) => {
+    effect: async (combat: Combat) => {
         const { enemy } = combat;
-        if (enemy) enemy.takeDamage(enemy.health, [DamageType.Ranged, DamageType.Magic]);
+        if (enemy) await combat.damageEnemy(enemy.health, [DamageType.Ranged, DamageType.Magic]);
     },
 };
 

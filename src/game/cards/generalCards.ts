@@ -37,13 +37,13 @@ const manaBurn: SpellCardParams = {
     name: 'Mana Burn',
     description: 'Deals 1 magic damage for each card in your mana pool.',
     keywords: [Keyword.Magic],
-    effect: (combat: Combat) => {
-        const { manaPools, enemy } = combat;
-        enemy.takeDamage(
-            manaPools.pools().reduce(
-                (acc: number, pool: ManaPool) => acc + pool.cards.length, 0
-            )
+    effect: async (combat: Combat) => {
+        const { manaPools } = combat;
+        const n = manaPools.pools().reduce(
+            (acc: number, pool: ManaPool) => acc + pool.cards.length,
+            0
         );
+        await combat.damageEnemy(n);
     },
 }
 
@@ -62,9 +62,9 @@ const shieldBash: SpellCardParams = {
     name: 'Shield Bash',
     description: 'Deals damage equal to your block.',
     keywords: [Keyword.Block],
-    effect: (combat: Combat) => {
-        const { player, enemy } = combat;
-        enemy.takeDamage(player.block);
+    effect: async (combat: Combat) => {
+        const { player } = combat;
+        await combat.damageEnemy(player.block);
     },
 }
 
@@ -183,11 +183,11 @@ const sasageyo: SpellCardParams = {
     description: 'Remove all your Koala summons. Deal 3 damage to the enemy for each of their hp.',
     keywords: [Keyword.Attack, Keyword.Summon],
     flavorText: 'Sasageyo! Sasageyo! Shinzou wo Sasageyo!',
-    effect: (combat: Combat) => {
-        const { player, enemy } = combat;
+    effect: async (combat: Combat) => {
+        const { player } = combat;
         const koalas = player?.summons.filter((s) => s.race === Race.Koala) ?? [];
         const damage = koalas.reduce((acc, koala) => acc + (koala.hp ?? 0), 0) * 3;
-        enemy.takeDamage(damage);
+        await combat.damageEnemy(damage);
         if (player) player.summons = player.summons.filter((s) => s.race !== Race.Koala);
     },
 };
@@ -211,10 +211,10 @@ const thunderstruck: SpellCardParams = {
     name: 'Thunderstruck',
     description: 'Deals 25, plus five times your Acumen, ranged magic damage to the enemy.',
     keywords: [Keyword.Magic, Keyword.Ranged],
-    effect: (combat: Combat) => {
-        const { enemy, player } = combat;
+    effect: async (combat: Combat) => {
+        const { player } = combat;
         const damage = 25 + (player?.acumen ?? 0) * 5;
-        enemy.takeDamage(damage, [DamageType.Ranged, DamageType.Magic]);
+        await combat.damageEnemy(damage, [DamageType.Ranged, DamageType.Magic]);
     },
     flavorText: "You've been thunderstruck!",
 }

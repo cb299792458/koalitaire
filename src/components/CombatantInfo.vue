@@ -6,6 +6,7 @@
     import SummonDisplay from './SummonDisplay.vue'
     import useDamageNumbers, { getFlashClassForLatest } from '../composables/useDamageNumbers'
     import { formatStatSymbols } from '../utils/damageSymbol'
+    import { combatStatusLabels } from '../game/combatStatuses'
 
     const props = withDefaults(
         defineProps<{
@@ -19,6 +20,7 @@
     const CURSOR_OFFSET = 12
     const TOOLTIP_EDGE_PADDING = 20
     const TOOLTIP_DELAY = 800
+    const CARDIFACT_TOOLTIP_DELAY = 300
 
     const tooltipX = ref(0)
     const tooltipY = ref(0)
@@ -67,6 +69,57 @@
 
     const isPlayer = computed(() => props.variant === 'player')
     const isEnemy = computed(() => props.variant === 'enemy')
+
+    const playerCardifacts = computed(() =>
+        props.variant === 'player' && props.combatant ? (props.combatant as Player).cardifacts : []
+    )
+
+    const playerCombatStatuses = computed(() =>
+        props.variant === 'player' && props.combatant ? (props.combatant as Player).combatStatuses : []
+    )
+
+    /** Same Teleport/fixed pattern as portrait — native `title` is clipped by overflow/transform. */
+    const cardifactTooltipX = ref(0)
+    const cardifactTooltipY = ref(0)
+    const cardifactTooltipRef = ref<HTMLElement | null>(null)
+    const cardifactTooltipText = ref<string | null>(null)
+    const showCardifactTooltip = ref(false)
+    let cardifactTooltipDelay: ReturnType<typeof setTimeout> | null = null
+
+    const cardifactTooltipStyle = computed(() => {
+        const height = cardifactTooltipRef.value?.offsetHeight ?? 80
+        const wouldOverflowBottom =
+            cardifactTooltipY.value + height > window.innerHeight - TOOLTIP_EDGE_PADDING
+        return {
+            left: `${cardifactTooltipX.value}px`,
+            top: wouldOverflowBottom
+                ? `${cardifactTooltipY.value - height - TOOLTIP_EDGE_PADDING}px`
+                : `${cardifactTooltipY.value}px`,
+        }
+    })
+
+    function onCardifactTooltipMove(e: MouseEvent) {
+        cardifactTooltipX.value = e.clientX + CURSOR_OFFSET
+        cardifactTooltipY.value = e.clientY + CURSOR_OFFSET
+    }
+
+    function onCardifactTooltipEnter(e: MouseEvent, description: string) {
+        onCardifactTooltipMove(e)
+        cardifactTooltipDelay = setTimeout(() => {
+            cardifactTooltipText.value = description
+            showCardifactTooltip.value = true
+            cardifactTooltipDelay = null
+        }, CARDIFACT_TOOLTIP_DELAY)
+    }
+
+    function onCardifactTooltipLeave() {
+        if (cardifactTooltipDelay !== null) {
+            clearTimeout(cardifactTooltipDelay)
+            cardifactTooltipDelay = null
+        }
+        showCardifactTooltip.value = false
+        cardifactTooltipText.value = null
+    }
 </script>
 
 <template>
@@ -106,6 +159,20 @@
         <p v-if="isPlayer"><span class="suit-symbol suit-symbol--mana-diamonds" title="♦ Mana Diamonds: Used to pay the difference when casting cards.">♦</span> {{ (combatant as Player).manaDiamonds }}</p>
         <p><span title="When you would take damage, ignore it completely and lose 1 dodge instead. Checked before block.">Dodge:</span> {{ combatant.dodge }}</p>
         <p><span title="Absorbs incoming damage before health.">Block:</span> {{ combatant.block }}</p>
+        <div
+            v-if="isPlayer && playerCombatStatuses.length"
+            class="combatant-info__statuses"
+        >
+            <h3>Statuses</h3>
+            <ul class="combatant-info__statuses-list">
+                <li
+                    v-for="(s, i) in playerCombatStatuses"
+                    :key="`${s.id}-${i}`"
+                >
+                    {{ combatStatusLabels[s.id] }} ({{ s.turnsRemaining }})
+                </li>
+            </ul>
+        </div>
         <p class="combatant-info__stats-gap"></p>
         <template v-if="isPlayer">
             <p>Appeal: {{ (combatant as Player).appeal }}</p>
@@ -115,6 +182,21 @@
             <p>Acumen: {{ (combatant as Player).acumen }}</p>
             <p>{{ (combatant as Player).koallarbucks }} 💵</p>
             <p v-if="showBytecoins">Bytecoins: {{ (combatant as Player).bytecoins }}</p>
+            <div v-if="playerCardifacts.length" class="combatant-info__cardifacts">
+                <h3>Cardifacts</h3>
+                <ul class="combatant-info__cardifacts-list">
+                    <li
+                        v-for="c in playerCardifacts"
+                        :key="c.id"
+                        class="combatant-info__cardifact-item"
+                        @mouseenter="onCardifactTooltipEnter($event, c.description)"
+                        @mousemove="onCardifactTooltipMove"
+                        @mouseleave="onCardifactTooltipLeave"
+                    >
+                        {{ c.name }}
+                    </li>
+                </ul>
+            </div>
         </template>
         <template v-else-if="isEnemy">
             <p>Attack: {{ (combatant as Enemy).attack }}</p>
@@ -137,6 +219,17 @@
                 :summon="summon"
             />
         </div>
+        <Teleport to="body">
+            <div
+                v-if="cardifactTooltipText"
+                ref="cardifactTooltipRef"
+                class="cursor-tooltip"
+                :class="{ 'cursor-tooltip--visible': showCardifactTooltip }"
+                :style="cardifactTooltipStyle"
+            >
+                {{ cardifactTooltipText }}
+            </div>
+        </Teleport>
     </div>
 </template>
 
@@ -200,6 +293,44 @@
     .summons-list h3 {
         margin: 0 0 4px 0;
         font-size: 14px;
+    }
+
+    .combatant-info__cardifacts {
+        margin-top: 10px;
+        width: 100%;
+    }
+
+    .combatant-info__cardifacts h3 {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+    }
+
+    .combatant-info__cardifacts-list {
+        margin: 0;
+        padding-left: 1.15rem;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .combatant-info__cardifact-item {
+        cursor: help;
+    }
+
+    .combatant-info__statuses {
+        margin-top: 8px;
+        width: 100%;
+    }
+
+    .combatant-info__statuses h3 {
+        margin: 0 0 4px 0;
+        font-size: 14px;
+    }
+
+    .combatant-info__statuses-list {
+        margin: 0;
+        padding-left: 1.15rem;
+        font-size: 13px;
+        line-height: 1.45;
     }
 
     </style>

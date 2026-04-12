@@ -20,7 +20,7 @@ export interface CardParams {
 export interface SpellCardParams extends CardParams {
     name: string;
     description: string;
-    effect: (combat: Combat) => void;
+    effect: (combat: Combat) => void | Promise<void>;
     /** If set, shown on the card; decrements on use; card goes to trash when it reaches 0. */
     charges?: number;
     /** Keyword ids shown in tooltip with explanations. */
@@ -90,7 +90,7 @@ export class SpellCard extends Card {
     isSpell: boolean = true;
     name: string;
     description: string;
-    effect: (combat: Combat) => void;
+    effect: (combat: Combat) => void | Promise<void>;
     charges?: number;
 
     getCastAnimationDirection(): 'left' | 'right' | 'up' {
@@ -105,7 +105,7 @@ export class SpellCard extends Card {
         suit: Suit,
         name: string,
         description: string,
-        effect: (combat: Combat) => void,
+        effect: (combat: Combat) => void | Promise<void>,
         charges?: number,
         keywords?: string[],
         flavorText?: string

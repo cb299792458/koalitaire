@@ -146,7 +146,7 @@ class Enemy extends Combatant {
 
     async executeActions(player: Player, combat: Combat): Promise<void> {
         for (const action of this.impendingActions) {
-            action.effect(this, player);
+            await Promise.resolve(action.effect(this, player, combat));
             combat.notify();
             await new Promise((resolve) => setTimeout(resolve, 500)); // 0.5s pause after each enemy action
         }
@@ -154,7 +154,7 @@ class Enemy extends Combatant {
 
         // Enemy summons run after all enemy actions
         for (const summon of this.summons) {
-            summon.effect(combat);
+            await Promise.resolve(summon.effect(combat));
             combat.notify();
             await new Promise((resolve) => setTimeout(resolve, 500)); // 0.5s pause after each enemy summon
         }

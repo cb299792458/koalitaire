@@ -17,7 +17,8 @@ import { AREAS, type Area } from '../models/Areas';
 import { openModal } from '../stores/modalStore';
 import { playSound } from '../utils/sounds';
 import type { ScenarioEntry } from '../game/makeScenario';
-import { CombatEventBus } from '../game/combatEvents';
+import { CombatEventBus, type DamagePayload } from '../game/combatEvents';
+import type { DamageType } from '../models/DamageType';
 
 export class Combat {
     // Game entities
@@ -97,6 +98,7 @@ export class Combat {
             this.player = player.copy();
             this.level = player.level; // Invalidate any pending delayed callbacks from previous combat
             this.player.originalPlayer = player;
+            this.player.combatEvents = this.events;
             this.enemy = enemy;
 
             // Clear all piles first to ensure clean slate from any previous combat
@@ -123,7 +125,10 @@ export class Combat {
                 this.player.dodge = 0;
                 this.player.block = 0;
                 this.player.manaDiamonds = this.player.startingManaDiamonds;
+                this.player.clearCombatStatuses();
             }
+
+            await this.applyCardifacts();
 
             await this.events.emit({ type: 'combatStarted' });
             await this.startTurn();
@@ -157,9 +162,28 @@ export class Combat {
      * `playerTurnStarted`: reset dodge/block, refresh enemy actions, then external listeners run.
      * `playerTurnEnded`: recycle tableau/compost into deck and redeal, then external listeners run.
      */
+    /**
+     * Runs each owned {@link Player.cardifacts} after tableau/deck setup, before `combatStarted`.
+     * Cardifacts may subscribe to the event bus or modify player/enemy for this combat only.
+     */
+    private async applyCardifacts(): Promise<void> {
+        if (!this.player) return;
+        for (const cardifact of this.player.cardifacts) {
+            await Promise.resolve(
+                cardifact.onCombatStart({
+                    events: this.events,
+                    player: this.player,
+                    enemy: this.enemy,
+                    damageEnemy: (rawAmount, damageTypes = []) =>
+                        this.damageEnemy(rawAmount, damageTypes),
+                })
+            );
+        }
+    }
+
     private registerCombatLifecycleListeners(): void {
         this.lifecycleUnsubscribe?.();
-        this.lifecycleUnsubscribe = this.events.subscribe((event) => {
+        this.lifecycleUnsubscribe = this.events.subscribe(async (event) => {
             if (event.type === "playerTurnStarted") {
                 if (!this.player || !this.enemy) return;
                 this.player.dodge = 0;
@@ -168,9 +192,40 @@ export class Combat {
                 return;
             }
             if (event.type === "playerTurnEnded") {
-                return this.recycleTableauAndCompostIntoDeck();
+                await this.recycleTableauAndCompostIntoDeck();
+                this.player?.tickCombatStatuses();
+                return;
             }
         });
+    }
+
+    /**
+     * All damage to the player during combat (enemy attacks, etc.). Emits {@link CombatEvent} `beforeDamageToPlayer`,
+     * then applies incoming multipliers (e.g. cowed) in {@link Player.takeDamage}.
+     */
+    async damagePlayer(rawAmount: number, damageTypes: DamageType[] = []): Promise<void> {
+        if (!this.player) return;
+        const payload: DamagePayload = {
+            amount: rawAmount,
+            damageTypes: [...damageTypes],
+        };
+        await this.events.emit({ type: "beforeDamageToPlayer", payload });
+        this.player.takeDamage(payload.amount, payload.damageTypes);
+    }
+
+    /**
+     * All damage from the player to the enemy (spells, summons, etc.). Emits `beforeDamageToEnemy`, then applies
+     * outgoing multipliers (e.g. knackered), then {@link Enemy.takeDamage}.
+     */
+    async damageEnemy(rawAmount: number, damageTypes: DamageType[] = []): Promise<void> {
+        if (!this.enemy || !this.player) return;
+        const payload: DamagePayload = {
+            amount: rawAmount,
+            damageTypes: [...damageTypes],
+        };
+        await this.events.emit({ type: "beforeDamageToEnemy", payload });
+        const scaled = Math.max(0, Math.round(payload.amount * this.player.outgoingDamageMultiplier));
+        this.enemy.takeDamage(scaled, payload.damageTypes);
     }
 
     async startTurn(): Promise<void> {
@@ -210,13 +265,13 @@ export class Combat {
         if (!this.player || !this.enemy) return;
 
         for (const summon of this.player.summons) {
-            this.enemy.takeDamage(summon.damage);
-            summon.effect(this);
+            await this.damageEnemy(summon.damage);
+            await Promise.resolve(summon.effect(this));
             this.notify();
             await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each summon
         }
         if (this.enemy.health <= 0) {
-            this.defeatEnemy();
+            await this.defeatEnemy();
             return;
         }
 
@@ -224,7 +279,7 @@ export class Combat {
         this.enemy.block = 0;
         await this.enemy.executeActions(this.player, this);
         if (this.enemy.health <= 0) {
-            this.defeatEnemy();
+            await this.defeatEnemy();
             return;
         }
 
@@ -236,27 +291,29 @@ export class Combat {
         await this.startTurn();
     }
     
-    checkEnemyDeath(): boolean {
+    async checkEnemyDeath(): Promise<boolean> {
         if (!this.enemy || !this.player) return false;
-        
+
         if (this.enemy.health <= 0) {
-            this.defeatEnemy();
+            await this.defeatEnemy();
             return true;
         }
         return false;
     }
-    
-    private defeatEnemy(): void {
+
+    private async defeatEnemy(): Promise<void> {
         if (!this.player) return;
 
         // Sync HP from combat copy to original so damage/healing persists
         if (this.player.originalPlayer) {
             this.player.originalPlayer.health = this.player.health;
         }
-        
+
+        const persistentPlayer = this.originalPlayer ?? this.player;
+        await this.events.emit({ type: "enemyDefeated" });
+
         // Open enemy defeated modal first; level is advanced when user clicks Continue.
         // Use combat.originalPlayer (not this.player) so we always pass the actual persistent player, not the combat copy.
-        const persistentPlayer = this.originalPlayer ?? this.player;
         openModal('cardReward', {
             title: 'Enemy Defeated',
             player: persistentPlayer,
@@ -492,7 +549,7 @@ export class Combat {
                 // Trigger spell card effect if it's a spell card
                 if (selectedCard.isSpell) {
                     const spellCard = selectedCard as SpellCard;
-                    spellCard.effect(this);
+                    await Promise.resolve(spellCard.effect(this));
                     await this.events.emit({
                         type: 'spellCast',
                         spellName: spellCard.name,
@@ -518,7 +575,7 @@ export class Combat {
                     this.moveCardToArea(selectedCard, AREAS.Compost);
                 }
 
-                if (this.checkEnemyDeath()) return;
+                if (await this.checkEnemyDeath()) return;
                 this.notify();
             })();
         });
@@ -965,6 +1022,8 @@ export function useCombat(): Combat {
             bytecoins: 0,
             collection: [],
             manaDeck: {},
+            cardifacts: [],
+            maxCardifacts: 0,
         });
         const defaultEnemy = new PlaceholderEnemy();
         

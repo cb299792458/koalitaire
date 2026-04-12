@@ -10,9 +10,8 @@ const shot: SpellCardParams = {
     name: 'Shot',
     description: 'Deals 5 ranged damage.',
     keywords: [Keyword.Ranged, Keyword.Charges],
-    effect: (combat: Combat) => {
-        const { enemy } = combat;
-        enemy.takeDamage(5, [DamageType.Ranged]);
+    effect: async (combat: Combat) => {
+        await combat.damageEnemy(5, [DamageType.Ranged]);
     },
     flavorText: "Less QQ, more Pew Pew.",
     charges: 3,
@@ -24,9 +23,8 @@ const scorch: SpellCardParams = {
     name: 'Scorch',
     description: 'Deals 8 magic damage.',
     keywords: [Keyword.Magic],
-    effect: (combat: Combat) => {
-        const { enemy } = combat;
-        enemy.takeDamage(8, [DamageType.Magic]);
+    effect: async (combat: Combat) => {
+        await combat.damageEnemy(8, [DamageType.Magic]);
     },
     flavorText: "Ow! Fire hot! -Leela; Fire indeed hot! -The Professy",
 }
@@ -50,9 +48,8 @@ const slash: SpellCardParams = {
     name: 'Slash',
     description: 'Deals 3 damage.',
     keywords: [Keyword.Attack],
-    effect: (combat: Combat) => {
-        const { enemy } = combat;
-        enemy.takeDamage(3);
+    effect: async (combat: Combat) => {
+        await combat.damageEnemy(3);
     },
     flavorText: "Flea and Ozzie would be proud.",
 }

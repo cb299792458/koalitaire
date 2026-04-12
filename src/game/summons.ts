@@ -13,7 +13,7 @@ export interface SummonTemplate {
     hp: number;
     damage: number;
     race: Race;
-    effect?: (combat: Combat) => void;
+    effect?: (combat: Combat) => void | Promise<void>;
 }
 
 export function createSummon(template: SummonTemplate): Summon {
@@ -44,9 +44,9 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 5,
         damage: 0,
         race: Race.Koala,
-        effect: (combat: Combat) => {
+        effect: async (combat: Combat) => {
             const dmg = koalaCount(combat);
-            if (dmg > 0) combat.enemy?.takeDamage(dmg);
+            if (dmg > 0) await combat.damageEnemy(dmg);
         },
         tooltip: "Koalas together strong.",
     },
@@ -70,8 +70,8 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 3,
         damage: 2,
         race: Race.Salamander,
-        effect: (combat: Combat) => {
-            combat.enemy?.takeDamage(2);
+        effect: async (combat: Combat) => {
+            await combat.damageEnemy(2);
         },
     },
     charLizard: {
@@ -102,8 +102,8 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 4,
         damage: 5,
         race: Race.Quokka,
-        effect: (combat: Combat) => {
-            combat.enemy?.takeDamage(5);
+        effect: async (combat: Combat) => {
+            await combat.damageEnemy(5);
         },
     },
     
@@ -143,9 +143,9 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 10,
         damage: 2,
         race: Race.FlyingSquirrel,
-        effect: (combat: Combat) => {
+        effect: async (combat: Combat) => {
             combat.player?.gainBlock(3);
-            combat.enemy?.takeDamage(2);
+            await combat.damageEnemy(2);
         },
     },
 };

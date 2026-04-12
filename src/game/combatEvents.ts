@@ -1,4 +1,11 @@
 import type { Suit } from "../models/Suit";
+import type { DamageType } from "../models/DamageType";
+
+/** Mutable damage routed through {@link Combat.damagePlayer} / {@link Combat.damageEnemy}. */
+export interface DamagePayload {
+    amount: number;
+    damageTypes: DamageType[];
+}
 
 /**
  * All combat-scoped game events. Extend this union as you add triggers.
@@ -8,6 +15,14 @@ export type CombatEvent =
     | { type: "combatStarted" }
     | { type: "playerTurnStarted" }
     | { type: "playerTurnEnded" }
+    /** Emitted when the enemy is defeated, after HP sync to the run player, before the victory modal. */
+    | { type: "enemyDefeated" }
+    /** Before {@link Combat.damagePlayer} applies damage to the player; listeners may mutate `payload`. */
+    | { type: "beforeDamageToPlayer"; payload: DamagePayload }
+    /** Before damage is applied to the enemy; listeners may mutate `payload`. Outgoing knackered is applied after emit. */
+    | { type: "beforeDamageToEnemy"; payload: DamagePayload }
+    /** After {@link Combatant.gainBlock} on the player with amount &gt; 0 (combat player only). */
+    | { type: "playerGainedBlock"; amount: number }
     | {
           type: "spellCast";
           /** Spell name after the card resolved (effect already ran). */
