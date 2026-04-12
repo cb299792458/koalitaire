@@ -16,8 +16,9 @@ export default class ManaPools {
         return pool;
     }
 
-    /** Returns the pool for the suit, or undefined if none (e.g. Koala). */
-    getPool(suit: Suit): ManaPool | undefined {
+    /** Returns the pool for the suit, or undefined if none (e.g. Koala or null suit). */
+    getPool(suit: Suit | null): ManaPool | undefined {
+        if (suit === null) return undefined;
         return this.poolBySuit.get(suit);
     }
 

@@ -189,6 +189,8 @@
         if (!card || !card.revealed || card.isSpell) return -1
 
         const { rank, suit } = card
+        if (suit == null) return -1
+
         const manaPool = combat.manaPools.getPool(suit)
         if (!manaPool || manaPool.cards.length !== rank - 1) return -1
 

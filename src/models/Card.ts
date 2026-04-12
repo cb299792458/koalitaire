@@ -1,6 +1,6 @@
 import { nextTick } from "vue";
 import type { Combat } from "../composables/useCombat";
-import { Suit } from "./Suit";
+import type { Suit } from "./Suit";
 import { Keyword } from "../game/keywords";
 
 const ANIMATION_DELAY = 50;
@@ -14,7 +14,8 @@ function scheduleAnimation(card: Card, name: string, duration: number): void {
 
 export interface CardParams {
     rank: number;
-    suit: Suit;
+    /** Null = no suit (not used for mana cards; spells may omit suit). */
+    suit: Suit | null;
 }
 
 export interface SpellCardParams extends CardParams {
@@ -31,7 +32,7 @@ export interface SpellCardParams extends CardParams {
 
 class Card {
     rank: number;
-    suit: Suit;
+    suit: Suit | null;
     revealed: boolean = false;
     animation: string = '';
     animationTime: number = 1000; // Default animation time in milliseconds
@@ -41,7 +42,7 @@ class Card {
     /** Optional flavor text in tooltip (italics, after keywords). */
     flavorText?: string;
 
-    constructor(rank: number, suit: Suit) {
+    constructor(rank: number, suit: Suit | null) {
         this.rank = rank;
         this.suit = suit;
     }
@@ -102,7 +103,7 @@ export class SpellCard extends Card {
 
     constructor(
         rank: number,
-        suit: Suit,
+        suit: Suit | null,
         name: string,
         description: string,
         effect: (combat: Combat) => void | Promise<void>,

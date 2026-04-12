@@ -19,6 +19,7 @@ import { playSound } from '../utils/sounds';
 import type { ScenarioEntry } from '../game/makeScenario';
 import { CombatEventBus, type DamagePayload } from '../game/combatEvents';
 import type { DamageType } from '../models/DamageType';
+import { canPlaceCardOnTableau, isValidTableauRun } from '../game/tableauRules';
 
 export type DefeatRewardKind = 'cards' | 'relics';
 
@@ -464,10 +465,10 @@ export class Combat {
                     if (clickedColumn) {
                         // Check if placement is valid
                         const isEmptyColumn = clickedColumn.size() === 0;
-                        const canPlace = isEmptyColumn || 
-                            (clickedCard?.rank && 
-                             this.selectedCard.suit !== clickedCard.suit && 
-                             this.selectedCard.rank === clickedCard.rank - 1);
+                        const canPlace =
+                            isEmptyColumn ||
+                            (clickedCard != null &&
+                                canPlaceCardOnTableau(this.selectedCard, clickedCard));
                         
                         if (canPlace) {
                             this.placeSelectedCardInTableau(clickedCard, clickIndex, clickJndex);
@@ -556,7 +557,7 @@ export class Combat {
 
                 // Calculate and remove mana diamonds needed
                 const manaPool = this.manaPools.getPool(selectedCard.suit);
-                if (selectedCard.suit === Suit.Koala) {
+                if (selectedCard.suit === Suit.Koala || selectedCard.suit === null) {
                     if (selectedCard.rank > 0) {
                         this.player.manaDiamonds -= selectedCard.rank;
                         if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
@@ -622,6 +623,11 @@ export class Combat {
             return rank <= this.player.manaDiamonds;
         }
 
+        // No suit: spell pays full cost in mana diamonds only (never uses a pool)
+        if (suit === null) {
+            return rank <= this.player.manaDiamonds;
+        }
+
         const manaPool = this.manaPools.getPool(suit);
         if (!manaPool) return false;
 
@@ -640,6 +646,10 @@ export class Combat {
         const { rank, suit } = this.selectedCard;
 
         if (suit === Suit.Koala) {
+            return rank > 0 ? rank : 0;
+        }
+
+        if (suit === null) {
             return rank > 0 ? rank : 0;
         }
 
@@ -662,6 +672,7 @@ export class Combat {
         if (!this.isCardInPlayablePosition(this.selectedCard)) return false;
 
         const { rank, suit } = this.selectedCard;
+        if (suit === null) return false;
         // Check if mana pool has enough cards for burning
         const manaPool = this.manaPools.getPool(suit);
         if (!manaPool) return false;
@@ -779,8 +790,7 @@ export class Combat {
             const lastCard = column.cards[column.size() - 1];
             if (!lastCard) continue;
             
-            // Must be different suit and rank must be one less
-            if (selectedCard.suit !== lastCard.suit && selectedCard.rank === lastCard.rank - 1) {
+            if (canPlaceCardOnTableau(selectedCard, lastCard)) {
                 validColumns.push(i);
             }
         }
@@ -824,6 +834,7 @@ export class Combat {
                 this.hand.setSlot(handIndex, undefined);
                 this.hand.setSlot(slotIndex, card);
             } else if (this.isTopCardOfManaPool(card)) {
+                if (card.suit === null) return;
                 const pool = this.manaPools.getPool(card.suit);
                 if (pool) {
                     pool.removeCard(card);
@@ -859,10 +870,9 @@ export class Combat {
         const clickedColumn = this.tableau.getColumn(clickIndex);
         if (!clickedColumn) return;
 
-        // Validate move if clicking on a real card
-        if (clickedCard?.rank) {
-            if (selectedCard.suit === clickedCard.suit) return;
-            if (selectedCard.rank !== clickedCard.rank - 1) return;
+        // Validate move if clicking on a real card (stack onto column top)
+        if (clickedCard != null && !canPlaceCardOnTableau(selectedCard, clickedCard)) {
+            return;
         }
 
         // Move card from hand, mana pool, or tableau
@@ -882,6 +892,7 @@ export class Combat {
         }
         if (this.isTopCardOfManaPool(selectedCard)) {
             // Move top card from mana pool to tableau
+            if (selectedCard.suit === null) return;
             const pool = this.manaPools.getPool(selectedCard.suit);
             if (!pool) return;
             playSound('move');
@@ -905,13 +916,8 @@ export class Combat {
             if (!selectedCardColumn) return;
             const selectedCardJndex = selectedCardColumn.cards.indexOf(selectedCard);
 
-            // Validate that cards below match suit and rank
-            for (let i = selectedCardJndex + 1; i < selectedCardColumn.cards.length; i++) {
-                const above = selectedCardColumn.cards[i - 1];
-                const below = selectedCardColumn.cards[i];
-                if (above && below && above.suit === below.suit) return;
-                if (above && below && above.rank !== below.rank + 1) return;
-            }
+            const run = selectedCardColumn.cards.slice(selectedCardJndex);
+            if (!isValidTableauRun(run)) return;
 
             // Move card and all below it
             playSound('move');
@@ -938,6 +944,7 @@ export class Combat {
 
     /** True if the card is the top (last) card in its mana pool. */
     private isTopCardOfManaPool(card: Card): boolean {
+        if (card.suit === null) return false;
         const pool = this.manaPools.getPool(card.suit);
         if (!pool || pool.cards.length === 0) return false;
         return pool.cards[pool.cards.length - 1] === card;
@@ -1001,9 +1008,11 @@ export class Combat {
                 this.trash.addCard(card);
                 break;
             case AREAS.ManaPools:
-                const targetManaPool = this.manaPools.getPool(card.suit);
-                if (targetManaPool) {
-                    targetManaPool.addCard(card);
+                if (card.suit !== null) {
+                    const targetManaPool = this.manaPools.getPool(card.suit);
+                    if (targetManaPool) {
+                        targetManaPool.addCard(card);
+                    }
                 }
                 break;
         }

@@ -27,7 +27,7 @@ export type CombatEvent =
           type: "spellCast";
           /** Spell name after the card resolved (effect already ran). */
           spellName: string;
-          suit: Suit;
+          suit: Suit | null;
           rank: number;
       };
 

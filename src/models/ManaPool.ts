@@ -18,6 +18,9 @@ class ManaPool {
      * Add a card to the mana pool
      */
     addCard(card: Card): void {
+        if (card.suit === null) {
+            throw new Error("Cannot add a card with no suit to a mana pool");
+        }
         if (card.suit !== this.suit) {
             throw new Error(`Cannot add ${card.suit} card to ${this.suit} mana pool`);
         }
