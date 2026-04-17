@@ -1,12 +1,13 @@
 import { ref, triggerRef, toRaw } from 'vue';
 
 // Models
-import Card, { SpellCard } from '../models/Card';
+import Card, { CAST_ANIMATION_DELAY_MS, SpellCard } from '../models/Card';
 import { Suit, Suits } from '../models/Suit';
 import Player from '../models/Player';
 import Enemy, { PlaceholderEnemy } from '../models/Enemy';
 import DrawPile from '../models/DrawPile';
 import CompostPile from '../models/CompostPile';
+import RecyclingPile from '../models/RecyclingPile';
 import TrashPile from '../models/TrashPile';
 import Hand from '../models/Hand';
 import Tableau from '../models/Tableau';
@@ -33,6 +34,7 @@ export class Combat {
     // Game state
     selectedCard: Card | null;
     deck: DrawPile;
+    recycling: RecyclingPile;
     compost: CompostPile;
     trash: TrashPile;
     hand: Hand;
@@ -40,13 +42,6 @@ export class Combat {
     manaPools: ManaPools;
     isProcessingTurn: boolean;
     isMovingToMana: boolean;
-
-    /**
-     * When true (until {@link CombatEvent} `playerTurnEnded`), spells ignore mana pool / ♦ costs
-     * and each cast resolves the spell effect twice.
-     */
-    marsuperSaiyanMode = false;
-    private marsuperDumpInProgress = false;
 
     /** Set to player.level at start of each combat; delayed callbacks check this to no-op if combat changed. */
     private level: number = 0;
@@ -79,6 +74,7 @@ export class Combat {
         
         this.selectedCard = null;
         this.deck = new DrawPile();
+        this.recycling = new RecyclingPile();
         this.compost = new CompostPile();
         this.trash = new TrashPile();
         this.hand = new Hand(this.player.handSlotCount);
@@ -121,11 +117,10 @@ export class Combat {
 
             // Clear all piles first to ensure clean slate from any previous combat
             this.deck.clear();
+            this.recycling.clear();
             this.compost.clear();
             this.trash.clear();
             this.manaPools.clear();
-            this.marsuperSaiyanMode = false;
-            this.marsuperDumpInProgress = false;
             if (this.player) {
                 this.hand = new Hand(this.player.handSlotCount);
             }
@@ -163,15 +158,20 @@ export class Combat {
     // ==================== Turn Management ====================
 
     /**
-     * Tableau + compost → deck (mana pools unchanged), shuffle, redeal tableau.
-     * Subscribed to {@link CombatEvent} `playerTurnEnded` in {@link registerCombatLifecycleListeners}.
+     * End turn only (via `playerTurnEnded`): tableau + recycling → deck; if mana pools are full for the
+     * compost cycle, compost and all mana pool cards → deck as well. Then shuffle the deck and deal to the tableau.
+     * Trash is unchanged; mana pools are only emptied when they participate in this fold.
      */
-    private async recycleTableauAndCompostIntoDeck(): Promise<void> {
+    private async recycleTableauAndRecyclingIntoDeck(): Promise<void> {
         for (const column of this.tableau.getColumns()) {
             this.deck.addCards([...column.cards]);
             column.cards = [];
         }
-        this.compost.recycleInto(this.deck);
+        this.recycling.recycleInto(this.deck);
+        if (this.shouldFoldCompostIntoDeckAtEndTurn()) {
+            this.compost.recycleInto(this.deck);
+            this.manaPools.recycleAllInto(this.deck);
+        }
         await this.deck.shuffle();
         this.dealTableau();
         this.notify();
@@ -180,7 +180,7 @@ export class Combat {
     /**
      * Built-in turn rules on the event bus (registered first after {@link CombatEventBus.clear}).
      * `playerTurnStarted`: reset dodge/block, refresh enemy actions, then external listeners run.
-     * `playerTurnEnded`: recycle tableau/compost into deck and redeal, then external listeners run.
+     * `playerTurnEnded`: {@link recycleTableauAndRecyclingIntoDeck} (tableau + recycling + compost + mana pools if mana full) → shuffle → tableau; trash unchanged.
      */
     /**
      * Runs each owned {@link Player.cardifacts} after tableau/deck setup, before `combatStarted`.
@@ -212,8 +212,7 @@ export class Combat {
                 return;
             }
             if (event.type === "playerTurnEnded") {
-                this.marsuperSaiyanMode = false;
-                await this.recycleTableauAndCompostIntoDeck();
+                await this.recycleTableauAndRecyclingIntoDeck();
                 this.player?.tickCombatStatuses();
                 return;
             }
@@ -265,8 +264,8 @@ export class Combat {
         });
         this.notify();
 
-        // Free cells (hand) are not shuffled; leave them as-is.
-        // Turn lifecycle handling (tableau recycle, etc.) is in registerCombatLifecycleListeners.
+        // Hand slots are not shuffled; leave them as-is.
+        // Tableau + recycling (+ compost + mana pools when mana full) → deck → tableau runs in registerCombatLifecycleListeners.
         await this.events.emit({ type: 'playerTurnEnded' });
 
         try {
@@ -305,7 +304,7 @@ export class Combat {
         }
 
         if (this.deck.isEmpty()) {
-            this.compost.recycleInto(this.deck);
+            this.recycling.recycleInto(this.deck);
             await this.deck.shuffle();
         }
 
@@ -455,6 +454,10 @@ export class Combat {
             case AREAS.Deck:
                 break;
 
+            case AREAS.Recycling:
+                openModal('recycling', { title: 'Recycling', cards: this.recycling.cards });
+                break;
+
             case AREAS.Hand: {
                 // Empty slot: only accept placement of a valid card; otherwise do nothing (not clickable)
                 if (!clickedCard && clickIndex !== undefined) {
@@ -524,11 +527,7 @@ export class Combat {
                 break;
 
             case AREAS.Compost:
-                if (this.selectedCard && this.canCastSelectedCard()) {
-                    this.castCard();
-                } else {
-                    openModal('compost', { title: 'Compost', cards: this.compost.cards });
-                }
+                openModal('compost', { title: 'Compost', cards: this.compost.cards });
                 break;
 
             case AREAS.Trash:
@@ -553,67 +552,63 @@ export class Combat {
         this.setSelectedCard(null);
     }
 
-    private castCard(): void {
+    /** Cast the selected spell (cost, effects, then move the spell to compost, or trash if that was its last charge). Use the Cast Spell control in the UI. */
+    castSelectedSpell(): void {
         if (!this.selectedCard || !this.player || !this.enemy) return;
         if (!this.canCastSelectedCard()) return;
 
         const selectedCard = this.selectedCard;
         playSound('cast');
         selectedCard.animate();
-        
-        this.runAfterDelay(selectedCard.animationTime, () => {
+
+        this.runAfterDelay(CAST_ANIMATION_DELAY_MS + selectedCard.animationTime, () => {
+            this.setSelectedCard(null);
+
             void (async () => {
                 if (!this.player || !this.enemy) return;
 
-                if (!this.marsuperSaiyanMode) {
-                    // Calculate and remove mana diamonds needed
-                    const manaPool = this.manaPools.getPool(selectedCard.suit);
-                    if (selectedCard.suit === Suit.Koala || selectedCard.suit === null) {
-                        if (selectedCard.rank > 0) {
-                            this.player.manaDiamonds -= selectedCard.rank;
-                            if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
-                        }
-                    } else if (manaPool) {
-                        const manaDiamondsNeeded = selectedCard.rank - manaPool.cards.length;
-                        if (manaDiamondsNeeded > 0) {
-                            this.player.manaDiamonds -= manaDiamondsNeeded;
-                            if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
-                        }
-                        const cardsToDiscard = manaPool.cards.slice(-selectedCard.rank);
-                        for (const card of cardsToDiscard) {
-                            this.moveCardToArea(card, AREAS.Compost);
-                        }
+                // Calculate and remove mana diamonds needed
+                const manaPool = this.manaPools.getPool(selectedCard.suit);
+                if (selectedCard.suit === Suit.Koala || selectedCard.suit === null) {
+                    if (selectedCard.rank > 0) {
+                        this.player.manaDiamonds -= selectedCard.rank;
+                        if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
+                    }
+                } else if (manaPool) {
+                    const manaDiamondsNeeded = selectedCard.rank - manaPool.cards.length;
+                    if (manaDiamondsNeeded > 0) {
+                        this.player.manaDiamonds -= manaDiamondsNeeded;
+                        if (this.player.manaDiamonds < 0) this.player.manaDiamonds = 0;
+                    }
+                    const cardsToDiscard = manaPool.cards.slice(-selectedCard.rank);
+                    for (const card of cardsToDiscard) {
+                        this.moveCardToArea(card, AREAS.Recycling);
                     }
                 }
 
                 // Trigger spell card effect if it's a spell card
                 if (selectedCard.isSpell) {
                     const spellCard = selectedCard as SpellCard;
-                    const resolutions = this.marsuperSaiyanMode ? 2 : 1;
-                    for (let i = 0; i < resolutions; i++) {
-                        await Promise.resolve(spellCard.effect(this));
-                        await this.events.emit({
-                            type: 'spellCast',
-                            spellName: spellCard.name,
-                            suit: spellCard.suit,
-                            rank: spellCard.rank,
-                        });
-                    }
+                    await Promise.resolve(spellCard.effect(this));
+                    await this.events.emit({
+                        type: 'spellCast',
+                        spellName: spellCard.name,
+                        suit: spellCard.suit,
+                        rank: spellCard.rank,
+                    });
                 }
 
-                // Move the card: if it has finite charges, decrement; when charges hits 0, trash instead of compost
+                // Move the spell to compost, or trash if finite charges just hit 0
                 if (selectedCard.isSpell) {
                     const spellCard = selectedCard as SpellCard;
+                    let destination: Area = AREAS.Compost;
                     if (Number.isFinite(spellCard.charges)) {
                         spellCard.charges = (spellCard.charges ?? 0) - 1;
                         if (spellCard.charges <= 0) {
-                            this.moveCardToArea(selectedCard, AREAS.Trash);
-                        } else {
-                            this.moveCardToArea(selectedCard, AREAS.Compost);
+                            destination = AREAS.Trash;
                         }
-                    } else {
-                        this.moveCardToArea(selectedCard, AREAS.Compost);
                     }
+                    this.moveCardToArea(selectedCard, destination);
                 } else {
                     this.moveCardToArea(selectedCard, AREAS.Compost);
                 }
@@ -622,25 +617,21 @@ export class Combat {
                 this.notify();
             })();
         });
-        
-        this.setSelectedCard(null);
     }
 
-    canCastSelectedCard(): boolean {
-        if (!this.selectedCard || !this.selectedCard.revealed || !this.player) return false;
-        if (!this.selectedCard.isSpell) return false;
-        if (!this.isCardInPlayablePosition(this.selectedCard)) return false;
+    /**
+     * Whether this spell could be cast right now from its current position (same rules as {@link canCastSelectedCard}).
+     */
+    canCastSpellWithCurrentMana(card: Card): boolean {
+        if (!this.player || !card.revealed || !card.isSpell) return false;
+        if (!this.isCardInPlayablePosition(card)) return false;
 
-        if (this.marsuperSaiyanMode) return true;
+        const { rank, suit } = card;
 
-        const { rank, suit } = this.selectedCard;
-
-        // Koala (debug) suit: cost is rank, no mana pool needed
         if (suit === Suit.Koala) {
             return rank <= this.player.manaDiamonds;
         }
 
-        // No suit: spell pays full cost in mana diamonds only (never uses a pool)
         if (suit === null) {
             return rank <= this.player.manaDiamonds;
         }
@@ -652,6 +643,27 @@ export class Combat {
         return manaDiamondsNeeded <= this.player.manaDiamonds;
     }
 
+    /** Every spell in hand or on the bottom of a tableau column that {@link canCastSpellWithCurrentMana} allows. */
+    getCastableSpellCards(): Card[] {
+        const out: Card[] = [];
+        if (!this.player) return out;
+
+        for (const column of this.tableau.getColumns()) {
+            if (column.cards.length === 0) continue;
+            const bottom = column.cards[column.cards.length - 1];
+            if (bottom && this.canCastSpellWithCurrentMana(bottom)) out.push(bottom);
+        }
+        for (const card of this.hand.cards) {
+            if (this.canCastSpellWithCurrentMana(card)) out.push(card);
+        }
+        return out;
+    }
+
+    canCastSelectedCard(): boolean {
+        if (!this.selectedCard) return false;
+        return this.canCastSpellWithCurrentMana(this.selectedCard);
+    }
+
     /**
      * Get the number of mana diamonds needed to cast the selected card
      * Returns -1 if the card cannot be cast or calculation is not applicable
@@ -659,8 +671,6 @@ export class Combat {
     getManaDiamondsNeededForCast(): number {
         if (!this.selectedCard || !this.selectedCard.revealed || !this.player) return -1;
         if (!this.isCardInPlayablePosition(this.selectedCard)) return -1;
-
-        if (this.marsuperSaiyanMode && this.selectedCard.isSpell) return 0;
 
         const { rank, suit } = this.selectedCard;
 
@@ -732,6 +742,26 @@ export class Combat {
     }
 
     /**
+     * Auto Mana button hover when the button is disabled: up to one card per suit — the first card
+     * in the Auto Mana queue for that suit, or if the queue is empty the first such card from
+     * {@link getCardsThatCouldBeBurnedToMana} scan order.
+     */
+    getAutoManaNextPerSuitPreview(): Card[] {
+        const queue = this.getCardsMovableToManaPools();
+        const result: Card[] = [];
+        for (const suit of Suits) {
+            let card: Card | undefined;
+            if (queue.length > 0) {
+                card = queue.find((c) => c.suit === suit);
+            } else {
+                card = this.getCardsThatCouldBeBurnedToMana().find((c) => c.suit === suit);
+            }
+            if (card) result.push(card);
+        }
+        return result;
+    }
+
+    /**
      * Returns all cards that could be burned to mana (revealed, not spell, pool has enough)
      * regardless of position. Used for hover highlight so any such card is highlighted.
      */
@@ -758,10 +788,10 @@ export class Combat {
     }
 
     /**
-     * Every elemental pool holds all mana for that suit; no number cards in compost or free cells.
-     * Requires the combat deck to include at least one mana card so empty-deck characters do not trigger.
+     * When true, end-turn recycle also moves compost and all mana pool cards into the draw pile before shuffling.
+     * Requires all elemental mana in pools, hand and compost free of mana (number) cards, and a non-empty mana deck.
      */
-    private shouldActivateMarsuperSaiyanMode(): boolean {
+    private shouldFoldCompostIntoDeckAtEndTurn(): boolean {
         if (!this.player) return false;
         if (this.getTotalManaCardsInDeck() <= 0) return false;
         for (const suit of Suits) {
@@ -771,25 +801,6 @@ export class Combat {
         if (this.compost.cards.some((c) => !c.isSpell)) return false;
         if (this.hand.cards.some((c) => !c.isSpell)) return false;
         return true;
-    }
-
-    /**
-     * After a board change, if all mana is pooled and clean, dump pool mana to compost and enable
-     * {@link marsuperSaiyanMode} until the player ends their turn.
-     */
-    private maybeActivateMarsuperSaiyanMode(): void {
-        if (this.marsuperSaiyanMode || this.marsuperDumpInProgress) return;
-        if (!this.shouldActivateMarsuperSaiyanMode()) return;
-
-        this.marsuperDumpInProgress = true;
-        for (const pool of this.manaPools.pools()) {
-            for (const card of [...pool.cards]) {
-                this.moveCardToArea(card, AREAS.Compost);
-            }
-        }
-        this.marsuperDumpInProgress = false;
-        this.marsuperSaiyanMode = true;
-        this.notify();
     }
 
     /**
@@ -811,7 +822,6 @@ export class Combat {
         if (movable.length === 0) {
             this.isMovingToMana = false;
             this.notify();
-            this.maybeActivateMarsuperSaiyanMode();
             return;
         }
         const card = movable[0]!;
@@ -859,7 +869,7 @@ export class Combat {
     }
 
     /**
-     * Whether the selected card can be placed in the given hand (free cell) slot.
+     * Whether the selected card can be placed in the given hand slot.
      * Slot must be empty. Only top card of tableau column, card in hand, or top of mana pool can move to hand.
      */
     canPlaceSelectedInHandSlot(slotIndex: number): boolean {
@@ -918,7 +928,6 @@ export class Combat {
             }
             this.setSelectedCard(null);
             this.notify();
-            this.maybeActivateMarsuperSaiyanMode();
         });
     }
 
@@ -939,7 +948,7 @@ export class Combat {
         // Move card from hand, mana pool, or tableau
         const handIndex = this.hand.getSlotIndex(selectedCard);
         if (handIndex !== -1) {
-            // Move from hand (free cell)
+            // Move from hand
             playSound('move');
             selectedCard.animateTableauMove();
             this.runAfterDelay(450, () => {
@@ -948,7 +957,6 @@ export class Combat {
                 clickedColumn.add(selectedCard);
                 this.setSelectedCard(null);
                 this.notify();
-                this.maybeActivateMarsuperSaiyanMode();
             }); // Match animation time (400ms + 50ms delay)
             return;
         }
@@ -965,7 +973,6 @@ export class Combat {
                 clickedColumn.add(selectedCard);
                 this.setSelectedCard(null);
                 this.notify();
-                this.maybeActivateMarsuperSaiyanMode();
             });
             return;
         }
@@ -998,7 +1005,6 @@ export class Combat {
                 }
                 this.setSelectedCard(null);
                 this.notify();
-                this.maybeActivateMarsuperSaiyanMode();
             }); // Match animation time (400ms + 50ms delay)
             return; // Early return since we're handling notify in setTimeout
         }
@@ -1032,7 +1038,7 @@ export class Combat {
     }
 
     /** True if card is in hand or is the last (top) card in a tableau column — required for burn/cast. */
-    private isCardInPlayablePosition(card: Card): boolean {
+    isCardInPlayablePosition(card: Card): boolean {
         const { handIndex, tableauIndex, tableauJndex } = this.getCardIndices(card);
         if (handIndex !== -1) return true;
         const column = this.tableau.getColumn(tableauIndex);
@@ -1055,6 +1061,8 @@ export class Combat {
                     if (lastCard) lastCard.revealed = true;
                 }
             }
+        } else if (this.recycling.remove(card)) {
+            // moved from recycling
         } else {
             // Card is in mana pools
             const manaPool = this.manaPools.getPool(card.suit);
@@ -1065,6 +1073,9 @@ export class Combat {
 
         // Add card to target area
         switch (area) {
+            case AREAS.Recycling:
+                this.recycling.addCard(card);
+                break;
             case AREAS.Compost:
                 this.compost.addCard(card);
                 break;
@@ -1081,9 +1092,6 @@ export class Combat {
                 break;
         }
         this.notify();
-        if (!this.marsuperDumpInProgress) {
-            this.maybeActivateMarsuperSaiyanMode();
-        }
     }
 
     // ==================== Observer Pattern ====================

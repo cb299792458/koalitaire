@@ -57,7 +57,17 @@
     ]
 
     const animation = computed(() => card?.animation);
-    
+
+    /** Cast fly duration must match {@link Card.animationTime} and useCombat cast delay. */
+    const castFlyTransitionStyle = computed(() => {
+        const a = card?.animation;
+        if (a !== 'fly-left' && a !== 'fly-right' && a !== 'fly-up') return {};
+        const ms = card.animationTime ?? 1000;
+        return {
+            transition: `transform ${ms}ms ease, opacity ${ms}ms ease`,
+        };
+    });
+
     const isSpell = computed(() => card.isSpell);
     const spellCard = computed(() => isSpell.value ? card as SpellCard : null);
 
@@ -144,6 +154,7 @@
             selected: selectedCard === card,
             [card?.animation]: !!animation
         }"
+        :style="castFlyTransitionStyle"
         @mousemove="onMouseMove"
         @mouseenter="onMouseEnter"
         @mouseleave="onMouseLeave"
@@ -346,7 +357,6 @@
     left: 50%;
     z-index: 999;
     opacity: 0;
-    transition: transform 2s ease, opacity 2s ease;
 }
 
 .card-view.fly-right {

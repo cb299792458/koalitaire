@@ -1,3 +1,4 @@
+import type DrawPile from './DrawPile';
 import type { Suit } from './Suit';
 import { Suits } from './Suit';
 import ManaPool from './ManaPool';
@@ -25,6 +26,16 @@ export default class ManaPools {
     clear(): void {
         for (const pool of this.poolBySuit.values()) {
             pool.clear();
+        }
+    }
+
+    /** Move every card from all elemental pools into the draw pile (e.g. end turn when compost cycle runs). */
+    recycleAllInto(drawPile: DrawPile): void {
+        for (const suit of Suits) {
+            const pool = this.get(suit);
+            const cards = [...pool.cards];
+            pool.clear();
+            drawPile.addCards(cards);
         }
     }
 

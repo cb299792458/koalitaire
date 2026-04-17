@@ -9,6 +9,7 @@ const props = defineProps<{
     highlighted?: boolean;
     highlightType?: 'burn' | 'cast';
     style?: Record<string, string>;
+    title?: string;
 }>();
 
 const emit = defineEmits<{
@@ -27,6 +28,7 @@ const highlightClass = computed(() =>
         class="card-stack-empty clickable"
         :class="highlightClass"
         :style="style"
+        :title="title || undefined"
         @click.stop="emit('click')"
     >
         <img

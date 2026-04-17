@@ -3,7 +3,7 @@ import type Card from "./Card";
 const DEFAULT_HAND_SLOT_COUNT = 1;
 
 /**
- * Free Cell slots; each holds 0 or 1 card.
+ * Hand slots; each holds 0 or 1 card.
  * Not shuffled into deck on End Turn.
  */
 class Hand {

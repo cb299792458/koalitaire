@@ -51,7 +51,7 @@ export class CombatEventBus {
     /**
      * Runs listeners in subscription order; awaits any async listener before the next.
      * Built-in rules subscribe first after each combat {@link CombatEventBus.clear}, so card triggers
-     * on `playerTurnEnded` run after tableau/compost recycle unless they subscribe earlier.
+     * on `playerTurnEnded` run after tableau/recycling recycle unless they subscribe earlier.
      */
     async emit(event: CombatEvent): Promise<void> {
         for (const listener of [...this.listeners]) {

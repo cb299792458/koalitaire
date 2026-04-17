@@ -39,7 +39,8 @@ function createSpellCardFromParams(params: SpellCardParams): SpellCard {
         params.effect,
         params.charges,
         params.keywords,
-        params.flavorText
+        params.flavorText,
+        params.castAnimationDirection
     );
 }
 

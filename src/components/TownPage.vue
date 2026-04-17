@@ -46,7 +46,8 @@
             params.effect,
             params.charges,
             params.keywords,
-            params.flavorText
+            params.flavorText,
+            params.castAnimationDirection
         )
         card.revealed = revealed
         return card

@@ -18,6 +18,8 @@ const props = defineProps<{
     highlightedIndices?: number[];
     highlightType?: 'burn' | 'cast';
     customLabel?: string;
+    /** Native tooltip for the pile (empty or stacked). */
+    pileTooltip?: string;
 }>();
 
 const SELECTED_CARD_Z_INDEX = 1000;
@@ -138,7 +140,10 @@ function handleEmptyClick() {
 </script>
 
 <template>
-    <div :class="['card-stack', layout || 'pile', { 'mana-pool-stack': name === AREAS.ManaPools }]">
+    <div
+        :class="['card-stack', layout || 'pile', { 'mana-pool-stack': name === AREAS.ManaPools }]"
+        :title="pileTooltip || undefined"
+    >
         <DummyCard
             v-if="!cards.length"
             :label="customLabel || name"
@@ -147,6 +152,7 @@ function handleEmptyClick() {
             :mana-pool-suit-class="name === AREAS.ManaPools ? manaPoolSuitClass : undefined"
             :highlighted="highlighted"
             :highlight-type="highlightType"
+            :title="pileTooltip"
             @click="handleEmptyClick"
         />
         <div v-else :class="{ 'mana-pool-pile-slot': isManaPoolPile }">

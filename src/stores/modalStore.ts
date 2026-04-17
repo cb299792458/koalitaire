@@ -8,7 +8,7 @@ import BackAtCampModal from '../components/Modals/BackAtCampModal.vue'
 import CardifactPickModal from '../components/Modals/CardifactPickModal.vue'
 import EliteRelicRewardModal from '../components/Modals/EliteRelicRewardModal.vue'
 
-export type ModalName = 'compost' | 'trash' | 'start' | 'message' | 'cardReward' | 'confirmNoReshuffles' | 'backAtCamp' | 'cardifactPick' | 'eliteRelicReward'
+export type ModalName = 'compost' | 'recycling' | 'trash' | 'start' | 'message' | 'cardReward' | 'confirmNoReshuffles' | 'backAtCamp' | 'cardifactPick' | 'eliteRelicReward'
 
 export interface OpenModalOptions {
     keepOpen?: boolean
@@ -30,6 +30,7 @@ interface ModalState {
 
 const modals: Record<ModalName, unknown> = {
     compost: markRaw(CardListModal),
+    recycling: markRaw(CardListModal),
     trash: markRaw(CardListModal),
     start: markRaw(StartModal),
     message: markRaw(MessageModal),
