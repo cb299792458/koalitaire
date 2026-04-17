@@ -88,6 +88,8 @@
         () => combat.getCardsMovableToManaPools().length > 0
     )
 
+    const marsuperSaiyanMode = computed(() => combatRef.value?.marsuperSaiyanMode ?? false)
+
     /** Index of the mana pool being hovered (0–4), or null when not over a pool. */
     const hoveredManaPoolIndex = ref<number | null>(null)
     /** Cards that could be burned to the currently hovered mana pool only. */
@@ -176,7 +178,11 @@
     })
 
     const compostHighlightType = computed(() =>
-        combat.getManaDiamondsNeededForCast() === 0 ? 'burn' : 'cast'
+        combatRef.value?.marsuperSaiyanMode
+            ? 'cast'
+            : combat.getManaDiamondsNeededForCast() === 0
+              ? 'burn'
+              : 'cast'
     )
 
     const showCastSpellText = computed(() => {
@@ -374,23 +380,34 @@
                                         </div>
                                     </div>
                                     <div class="cards-top-right">
-                                        <div
-                                            class="mana-pools"
-                                            @mouseleave="hoveredManaPoolIndex = null"
-                                        >
-                                            <CardStack
-                                                v-for="([_suit, manaPool], index) in manaPools.entries()"
-                                                :key="index"
-                                                :cards="manaPool.cards"
-                                                :name="AREAS.ManaPools"
-                                                :arrayIndex="index"
-                                                :selectedCard="selectedCard"
-                                                :highlighted="highlightedManaPoolIndex === index"
-                                                highlightType="burn"
-                                                @mouseenter="hoveredManaPoolIndex = index"
-                                                @mousedown.prevent
-                                                @click="onClick"
-                                            />
+                                        <div class="mana-pools-battle">
+                                            <div
+                                                class="mana-pools"
+                                                @mouseleave="hoveredManaPoolIndex = null"
+                                            >
+                                                <CardStack
+                                                    v-for="([_suit, manaPool], index) in manaPools.entries()"
+                                                    :key="index"
+                                                    :cards="manaPool.cards"
+                                                    :name="AREAS.ManaPools"
+                                                    :arrayIndex="index"
+                                                    :selectedCard="selectedCard"
+                                                    :highlighted="highlightedManaPoolIndex === index"
+                                                    highlightType="burn"
+                                                    @mouseenter="hoveredManaPoolIndex = index"
+                                                    @mousedown.prevent
+                                                    @click="onClick"
+                                                />
+                                            </div>
+                                            <div
+                                                v-if="marsuperSaiyanMode"
+                                                class="marsuper-overlay"
+                                                aria-live="polite"
+                                            >
+                                                <p class="marsuper-overlay-text">
+                                                    Marsuper Saiyan Mode: All spells free and doubled until end of turn.
+                                                </p>
+                                            </div>
                                         </div>
                                         <div class="mana-pools-buttons">
                                             <button
@@ -638,6 +655,41 @@
     flex-direction: column;
     align-items: flex-end;
     width: 100%;
+}
+
+.mana-pools-battle {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.marsuper-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 40;
+    padding: 10px 12px;
+    background: rgba(15, 10, 40, 0.42);
+    border-radius: 8px;
+}
+
+.marsuper-overlay-text {
+    margin: 0;
+    font-size: clamp(17px, 2.6vw, 28px);
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.2;
+    color: #ffe566;
+    text-shadow:
+        0 0 14px rgba(255, 200, 80, 0.9),
+        0 0 4px #8b4513,
+        2px 2px 6px rgba(0, 0, 0, 0.85);
+    max-width: 98%;
 }
 
 .mana-pools {

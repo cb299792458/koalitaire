@@ -34,4 +34,5 @@ export const basicCards: SpellCardParams[] = [
     basicAttack,
     basicBlock,
     basicBlock,
+    basicBlock,
 ]

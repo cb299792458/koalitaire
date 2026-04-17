@@ -341,8 +341,8 @@ export const koaParams: PlayerParams = {
     portrait: koaPortrait,
     tooltip: "Crown Prince Koa XIII of Koala Lumpur",
 
-    columnCount: 7,
-    handSlotCount: 3,
+    columnCount: 6,
+    handSlotCount: 2,
 
     appeal: 5,
     attack: 3,
