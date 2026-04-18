@@ -80,9 +80,11 @@
     );
     const suitTopClass = computed(() => (hasSuit.value && card.suit != null ? card.suit : 'card-suit-none'));
 
+    const titleFormatOpts = { replaceBlock: false } as const;
+
     const tooltipTitle = computed(() => {
         if (isSpell.value && spellCard.value) {
-            return spellCard.value.name;
+            return formatStatSymbols(spellCard.value.name, titleFormatOpts);
         }
         return 'Mana Card';
     });
@@ -181,7 +183,7 @@
                                         :class="suitClass"
                                     />
                                 </div>
-                                <span class="spell-card-name">{{ spellCard.name }}</span>
+                                <span class="spell-card-name" v-html="formatStatSymbols(spellCard.name, titleFormatOpts)"></span>
                             </div>
                             <div v-if="artworkVisible && artworkSrc" class="card-artwork-container">
                                 <img :src="artworkSrc" :alt="spellCard.name" class="card-artwork" />
@@ -237,11 +239,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="card-tooltip-title">{{ tooltipTitle }}</div>
+                <div class="card-tooltip-title" v-html="tooltipTitle"></div>
                 <template v-if="keywordExplanations.length">
                     <div v-for="item in keywordExplanations" :key="item.id" class="card-tooltip-keyword" v-html="formatStatSymbols(item.text)"></div>
                 </template>
-                <div v-if="card.flavorText" class="card-tooltip-flavor">{{ card.flavorText }}</div>
+                <div
+                    v-if="card.flavorText"
+                    class="card-tooltip-flavor"
+                    v-html="formatStatSymbols(card.flavorText)"
+                ></div>
             </div>
         </Teleport>
         <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
@@ -257,7 +263,7 @@
                         :class="suitClass"
                     />
                 </div>
-                <span class="spell-card-name">{{ spellCard.name }}</span>
+                <span class="spell-card-name" v-html="formatStatSymbols(spellCard.name, titleFormatOpts)"></span>
             </div>
             <div v-if="artworkVisible && artworkSrc" class="card-artwork-container">
                 <img
@@ -472,12 +478,14 @@
 .spell-card-description {
     margin: 0 0 2px 0;
     color: black;
+    font-family: var(--font-game-mono);
     font-weight: bold;
     font-size: 10px;
 }
 
 .spell-card-charges {
     margin: 0;
+    font-family: var(--font-game-mono);
     font-size: 11px;
     color: black;
     font-weight: bold;
@@ -712,7 +720,7 @@
 .spell-card-top {
     display: flex;
     justify-content: flex-start;
-    align-items: flex-start;
+    align-items: center;
     width: calc(100% - 6px);
     max-width: calc(100% - 6px);
     gap: 2px;
@@ -731,7 +739,7 @@
 
 .spell-card-rank {
     /* Monospace so each rank glyph (A, 2–6, T, J, …) shares one column width; proportional 1ch was narrower than bold A and clipped under .spell-card-top overflow:hidden */
-    font-family: ui-monospace, 'Cascadia Mono', 'Consolas', 'Segoe UI Mono', monospace;
+    font-family: var(--font-game-mono);
     font-weight: bold;
     display: inline-flex;
     align-items: center;
@@ -743,23 +751,22 @@
 }
 
 .spell-card-name {
-    flex: 1 1 0;
+    flex: 1 1 auto;
     min-width: 0;
-    max-width: calc(100% - 60px);
-    margin-left: auto;
-    text-align: right;
     overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    line-clamp: 2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: right;
+    font-family: var(--font-game-mono);
     font-weight: bold;
     font-size: 10px;
+    line-height: 1.15;
 }
 
 .card-description {
     color: black;
     margin: 5px;
+    font-family: var(--font-game-mono);
 }
 
 .card-back {
@@ -777,6 +784,7 @@
     max-width: 380px;
     background: rgba(0, 0, 0, 0.9);
     color: #fff;
+    font-family: var(--font-game-mono);
     font-size: 12px;
     line-height: 1.4;
     border-radius: 6px;
@@ -824,6 +832,25 @@
     margin-top: 8px;
     font-style: italic;
     color: rgba(255, 255, 255, 0.85);
+}
+
+/* v-html suit/block icons: match local text (global .suit-symbol is 1.15rem) */
+.spell-card-description :deep(.suit-symbol),
+.card-tooltip-keyword :deep(.suit-symbol),
+.card-tooltip-flavor :deep(.suit-symbol),
+.card-tooltip-title :deep(.suit-symbol) {
+    font-size: 1em;
+    line-height: 1;
+    vertical-align: -0.06em;
+}
+
+.spell-card-description :deep(.suit-symbol svg),
+.card-tooltip-keyword :deep(.suit-symbol svg),
+.card-tooltip-flavor :deep(.suit-symbol svg),
+.card-tooltip-title :deep(.suit-symbol svg) {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.06em;
 }
 
 .card-artwork-container {

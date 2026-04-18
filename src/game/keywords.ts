@@ -1,3 +1,5 @@
+import { COMBAT_STATUS_TOOLTIPS, CombatStatusId } from "./combatStatuses";
+
 /**
  * Card keywords enum. Add new keywords here and set their tooltip explanation below.
  */
@@ -14,6 +16,10 @@ export enum Keyword {
     Aoe = 'aoe',
     Charges = 'charges',
     ManaDiamond = 'manaDiamond',
+    /** Combat status; same rules as {@link CombatStatusId.Knackered}. */
+    Knackered = "knackered",
+    /** Combat status; same rules as {@link CombatStatusId.Wonky}. */
+    Wonky = "wonky",
 }
 
 /** Tooltip explanation for each keyword. Keep tone consistent: "[Keyword]: [concise rule]." */
@@ -30,6 +36,8 @@ export const KEYWORD_EXPLANATIONS: Record<Keyword, string> = {
     [Keyword.Aoe]: 'Aoe: Deals damage to all summons and to the player/enemy.',
     [Keyword.Charges]: 'Charges: This spell has limited uses per combat. When the last charge is used, the card is trashed.',
     [Keyword.ManaDiamond]: 'Mana Diamond: Can be used to pay for the difference between the card\'s rank and the number of cards in the corresponding mana pool.',
+    [Keyword.Knackered]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Knackered],
+    [Keyword.Wonky]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Wonky],
 };
 
 export function getKeywordExplanation(keyword: string): string {

@@ -1,7 +1,14 @@
 import Combatant from "./Combatant";
 import type { DamageNumberType } from "./Combatant";
+import type { ActiveCombatStatus } from "../game/combatStatuses";
+import {
+    CombatStatusId,
+    KNACKERED_OUTGOING_FACTOR,
+    WONKY_INCOMING_FACTOR,
+} from "../game/combatStatuses";
 import EnemyAction, { enemyActions } from "./EnemyAction";
 import type Player from "./Player";
+import { DamageType } from "./DamageType";
 import type { Combat } from "../composables/useCombat";
 import useDamageNumbers from "../composables/useDamageNumbers";
 
@@ -120,6 +127,13 @@ class Enemy extends Combatant {
 
     private readonly generateTurnActions: EnemyTurnActionGenerator;
 
+    /** Combat-only debuffs/buffs; duration counts down at end of each player turn. */
+    combatStatuses: ActiveCombatStatus[] = [];
+    /** Derived from {@link combatStatuses}; applied in {@link takeDamage} for incoming damage to this enemy. */
+    incomingDamageMultiplier: number = 1;
+    /** Derived from {@link combatStatuses}; applied in {@link Combat.damagePlayer} for damage this enemy deals. */
+    outgoingDamageMultiplier: number = 1;
+
     protected constructor(enemyParams: EnemyParams) {
         super({
             name: enemyParams.name,
@@ -138,6 +152,47 @@ class Enemy extends Combatant {
         this.agility = enemyParams.agility ?? 0;
         this.acumen = enemyParams.acumen ?? 0;
         this.turnNumber = 0;
+        this.recomputeCombatStatusMultipliers();
+    }
+
+    /** Add or refresh a combat status (refreshes duration if the same id already exists). */
+    addCombatStatus(id: CombatStatusId, turns: number): void {
+        const existing = this.combatStatuses.find((s) => s.id === id);
+        if (existing) {
+            existing.turnsRemaining = Math.max(existing.turnsRemaining, turns);
+        } else {
+            this.combatStatuses.push({ id, turnsRemaining: turns });
+        }
+        this.recomputeCombatStatusMultipliers();
+    }
+
+    clearCombatStatuses(): void {
+        this.combatStatuses = [];
+        this.recomputeCombatStatusMultipliers();
+    }
+
+    tickCombatStatuses(): void {
+        for (const s of this.combatStatuses) {
+            s.turnsRemaining -= 1;
+        }
+        this.combatStatuses = this.combatStatuses.filter((s) => s.turnsRemaining > 0);
+        this.recomputeCombatStatusMultipliers();
+    }
+
+    private recomputeCombatStatusMultipliers(): void {
+        let incoming = 1;
+        let outgoing = 1;
+        for (const s of this.combatStatuses) {
+            if (s.id === CombatStatusId.Wonky) incoming *= WONKY_INCOMING_FACTOR;
+            if (s.id === CombatStatusId.Knackered) outgoing *= KNACKERED_OUTGOING_FACTOR;
+        }
+        this.incomingDamageMultiplier = incoming;
+        this.outgoingDamageMultiplier = outgoing;
+    }
+
+    takeDamage(amount: number, damageTypes: DamageType[] = []): void {
+        const scaled = Math.max(0, Math.floor(amount * this.incomingDamageMultiplier));
+        super.takeDamage(scaled, damageTypes);
     }
 
     protected addDamageNumber(amount: number, type: DamageNumberType): void {
@@ -164,8 +219,9 @@ class Enemy extends Combatant {
         }
         this.impendingActions = [];
 
-        // Enemy summons run after all enemy actions
+        // Enemy summons run after all enemy actions (mirror {@link Combat.runRestOfTurn}: base damage then effect).
         for (const summon of this.summons) {
+            await combat.damagePlayer(Math.max(0, Math.floor(Number(summon.damage) || 0)));
             await Promise.resolve(summon.effect(combat));
             combat.notify();
             await new Promise((resolve) => setTimeout(resolve, 500)); // 0.5s pause after each enemy summon

@@ -5,16 +5,28 @@
     import FloatingNumber from './FloatingNumber.vue'
     import SummonDisplay from './SummonDisplay.vue'
     import useDamageNumbers, { getFlashClassForLatest } from '../composables/useDamageNumbers'
-    import { formatStatSymbols } from '../utils/damageSymbol'
-    import { combatStatusLabels } from '../game/combatStatuses'
+    import { formatStatSymbols, BLOCK_STAT_SYMBOL_HTML, BLOCK_SHIELD_SVG_INNER } from '../utils/damageSymbol'
+    import { diamondSuitSvgInner, heartSuitSvgInner } from '../utils/suitUiSymbols'
+    import { combatStatusLabels, getCombatStatusTooltip } from '../game/combatStatuses'
 
     const props = withDefaults(
         defineProps<{
             combatant: Player | Enemy | null
             variant: 'player' | 'enemy'
             showBytecoins?: boolean
+            /** Net ♥ loss if End Turn resolved now (0 = hide). */
+            pendingEndTurnHpLoss?: number | null
+            /** Player only: block consumed by incoming hits if End Turn resolved now (0 = hide). */
+            pendingEndTurnBlockLoss?: number | null
+            /** Per-summon ♥ loss vs current `combatant.summons` order; omit entries or use null when unknown. */
+            pendingEndTurnSummonHpLosses?: number[] | null
         }>(),
-        { showBytecoins: false }
+        {
+            showBytecoins: false,
+            pendingEndTurnHpLoss: null,
+            pendingEndTurnBlockLoss: null,
+            pendingEndTurnSummonHpLosses: null,
+        }
     )
 
     const CURSOR_OFFSET = 12
@@ -29,6 +41,10 @@
             'Diamonds: Condensed mana, spent to cast a spell if you do not have enough mana cards in the corresponding pool.',
         dodge: 'Dodge: Each point negates one incoming damage instance entirely, before block. Consumed when it stops a hit.',
         block: 'Block: Absorbs incoming damage before it reduces health. Applied after dodge, but before damage to summons. Magic damage ignores block.',
+        pendingEndTurnDamage:
+            'If you press End Turn now: net hearts lost after your summons attack, then the enemy acts (their listed actions and summons). Summon rows show extra ♥ loss they would take. Does not include recycling the tableau.',
+        pendingEndTurnBlockLoss:
+            'If you press End Turn now: block your shields will lose from enemy hits (damage absorbed by block before HP). Does not include recycling the tableau.',
         appeal: 'Appeal: Charisma and Leadership.',
         attackPlayer: 'Attack: Damage dealt by regular attacks.',
         attackEnemy: 'Attack: Added to this enemy\'s damage when they use attack actions.',
@@ -97,6 +113,10 @@
 
     const playerCombatStatuses = computed(() =>
         props.variant === 'player' && props.combatant ? (props.combatant as Player).combatStatuses : []
+    )
+
+    const enemyCombatStatuses = computed(() =>
+        props.variant === 'enemy' && props.combatant ? (props.combatant as Enemy).combatStatuses : []
     )
 
     /** Same Teleport/fixed pattern as portrait — native `title` is clipped by overflow/transform. */
@@ -177,13 +197,30 @@
             </Teleport>
         </div>
         <p
-            class="combatant-info__stat-line"
-            @mouseenter="onInfoTooltipEnter($event, statTooltips.health)"
+            class="combatant-info__stat-line combatant-info__health-row"
             @mousemove="onInfoTooltipMove"
             @mouseleave="onInfoTooltipLeave"
         >
-            <span class="suit-symbol suit-symbol--health">♥</span> {{ combatant.health }} /
-            {{ combatant.maxHealth }}
+            <span @mouseenter="onInfoTooltipEnter($event, statTooltips.health)">
+                <span
+                    class="suit-symbol suit-symbol--health"
+                    title="Health"
+                    v-html="heartSuitSvgInner"
+                ></span>
+                {{ combatant.health }} /
+                {{ combatant.maxHealth }}
+            </span>
+            <span
+                v-if="pendingEndTurnHpLoss != null && pendingEndTurnHpLoss > 0"
+                class="combatant-info__end-turn-preview-inline"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.pendingEndTurnDamage)"
+            > (-{{ pendingEndTurnHpLoss
+                }}<span
+                    class="suit-symbol suit-symbol--health"
+                    aria-hidden="true"
+                    v-html="heartSuitSvgInner"
+                ></span>)
+            </span>
         </p>
         <p
             v-if="isPlayer"
@@ -192,10 +229,15 @@
             @mousemove="onInfoTooltipMove"
             @mouseleave="onInfoTooltipLeave"
         >
-            <span class="suit-symbol suit-symbol--mana-diamonds">♦</span>
+            <span
+                class="suit-symbol suit-symbol--mana-diamonds"
+                title="Mana Diamonds"
+                v-html="diamondSuitSvgInner"
+            ></span>
             {{ (combatant as Player).manaDiamonds }}
         </p>
         <p
+            v-if="combatant.dodge > 0"
             class="combatant-info__stat-line"
             @mouseenter="onInfoTooltipEnter($event, statTooltips.dodge)"
             @mousemove="onInfoTooltipMove"
@@ -204,12 +246,25 @@
             Dodge: {{ combatant.dodge }}
         </p>
         <p
-            class="combatant-info__stat-line"
+            class="combatant-info__stat-line combatant-info__block-row"
             @mouseenter="onInfoTooltipEnter($event, statTooltips.block)"
             @mousemove="onInfoTooltipMove"
             @mouseleave="onInfoTooltipLeave"
         >
-            Block: {{ combatant.block }}
+            <span v-html="BLOCK_STAT_SYMBOL_HTML"></span> {{ combatant.block }}
+            <span
+                v-if="pendingEndTurnBlockLoss != null && pendingEndTurnBlockLoss > 0"
+                class="combatant-info__end-turn-preview-inline"
+                @mouseenter="onInfoTooltipEnter($event, statTooltips.pendingEndTurnBlockLoss)"
+                @mousemove="onInfoTooltipMove"
+                @mouseleave="onInfoTooltipLeave"
+            > (-{{ pendingEndTurnBlockLoss
+                }}<span
+                    class="suit-symbol suit-symbol--block"
+                    aria-hidden="true"
+                    v-html="BLOCK_SHIELD_SVG_INNER"
+                ></span>)
+            </span>
         </p>
         <div
             v-if="isPlayer && playerCombatStatuses.length"
@@ -220,6 +275,28 @@
                 <li
                     v-for="(s, i) in playerCombatStatuses"
                     :key="`${s.id}-${i}`"
+                    class="combatant-info__status-line"
+                    @mouseenter="onInfoTooltipEnter($event, getCombatStatusTooltip(s.id))"
+                    @mousemove="onInfoTooltipMove"
+                    @mouseleave="onInfoTooltipLeave"
+                >
+                    {{ combatStatusLabels[s.id] }} ({{ s.turnsRemaining }})
+                </li>
+            </ul>
+        </div>
+        <div
+            v-if="isEnemy && enemyCombatStatuses.length"
+            class="combatant-info__statuses"
+        >
+            <h3>Statuses</h3>
+            <ul class="combatant-info__statuses-list">
+                <li
+                    v-for="(s, i) in enemyCombatStatuses"
+                    :key="`${s.id}-${i}`"
+                    class="combatant-info__status-line"
+                    @mouseenter="onInfoTooltipEnter($event, getCombatStatusTooltip(s.id))"
+                    @mousemove="onInfoTooltipMove"
+                    @mouseleave="onInfoTooltipLeave"
                 >
                     {{ combatStatusLabels[s.id] }} ({{ s.turnsRemaining }})
                 </li>
@@ -354,6 +431,7 @@
                 v-for="(summon, index) in combatant.summons"
                 :key="index"
                 :summon="summon"
+                :pending-end-turn-hp-loss="pendingEndTurnSummonHpLosses?.[index] ?? null"
             />
         </div>
         <Teleport to="body">
@@ -364,7 +442,7 @@
                 :class="{ 'cursor-tooltip--visible': showInfoTooltip }"
                 :style="infoTooltipStyle"
             >
-                {{ infoTooltipText }}
+                <span v-html="formatStatSymbols(infoTooltipText)"></span>
             </div>
         </Teleport>
     </div>
@@ -380,6 +458,7 @@
         flex: 1;
         min-height: 0;
         width: 100%;
+        font-family: var(--font-game-mono);
     }
 
     .portrait-tooltip-wrapper {
@@ -453,6 +532,12 @@
         cursor: help;
     }
 
+    .combatant-info__health-row .combatant-info__end-turn-preview-inline,
+    .combatant-info__block-row .combatant-info__end-turn-preview-inline {
+        color: #a63;
+        font-weight: 600;
+    }
+
     .combatant-info__cardifact-item {
         cursor: help;
     }
@@ -472,6 +557,10 @@
         padding-left: 1.15rem;
         font-size: 13px;
         line-height: 1.45;
+    }
+
+    .combatant-info__status-line {
+        cursor: help;
     }
 
     </style>

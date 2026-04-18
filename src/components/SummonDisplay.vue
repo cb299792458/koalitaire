@@ -2,10 +2,16 @@
     import { computed, ref } from 'vue'
     import type Summon from '../models/Summon'
     import { formatStatSymbols } from '../utils/damageSymbol'
+    import { clubSuitSvgInner, heartSuitSvgInner } from '../utils/suitUiSymbols'
 
-    defineProps<{
-        summon: Summon
-    }>()
+    withDefaults(
+        defineProps<{
+            summon: Summon
+            /** Extra ♥ loss on this summon if End Turn resolved now (0 = hide). */
+            pendingEndTurnHpLoss?: number | null
+        }>(),
+        { pendingEndTurnHpLoss: null }
+    )
 
     const CURSOR_OFFSET = 12
     const TOOLTIP_EDGE_PADDING = 20
@@ -61,8 +67,29 @@
         <span class="summon-name">{{ summon.name }}</span>
         <span class="summon-description" v-html="formatStatSymbols(summon.description)"></span>
         <span class="summon-stats">
-            <span v-if="summon.damage" class="suit-symbol suit-symbol--damage" title="♣ Dealt to the enemy by this summon each turn.">♣</span><span v-if="summon.damage" class="summon-num"> {{ summon.damage }} </span>
-            <span class="suit-symbol suit-symbol--health" title="♥ When this reaches 0, the summon is removed.">♥</span> <span class="summon-num">{{ summon.hp }}</span>
+            <span
+                v-if="summon.damage"
+                class="suit-symbol suit-symbol--damage"
+                title="Damage dealt to the enemy by this summon each turn."
+                v-html="clubSuitSvgInner"
+            ></span>
+            <span v-if="summon.damage" class="summon-num"> {{ summon.damage }} </span>
+            <span
+                class="suit-symbol suit-symbol--health"
+                title="When this reaches 0, the summon is removed."
+                v-html="heartSuitSvgInner"
+            ></span>
+            <span class="summon-num">{{ summon.hp }}</span>
+            <template v-if="pendingEndTurnHpLoss != null && pendingEndTurnHpLoss > 0">
+                <span class="summon-pending-loss">
+                    (-{{ pendingEndTurnHpLoss
+                    }}<span
+                        class="suit-symbol suit-symbol--health"
+                        aria-hidden="true"
+                        v-html="heartSuitSvgInner"
+                    ></span>)
+                </span>
+            </template>
         </span>
         <Teleport to="body">
             <div
@@ -71,7 +98,7 @@
                 :class="{ 'cursor-tooltip--visible': showTooltip }"
                 :style="tooltipStyle"
             >
-                {{ summon.tooltip }}
+                <span v-html="formatStatSymbols(summon.tooltip)"></span>
             </div>
         </Teleport>
     </div>
@@ -104,6 +131,13 @@
 
     .summon-num {
         color: #000;
+    }
+
+    .summon-pending-loss {
+        margin-left: 4px;
+        font-size: 12px;
+        color: #a63;
+        font-weight: 600;
     }
 
     .cursor-tooltip {

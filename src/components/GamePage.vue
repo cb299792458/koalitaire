@@ -18,6 +18,8 @@
     import EventView from './EventView.vue'
     import GameLayout from './GameLayout.vue'
     import { formatStatSymbols } from '../utils/damageSymbol'
+    import { diamondSuitSvgInner } from '../utils/suitUiSymbols'
+    import type { EndTurnDamagePreview } from '../game/endTurnDamagePreview'
 
     const DECK_PILE_TOOLTIP = 'Your deck starts here'
     const RECYCLING_PILE_TOOLTIP =
@@ -159,6 +161,55 @@
     const eventResultMessage = computed(() => eventState.resultMessage.value)
     const eventIsResolving = computed(() => eventState.isResolving.value)
     const isProcessing = computed(() => (combatRef.value?.isProcessingTurn ?? false) || eventIsResolving.value)
+
+    const endTurnDamagePreview = ref<EndTurnDamagePreview | null>(null)
+    let endTurnPreviewRequestId = 0
+
+    watch(
+        () => {
+            const c = combatRef.value
+            if (!c) return ''
+            const p = c.player
+            const e = c.enemy
+            return [
+                isInCombat.value,
+                c.isProcessingTurn,
+                p?.health,
+                p?.block,
+                p?.dodge,
+                p?.incomingDamageMultiplier,
+                p?.outgoingDamageMultiplier,
+                p?.summons?.map((s) => `${s.hp},${s.damage}`).join(';'),
+                e?.health,
+                e?.block,
+                e?.dodge,
+                e?.incomingDamageMultiplier,
+                e?.outgoingDamageMultiplier,
+                e?.summons?.map((s) => `${s.hp},${s.damage}`).join(';'),
+                e?.attack,
+                e?.impendingActions?.map((a) => a.name).join(','),
+            ].join('|')
+        },
+        async () => {
+            const req = ++endTurnPreviewRequestId
+            const c = combatRef.value
+            if (!isInCombat.value || !c || c.isProcessingTurn) {
+                endTurnDamagePreview.value = null
+                return
+            }
+            try {
+                const preview = await c.computeEndTurnDamagePreviewAsync()
+                if (req === endTurnPreviewRequestId) {
+                    endTurnDamagePreview.value = preview
+                }
+            } catch {
+                if (req === endTurnPreviewRequestId) {
+                    endTurnDamagePreview.value = null
+                }
+            }
+        },
+        { immediate: true }
+    )
 
     const autoManaButtonDisabled = computed(
         () =>
@@ -435,7 +486,13 @@
                     <GameLayout>
                         <template #left>
                             <h1>Player</h1>
-                            <CombatantInfo :combatant="player" variant="player" />
+                            <CombatantInfo
+                                :combatant="player"
+                                variant="player"
+                                :pending-end-turn-hp-loss="endTurnDamagePreview?.playerHpLoss ?? null"
+                                :pending-end-turn-block-loss="endTurnDamagePreview?.playerBlockLoss ?? null"
+                                :pending-end-turn-summon-hp-losses="endTurnDamagePreview?.playerSummonHpLosses ?? null"
+                            />
                             <div v-if="isInEvent && eventPlayerRoll !== null" class="event-roll-display event-roll-display--player">
                                 <p class="event-roll-label">Roll</p>
                                 <p class="event-roll-value">
@@ -520,7 +577,7 @@
                                                     type="button"
                                                     class="cast-spell-button"
                                                     :disabled="!canCastSpell || isProcessing || combat.isMovingToMana"
-                                                    title="♦ Mana diamonds pay the gap when your pools do not cover the full rank."
+                                                    title="Mana diamonds pay the gap when your pools do not cover the full rank."
                                                     @mouseenter="hoverCastSpell = true"
                                                     @mouseleave="hoverCastSpell = false"
                                                     @click="onCastSpellClick"
@@ -529,7 +586,8 @@
                                                         (-{{ manaDiamondsCost }}<span
                                                             class="suit-symbol suit-symbol--mana-diamonds"
                                                             aria-hidden="true"
-                                                        >♦</span>)
+                                                            v-html="diamondSuitSvgInner"
+                                                        ></span>)
                                                     </template>
                                                 </button>
                                                 <button
@@ -583,7 +641,13 @@
                             </template>
                             <template v-else>
                                 <h1 v-if="isInCombat">Enemy</h1>
-                                <CombatantInfo v-if="isInCombat" :combatant="(enemy ?? null) as Player | Enemy | null" variant="enemy" />
+                                <CombatantInfo
+                                    v-if="isInCombat"
+                                    :combatant="(enemy ?? null) as Player | Enemy | null"
+                                    variant="enemy"
+                                    :pending-end-turn-hp-loss="endTurnDamagePreview?.enemyHpLoss ?? null"
+                                    :pending-end-turn-summon-hp-losses="endTurnDamagePreview?.enemySummonHpLosses ?? null"
+                                />
                             </template>
                         </template>
 
@@ -1022,6 +1086,7 @@
 
 .event-choice {
     padding: 14px 20px;
+    font-family: var(--font-game-mono);
     font-size: 1rem;
     text-align: left;
     background: #e8e8e8;
@@ -1051,6 +1116,7 @@
 .event-result-message {
     margin: 0;
     padding: 1rem;
+    font-family: var(--font-game-mono);
     background: #f5f5f5;
     border-radius: 8px;
     line-height: 1.5;

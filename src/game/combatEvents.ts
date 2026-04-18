@@ -19,7 +19,7 @@ export type CombatEvent =
     | { type: "enemyDefeated" }
     /** Before {@link Combat.damagePlayer} applies damage to the player; listeners may mutate `payload`. */
     | { type: "beforeDamageToPlayer"; payload: DamagePayload }
-    /** Before damage is applied to the enemy; listeners may mutate `payload`. Outgoing knackered is applied after emit. */
+    /** Before damage is applied to the enemy; listeners may mutate `payload`. Player outgoing knackered is applied after emit; enemy incoming wonky is applied in {@link Enemy.takeDamage}. */
     | { type: "beforeDamageToEnemy"; payload: DamagePayload }
     /** After {@link Combatant.gainBlock} on the player with amount &gt; 0 (combat player only). */
     | { type: "playerGainedBlock"; amount: number }

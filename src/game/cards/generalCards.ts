@@ -6,6 +6,7 @@ import { addSummon } from "../summons";
 import { Keyword } from "../keywords";
 import { Race } from "../../models/Summon";
 import { DamageType } from "../../models/DamageType";
+import { CombatStatusId } from "../combatStatuses";
 
 const parry: SpellCardParams = {
     rank: 1,
@@ -219,6 +220,28 @@ const thunderstruck: SpellCardParams = {
     flavorText: "You've been thunderstruck!",
 }
 
+const brineLag: SpellCardParams = {
+    rank: 2,
+    suit: Suit.Water,
+    name: "Brine Lag",
+    description: "Apply Knackered to the enemy for 3 turns (~33% less damage to you from them).",
+    keywords: [Keyword.Knackered],
+    effect: (combat: Combat) => {
+        combat.enemy?.addCombatStatus(CombatStatusId.Knackered, 3);
+    },
+};
+
+const riptide: SpellCardParams = {
+    rank: 3,
+    suit: Suit.Water,
+    name: "Riptide",
+    description: "Apply Wonky to the enemy for 3 turns (they take 50% more damage from you).",
+    keywords: [Keyword.Wonky],
+    effect: (combat: Combat) => {
+        combat.enemy?.addCombatStatus(CombatStatusId.Wonky, 3);
+    },
+};
+
 export const generalCards: SpellCardParams[] = [
     parry,
     sparkRitual,
@@ -238,4 +261,6 @@ export const generalCards: SpellCardParams[] = [
     despertaFerro,
     sasageyo,
     thunderstruck,
+    brineLag,
+    riptide,
 ];

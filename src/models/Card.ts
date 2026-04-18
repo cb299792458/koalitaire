@@ -92,7 +92,16 @@ class Card {
 }
 
 const CAST_LEFT_KEYWORDS: string[] = [Keyword.Block, Keyword.Summon, Keyword.Heal, Keyword.ManaDiamond, Keyword.Draw];
-const CAST_RIGHT_KEYWORDS: string[] = [Keyword.Attack, Keyword.Ranged, Keyword.Magic, Keyword.Piercing, Keyword.Backstab, Keyword.Aoe];
+const CAST_RIGHT_KEYWORDS: string[] = [
+    Keyword.Attack,
+    Keyword.Ranged,
+    Keyword.Magic,
+    Keyword.Piercing,
+    Keyword.Backstab,
+    Keyword.Aoe,
+    Keyword.Knackered,
+    Keyword.Wonky,
+];
 
 export class SpellCard extends Card {
     isSpell: boolean = true;

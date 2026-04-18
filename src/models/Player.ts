@@ -7,7 +7,7 @@ import type Cardifact from "./Cardifact";
 import {
     type ActiveCombatStatus,
     CombatStatusId,
-    COWED_INCOMING_FACTOR,
+    WONKY_INCOMING_FACTOR,
     KNACKERED_OUTGOING_FACTOR,
 } from "../game/combatStatuses";
 import type { CombatEventBus } from "../game/combatEvents";
@@ -192,7 +192,7 @@ class Player extends Combatant {
         let incoming = 1;
         let outgoing = 1;
         for (const s of this.combatStatuses) {
-            if (s.id === CombatStatusId.Cowed) incoming *= COWED_INCOMING_FACTOR;
+            if (s.id === CombatStatusId.Wonky) incoming *= WONKY_INCOMING_FACTOR;
             if (s.id === CombatStatusId.Knackered) outgoing *= KNACKERED_OUTGOING_FACTOR;
         }
         this.incomingDamageMultiplier = incoming;
@@ -200,7 +200,7 @@ class Player extends Combatant {
     }
 
     takeDamage(amount: number, damageTypes: DamageType[] = []): void {
-        const scaled = Math.max(0, Math.round(amount * this.incomingDamageMultiplier));
+        const scaled = Math.max(0, Math.floor(amount * this.incomingDamageMultiplier));
         super.takeDamage(scaled, damageTypes);
     }
 

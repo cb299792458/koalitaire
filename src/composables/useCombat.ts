@@ -21,6 +21,10 @@ import type { ScenarioEntry } from '../game/makeScenario';
 import { CombatEventBus, type DamagePayload } from '../game/combatEvents';
 import type { DamageType } from '../models/DamageType';
 import { canPlaceCardOnTableau, isValidTableauRun } from '../game/tableauRules';
+import {
+    computeEndTurnDamagePreviewAsync,
+    type EndTurnDamagePreview,
+} from '../game/endTurnDamagePreview';
 
 export type DefeatRewardKind = 'cards' | 'relics';
 
@@ -142,6 +146,7 @@ export class Combat {
                 this.player.manaDiamonds = this.player.startingManaDiamonds;
                 this.player.clearCombatStatuses();
             }
+            this.enemy.clearCombatStatuses();
 
             await this.applyCardifacts();
 
@@ -214,6 +219,7 @@ export class Combat {
             if (event.type === "playerTurnEnded") {
                 await this.recycleTableauAndRecyclingIntoDeck();
                 this.player?.tickCombatStatuses();
+                this.enemy?.tickCombatStatuses();
                 return;
             }
         });
@@ -221,7 +227,8 @@ export class Combat {
 
     /**
      * All damage to the player during combat (enemy attacks, etc.). Emits {@link CombatEvent} `beforeDamageToPlayer`,
-     * then applies incoming multipliers (e.g. cowed) in {@link Player.takeDamage}.
+     * then applies the enemy's outgoing multipliers (e.g. knackered), then incoming multipliers (e.g. wonky) in
+     * {@link Player.takeDamage}.
      */
     async damagePlayer(rawAmount: number, damageTypes: DamageType[] = []): Promise<void> {
         if (!this.player) return;
@@ -230,12 +237,16 @@ export class Combat {
             damageTypes: [...damageTypes],
         };
         await this.events.emit({ type: "beforeDamageToPlayer", payload });
-        this.player.takeDamage(payload.amount, payload.damageTypes);
+        const afterEnemyOutgoing = this.enemy
+            ? Math.max(0, Math.floor(payload.amount * this.enemy.outgoingDamageMultiplier))
+            : payload.amount;
+        this.player.takeDamage(afterEnemyOutgoing, payload.damageTypes);
     }
 
     /**
      * All damage from the player to the enemy (spells, summons, etc.). Emits `beforeDamageToEnemy`, then applies
-     * outgoing multipliers (e.g. knackered), then {@link Enemy.takeDamage}.
+     * the player's outgoing multipliers (e.g. knackered), then {@link Enemy.takeDamage} (which applies the enemy's
+     * incoming multipliers, e.g. wonky).
      */
     async damageEnemy(rawAmount: number, damageTypes: DamageType[] = []): Promise<void> {
         if (!this.enemy || !this.player) return;
@@ -244,7 +255,7 @@ export class Combat {
             damageTypes: [...damageTypes],
         };
         await this.events.emit({ type: "beforeDamageToEnemy", payload });
-        const scaled = Math.max(0, Math.round(payload.amount * this.player.outgoingDamageMultiplier));
+        const scaled = Math.max(0, Math.floor(payload.amount * this.player.outgoingDamageMultiplier));
         this.enemy.takeDamage(scaled, payload.damageTypes);
     }
 
@@ -1102,6 +1113,11 @@ export class Combat {
 
     notify(): void {
         for (const fn of this.listeners) fn();
+    }
+
+    /** HP loss if the player ended the turn now (summons + enemy actions); ignores `beforeDamage*` bus listeners. */
+    computeEndTurnDamagePreviewAsync(): Promise<EndTurnDamagePreview> {
+        return computeEndTurnDamagePreviewAsync(this);
     }
 }
 

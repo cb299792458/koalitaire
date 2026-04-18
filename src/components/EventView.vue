@@ -25,6 +25,7 @@ const { currentEvent } = useEvent();
 
 .event-description {
     margin: 0;
+    font-family: var(--font-game-mono);
     font-size: 1.1rem;
     text-align: center;
     line-height: 1.5;

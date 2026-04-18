@@ -1,3 +1,8 @@
+:root {
+    /* Card rank/title, spell text, combatant panel, teleported tooltips */
+    --font-game-mono: ui-monospace, 'Cascadia Mono', 'Consolas', 'Segoe UI Mono', monospace;
+}
+
 html, body {
     background-color: #444444;
     overflow: hidden;
@@ -5,6 +10,11 @@ html, body {
     -moz-user-select: none;
     user-select: none;
     cursor: default;
+}
+
+/* Teleported tooltips (SummonDisplay, CombatantInfo portrait, etc.) */
+.cursor-tooltip {
+    font-family: var(--font-game-mono);
 }
 
 /* Clickable elements: pointer normally, wait when loading, not-allowed when disabled */
@@ -58,16 +68,22 @@ input:disabled {
     50% { background-color: rgba(0, 180, 0, 0.3); }
 }
 
-/* Playing card suit symbols: larger and consistent (block ♠, mana ♦, health ♥, damage ♣) */
+/* Playing card suit symbols: block shield + heart/club/diamond SVGs (same size) */
 .suit-symbol {
     display: inline-block;
     font-size: 1.15rem;
     line-height: 1;
 }
 
+.suit-symbol svg {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: -0.15em;
+}
+
 .suit-symbol--block {
     color: #666;
-    transform: rotate(180deg);
 }
 
 .suit-symbol--mana-diamonds {
