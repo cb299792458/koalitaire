@@ -18,6 +18,15 @@
     import EventView from './EventView.vue'
     import GameLayout from './GameLayout.vue'
     import { formatStatSymbols } from '../utils/damageSymbol'
+
+    const DECK_PILE_TOOLTIP = 'Your deck starts here'
+    const RECYCLING_PILE_TOOLTIP =
+        'At the end of each turn, recycling and the tableau are gathered, shuffled into the deck, and the tableau is redealt. If your mana pools are not full, compost stays separate; trash is never mixed in.'
+    const COMPOST_PILE_TOOLTIP =
+        'Spells go to compost when cast. When you end your turn with every mana card in the mana pools, compost and those mana pool cards are shuffled into the deck with the tableau and recycling, then redealt to the tableau.'
+    const TRASH_PILE_TOOLTIP =
+        'Trashed cards stay here until the end of combat, then they are removed from play.'
+
     const modalState = useModalState()
     const town = useTown()
     const eventState = useEvent()
@@ -58,6 +67,7 @@
     const enemy = computed(() => combatRef.value?.enemy)
 
     const deck = combat.deck
+    const recycling = combat.recycling
     const compost = combat.compost
     const trash = combat.trash
 
@@ -69,7 +79,7 @@
         return card ? [card] : []
     }
 
-    /** Empty free cell is only clickable when a valid card can be placed there. */
+    /** Empty hand slot is only clickable when a valid card can be placed there. */
     function isHandSlotClickable(slotIndex: number): boolean {
         const hand = combatRef.value?.hand
         if (hand?.getSlot(slotIndex) != null) return true
@@ -78,7 +88,7 @@
     const tableau = computed(() => combatRef.value?.tableau.getCardsArrays() ?? [])
     const manaPools = combat.manaPools
     const selectedCard = computed(() => combatRef.value?.selectedCard ?? null)
-    /** Number of hand (free cell) slots to show; from current player so it updates when starting combat. */
+    /** Number of hand slots to show; from current player so it updates when starting combat. */
     const handSlotCount = computed(() => Math.max(1, combatRef.value?.player?.handSlotCount ?? 1))
 
     const allManaPoolCounts = computed(() =>
@@ -90,6 +100,10 @@
 
     /** Index of the mana pool being hovered (0–4), or null when not over a pool. */
     const hoveredManaPoolIndex = ref<number | null>(null)
+    /** Mouse over the Auto Mana button — highlights burnable / preview cards. */
+    const hoverAutoMana = ref(false)
+    /** Mouse over the Cast Spell button — highlights every castable spell for current mana. */
+    const hoverCastSpell = ref(false)
     /** Cards that could be burned to the currently hovered mana pool only. */
     const cardsThatCouldBeBurnedToHoveredPool = computed(() => {
         const index = hoveredManaPoolIndex.value
@@ -146,6 +160,109 @@
     const eventIsResolving = computed(() => eventState.isResolving.value)
     const isProcessing = computed(() => (combatRef.value?.isProcessingTurn ?? false) || eventIsResolving.value)
 
+    const autoManaButtonDisabled = computed(
+        () =>
+            !canMoveToManaPools.value ||
+            isProcessing.value ||
+            (combatRef.value?.isMovingToMana ?? false)
+    )
+
+    /** Cards to outline for Auto Mana hover: all movable bottoms + hand when button enabled; per-suit next when disabled. */
+    const autoManaHoverBurnCards = computed(() => {
+        if (!hoverAutoMana.value || selectedCard.value) return new Set<Card>()
+        void tableau.value
+        void allManaPoolCounts.value
+        void combatRef.value?.isMovingToMana
+        const cards = autoManaButtonDisabled.value
+            ? combat.getAutoManaNextPerSuitPreview()
+            : combat.getCardsMovableToManaPools()
+        return new Set(cards)
+    })
+
+    function getTableauColumnAutoManaHighlightIndices(columnIndex: number): number[] {
+        const columns = combat.tableau.getColumns()
+        const col = columns[columnIndex]
+        if (!col) return []
+        const set = autoManaHoverBurnCards.value
+        const indices: number[] = []
+        col.cards.forEach((card, i) => {
+            if (set.has(card)) indices.push(i)
+        })
+        return indices
+    }
+
+    function isTableauColumnHighlightedForAutoMana(columnIndex: number): boolean {
+        return getTableauColumnAutoManaHighlightIndices(columnIndex).length > 0
+    }
+
+    function isHandSlotHighlightedForAutoMana(slotIndex: number): boolean {
+        const hand = combatRef.value?.hand
+        const card = hand?.getSlot(slotIndex)
+        return card != null && autoManaHoverBurnCards.value.has(card)
+    }
+
+    /** Burn highlights: Auto Mana button hover takes precedence over mana-pool hover. */
+    function getTableauBurnHighlightIndices(columnIndex: number): number[] | undefined {
+        if (selectedCard.value) return undefined
+        if (hoverAutoMana.value) {
+            const idx = getTableauColumnAutoManaHighlightIndices(columnIndex)
+            return idx.length > 0 ? idx : undefined
+        }
+        if (hoveredManaPoolIndex.value != null) {
+            const idx = getTableauColumnManaHighlightIndices(columnIndex)
+            return idx.length > 0 ? idx : undefined
+        }
+        return undefined
+    }
+
+    function isTableauColumnBurnHighlighted(columnIndex: number): boolean {
+        if (selectedCard.value) return false
+        if (hoverAutoMana.value) return isTableauColumnHighlightedForAutoMana(columnIndex)
+        if (hoveredManaPoolIndex.value != null) return isTableauColumnMovableToMana(columnIndex)
+        return false
+    }
+
+    const castSpellHoverCardSet = computed(() => {
+        if (!hoverCastSpell.value) return new Set<Card>()
+        void selectedCard.value
+        void tableau.value
+        void allManaPoolCounts.value
+        void combatRef.value?.player?.manaDiamonds
+        return new Set(combat.getCastableSpellCards())
+    })
+
+    function getTableauColumnCastSpellHighlightIndices(columnIndex: number): number[] {
+        const columns = combat.tableau.getColumns()
+        const col = columns[columnIndex]
+        if (!col) return []
+        const set = castSpellHoverCardSet.value
+        const indices: number[] = []
+        col.cards.forEach((card, i) => {
+            if (set.has(card)) indices.push(i)
+        })
+        return indices
+    }
+
+    function isTableauColumnHighlightedForCastSpellHover(columnIndex: number): boolean {
+        return getTableauColumnCastSpellHighlightIndices(columnIndex).length > 0
+    }
+
+    function isHandSlotCastSpellHover(slotIndex: number): boolean {
+        const hand = combatRef.value?.hand
+        const card = hand?.getSlot(slotIndex)
+        return card != null && castSpellHoverCardSet.value.has(card)
+    }
+
+    /** Burn (Auto Mana / pool) or cast-spell-button hover indices; placement uses separate column highlight. */
+    function getTableauPointerHighlightIndices(columnIndex: number): number[] | undefined {
+        if (hoverCastSpell.value) {
+            const idx = getTableauColumnCastSpellHighlightIndices(columnIndex)
+            return idx.length > 0 ? idx : undefined
+        }
+        if (selectedCard.value) return undefined
+        return getTableauBurnHighlightIndices(columnIndex)
+    }
+
     watch(eventResultMessage, (msg) => {
         if (msg && isInEvent.value) {
             const p = combat.originalPlayer ?? eventState.player.value ?? combat.player
@@ -161,34 +278,29 @@
     })
 
     const deckCount = computed(() => combatRef.value?.deck.cards.length ?? 0)
+    const recyclingCount = computed(() => combatRef.value?.recycling.cards.length ?? 0)
     const compostCount = computed(() => combatRef.value?.compost.cards.length ?? 0)
-    const hasTrashCards = computed(() => (combatRef.value?.trash.cards.length ?? 0) > 0)
     const trashCount = computed(() => combatRef.value?.trash.cards.length ?? 0)
     
-    const isCompostHighlighted = computed(() => {
-        const card = selectedCard.value
-        return (card?.revealed && combat.canCastSelectedCard()) ?? false
-    })
-
     const manaDiamondsCost = computed(() => {
         const cost = combat.getManaDiamondsNeededForCast()
         return cost > 0 && combat.canCastSelectedCard() ? cost : null
     })
 
-    const compostHighlightType = computed(() =>
-        combat.getManaDiamondsNeededForCast() === 0 ? 'burn' : 'cast'
-    )
-
-    const showCastSpellText = computed(() => {
-        const card = selectedCard.value
-        return (card?.revealed && combat.canCastSelectedCard()) ?? false
+    const canCastSpell = computed(() => {
+        void selectedCard.value
+        void allManaPoolCounts.value
+        void combatRef.value?.player?.manaDiamonds
+        return combat.canCastSelectedCard()
     })
-    
+
     const highlightedManaPoolIndex = computed(() => {
         const card = selectedCard.value
         if (!card || !card.revealed || card.isSpell) return -1
 
         const { rank, suit } = card
+        if (suit == null) return -1
+
         const manaPool = combat.manaPools.getPool(suit)
         if (!manaPool || manaPool.cards.length !== rank - 1) return -1
 
@@ -256,6 +368,10 @@
 
     function onMoveToManaClick() {
         combat.moveAllPossibleToManaPools()
+    }
+
+    function onCastSpellClick() {
+        combat.castSelectedSpell()
     }
 
     const scale = ref(0.8)
@@ -340,63 +456,93 @@
                                                 :name="AREAS.Deck"
                                                 layout="pile"
                                                 customLabel="Deck"
+                                                :pile-tooltip="DECK_PILE_TOOLTIP"
                                                 @click="onClick"
                                             />
                                             <div class="pile-slot-count">{{ deckCount }} cards</div>
                                         </div>
+                                        <div class="recycling-wrapper pile-slot-area">
+                                            <CardStack
+                                                :cards="recycling.cards"
+                                                :name="AREAS.Recycling"
+                                                layout="pile"
+                                                customLabel="Recycling"
+                                                :pile-tooltip="RECYCLING_PILE_TOOLTIP"
+                                                @click="onClick"
+                                            />
+                                            <div class="pile-slot-count">{{ recyclingCount }} cards</div>
+                                        </div>
                                         <div class="compost-wrapper pile-slot-area">
-                                            <div v-if="manaDiamondsCost !== null" class="mana-diamonds-cost">
-                                                <span class="suit-symbol suit-symbol--mana-diamonds" title="♦ Mana Diamonds: Used to pay the difference when casting cards.">♦</span> −{{ manaDiamondsCost }}
-                                            </div>
-                                            <div v-if="showCastSpellText" class="cast-spell-text">
-                                                Cast Spell
-                                            </div>
                                             <CardStack
                                                 :cards="compost.cards"
                                                 :name="AREAS.Compost"
-                                                :highlighted="isCompostHighlighted"
-                                                :highlightType="compostHighlightType"
                                                 customLabel="Compost"
+                                                :pile-tooltip="COMPOST_PILE_TOOLTIP"
                                                 @click="onClick"
                                             />
                                             <div class="pile-slot-count">{{ compostCount }} cards</div>
                                         </div>
-                                        <div class="trash-wrapper" :class="{ 'trash-wrapper--empty': !hasTrashCards }">
+                                        <div class="trash-wrapper">
                                             <CardStack
                                                 :cards="trash.cards"
                                                 :name="AREAS.Trash"
-                                                customLabel="Trash (WIP)"
+                                                customLabel="Trash"
+                                                :pile-tooltip="TRASH_PILE_TOOLTIP"
                                                 @click="onClick"
                                             />
                                             <div class="trash-count">{{ trashCount }} cards</div>
                                         </div>
                                     </div>
                                     <div class="cards-top-right">
-                                        <div
-                                            class="mana-pools"
-                                            @mouseleave="hoveredManaPoolIndex = null"
-                                        >
-                                            <CardStack
-                                                v-for="([_suit, manaPool], index) in manaPools.entries()"
-                                                :key="index"
-                                                :cards="manaPool.cards"
-                                                :name="AREAS.ManaPools"
-                                                :arrayIndex="index"
-                                                :selectedCard="selectedCard"
-                                                :highlighted="highlightedManaPoolIndex === index"
-                                                highlightType="burn"
-                                                @mouseenter="hoveredManaPoolIndex = index"
-                                                @mousedown.prevent
-                                                @click="onClick"
-                                            />
+                                        <div class="mana-pools-battle">
+                                            <div
+                                                class="mana-pools"
+                                                @mouseleave="hoveredManaPoolIndex = null"
+                                            >
+                                                <CardStack
+                                                    v-for="([_suit, manaPool], index) in manaPools.entries()"
+                                                    :key="index"
+                                                    :cards="manaPool.cards"
+                                                    :name="AREAS.ManaPools"
+                                                    :arrayIndex="index"
+                                                    :selectedCard="selectedCard"
+                                                    :highlighted="highlightedManaPoolIndex === index"
+                                                    highlightType="burn"
+                                                    @mouseenter="hoveredManaPoolIndex = index"
+                                                    @mousedown.prevent
+                                                    @click="onClick"
+                                                />
+                                            </div>
                                         </div>
                                         <div class="mana-pools-buttons">
-                                            <button
-                                                type="button"
-                                                class="move-to-mana-button"
-                                                :disabled="!canMoveToManaPools || isProcessing || combat.isMovingToMana"
-                                                @click="onMoveToManaClick"
-                                            >Auto Mana</button>
+                                            <div class="mana-pools-buttons-row">
+                                                <button
+                                                    type="button"
+                                                    class="cast-spell-button"
+                                                    :disabled="!canCastSpell || isProcessing || combat.isMovingToMana"
+                                                    title="♦ Mana diamonds pay the gap when your pools do not cover the full rank."
+                                                    @mouseenter="hoverCastSpell = true"
+                                                    @mouseleave="hoverCastSpell = false"
+                                                    @click="onCastSpellClick"
+                                                >
+                                                    Cast Spell<template v-if="manaDiamondsCost !== null">
+                                                        (-{{ manaDiamondsCost }}<span
+                                                            class="suit-symbol suit-symbol--mana-diamonds"
+                                                            aria-hidden="true"
+                                                        >♦</span>)
+                                                    </template>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    class="move-to-mana-button"
+                                                    :disabled="!canMoveToManaPools || isProcessing || combat.isMovingToMana"
+                                                    @mouseenter="hoverAutoMana = true"
+                                                    @mouseleave="hoverAutoMana = false"
+                                                    @click="onMoveToManaClick"
+                                                >
+                                                    Auto Mana
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -409,9 +555,14 @@
                                         layout="vertical"
                                         :selectedCard="selectedCard"
                                         :arrayIndex="index as number"
-                                        :highlighted="(hoveredManaPoolIndex != null && !selectedCard && isTableauColumnMovableToMana(index)) || (!!selectedCard && highlightedTableauIndices.includes(index))"
-                                        :highlightedIndices="(hoveredManaPoolIndex != null && !selectedCard) ? getTableauColumnManaHighlightIndices(index) : undefined"
-                                        :highlightType="(hoveredManaPoolIndex != null && !selectedCard) ? 'burn' : 'cast'"
+                                        :highlighted="
+                                            (hoverCastSpell && isTableauColumnHighlightedForCastSpellHover(index)) ||
+                                            (hoverAutoMana && !selectedCard && isTableauColumnBurnHighlighted(index)) ||
+                                            (hoveredManaPoolIndex != null && !selectedCard && !hoverAutoMana && isTableauColumnMovableToMana(index)) ||
+                                            (!!selectedCard && highlightedTableauIndices.includes(index))
+                                        "
+                                        :highlightedIndices="getTableauPointerHighlightIndices(index)"
+                                        :highlightType="(hoverAutoMana || hoveredManaPoolIndex != null) && !selectedCard && !hoverCastSpell ? 'burn' : 'cast'"
                                         @mousedown.prevent
                                         @click="onClick"
                                     />
@@ -470,9 +621,13 @@
                                             layout="pile"
                                             :selectedCard="selectedCard"
                                             :arrayIndex="slotIndex - 1"
-                                            :highlighted="hoveredManaPoolIndex != null && !selectedCard && isHandSlotMovableToMana(slotIndex - 1)"
-                                            highlightType="burn"
-                                            customLabel="Free Cell"
+                                            :highlighted="
+                                                (hoverCastSpell && isHandSlotCastSpellHover(slotIndex - 1)) ||
+                                                (hoverAutoMana && !selectedCard && isHandSlotHighlightedForAutoMana(slotIndex - 1)) ||
+                                                (hoveredManaPoolIndex != null && !selectedCard && !hoverAutoMana && isHandSlotMovableToMana(slotIndex - 1))
+                                            "
+                                            :highlightType="(hoverAutoMana || hoveredManaPoolIndex != null) && !selectedCard && !hoverCastSpell ? 'burn' : 'cast'"
+                                            customLabel="Hand"
                                             @click="onClick"
                                         />
                                     </div>
@@ -626,16 +781,19 @@
     flex-shrink: 0;
 }
 
-.trash-wrapper--empty {
-    visibility: hidden;
-    pointer-events: none;
-}
-
 .cards-top-right {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
     width: 100%;
+}
+
+.mana-pools-battle {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .mana-pools {
@@ -692,22 +850,45 @@
 
 .mana-pools-buttons {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 0;
     width: 100%;
 }
 
+.mana-pools-buttons-row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 12px;
+}
+
+.cast-spell-button,
 .move-to-mana-button {
     margin-top: 0;
-    padding: 2px 10px;
+    padding: 8px 18px;
     font-size: 14px;
     border-radius: 6px;
     border: 1px solid #888;
     background: #f0f0f0;
-    height: fit-content;
-    width: fit-content;
+    min-width: min(100%, 180px);
+    flex: 1 1 160px;
+    max-width: 280px;
+    text-align: center;
+    line-height: 1.25;
 }
 
+.cast-spell-button {
+    white-space: normal;
+}
+
+.cast-spell-button:disabled,
 .move-to-mana-button:disabled {
     opacity: 0.5;
 }
@@ -780,25 +961,6 @@
     align-items: center;
 }
 
-
-.mana-diamonds-cost {
-    position: absolute;
-    top: 10px;
-}
-
-.cast-spell-text {
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 18px;
-    font-weight: bold;
-    color: #4a90e2;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-    pointer-events: none;
-    z-index: 1000;
-    white-space: nowrap;
-}
 
 .event-name-panel {
     flex: 1;

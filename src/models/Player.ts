@@ -16,7 +16,8 @@ import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 import { openMessageModal } from "../stores/modalStore";
 import useDamageNumbers from "../composables/useDamageNumbers";
-import { starterCards } from "../game/cards/starterCards";
+// import { starterCards } from "../game/cards/starterCards";
+import { basicCards } from "../game/cards/basicCards";
 import { generalCards } from "../game/cards/generalCards";
 import { debugCards } from "../game/cards/debugCards";
 
@@ -31,7 +32,7 @@ export interface PlayerParams {
 
     /** Number of tableau columns (layout is per character, e.g. Koa). */
     columnCount: number;
-    /** Number of free cell (hand) slots. */
+    /** Number of hand slots. */
     handSlotCount: number;
     /** Mana diamonds at the start of combat. Defaults to 0. */
     startingManaDiamonds?: number;
@@ -74,7 +75,8 @@ function spellCardsFromParams(params: SpellCardParams[]): SpellCard[] {
         p.effect,
         p.charges,
         p.keywords,
-        p.flavorText
+        p.flavorText,
+        p.castAnimationDirection
     ));
 }
 
@@ -223,7 +225,8 @@ class Player extends Combatant {
                     spellCard.effect,
                     spellCard.charges,
                     spellCard.keywords,
-                    spellCard.flavorText
+                    spellCard.flavorText,
+                    spellCard.castAnimationDirection
                 ));
             }
         }
@@ -310,7 +313,8 @@ class Player extends Combatant {
                 card.effect,
                 card.charges,
                 card.keywords,
-                card.flavorText
+                card.flavorText,
+                card.castAnimationDirection
             )),
             manaDeck: { ...this.manaDeck },
             townTraderCards: [...this.townTraderCards],
@@ -332,15 +336,16 @@ class Player extends Combatant {
     }
 }
 
-const koaSpellCards = spellCardsFromParams(starterCards);
+// const koaSpellCards = spellCardsFromParams(starterCards);
+const koaSpellCards = spellCardsFromParams(basicCards);
 
 export const koaParams: PlayerParams = {
     name: "Koa XIII",
     portrait: koaPortrait,
     tooltip: "Crown Prince Koa XIII of Koala Lumpur",
 
-    columnCount: 6,
-    handSlotCount: 2,
+    columnCount: 5,
+    handSlotCount: 1,
 
     appeal: 5,
     attack: 3,
@@ -366,7 +371,7 @@ export const testCharacterParams: PlayerParams = {
 
     columnCount: 10,
     handSlotCount: 10,
-    startingManaDiamonds: 1000,
+    startingManaDiamonds: 100,
 
     appeal: 0,
     attack: 0,
@@ -379,7 +384,7 @@ export const testCharacterParams: PlayerParams = {
     bytecoins: 0,
 
     collection: testSpellCards,
-    manaDeck: defaultManaCards(0),
+    manaDeck: defaultManaCards(1),
 
     /** High cap so debug / test builds can equip many cardifacts. */
     maxCardifacts: 99,

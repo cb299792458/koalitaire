@@ -1,8 +1,8 @@
 <script setup lang="ts">
     import { ref, watch, computed, nextTick } from 'vue'
     import type Player from '../../models/Player'
-    import { Suit, Suits } from '../../models/Suit'
-    import { suitIconMap, suitClassMap } from '../../utils/suitAssets'
+    // import { Suit, Suits } from '../../models/Suit'
+    // import { suitIconMap, suitClassMap } from '../../utils/suitAssets'
     import SingleCard from '../Cards/SingleCard.vue'
     import type { ScenarioEntry } from '../../game/makeScenario'
     import { getNextRowOptions } from '../../game/makeScenario'
@@ -70,44 +70,14 @@
     }>()
 
     const deckList = ref<boolean[]>([])
+
+    /*
+     * ----- Mana deck editing (disabled): uncomment imports above, this block, template "Mana Cards"
+     * section, and the Object.assign line in goToEntry to restore. -----
+     *
     const manaCards = ref<Record<string, number>>({})
 
-    watch(() => props.player, () => {
-        currentRowRef.value = null
-    }, { deep: true })
-
-    function goToEntry(row: number, col: number) {
-        props.player.spellDeck.length = 0
-        props.player.spellDeck.push(...deckList.value)
-        Object.assign(props.player.manaDeck, manaCards.value)
-        props.player.scenarioRow = row
-        props.player.scenarioColumn = col
-        props.player.level = row
-        props.onContinue(props.player, row, col)
-        emit('close')
-    }
-
-    watch(() => props.player, (player) => {
-        deckList.value = [...player.spellDeck]
-        manaCards.value = { ...player.manaDeck }
-        player.collection.forEach((card) => { card.revealed = true })
-    }, { immediate: true })
-
     const manaSuits = Suits
-
-    function toggleDeckCard(index: number) {
-        if (index >= 0 && index < deckList.value.length) {
-            deckList.value[index] = !deckList.value[index]
-        }
-    }
-
-    function addAllCardsToDeck() {
-        deckList.value = deckList.value.map(() => true)
-    }
-
-    function removeAllCardsFromDeck() {
-        deckList.value = deckList.value.map(() => false)
-    }
 
     function setManaCards(suit: Suit, value: number) {
         manaCards.value[suit] = Math.max(0, Math.min(9, value))
@@ -123,6 +93,42 @@
 
     function decrementManaCards(suit: Suit) {
         setManaCards(suit, getManaCards(suit) - 1)
+    }
+    */
+
+    watch(() => props.player, () => {
+        currentRowRef.value = null
+    }, { deep: true })
+
+    function goToEntry(row: number, col: number) {
+        props.player.spellDeck.length = 0
+        props.player.spellDeck.push(...deckList.value)
+        // Object.assign(props.player.manaDeck, manaCards.value)
+        props.player.scenarioRow = row
+        props.player.scenarioColumn = col
+        props.player.level = row
+        props.onContinue(props.player, row, col)
+        emit('close')
+    }
+
+    watch(() => props.player, (player) => {
+        deckList.value = [...player.spellDeck]
+        // manaCards.value = { ...player.manaDeck }
+        player.collection.forEach((card) => { card.revealed = true })
+    }, { immediate: true })
+
+    function toggleDeckCard(index: number) {
+        if (index >= 0 && index < deckList.value.length) {
+            deckList.value[index] = !deckList.value[index]
+        }
+    }
+
+    function addAllCardsToDeck() {
+        deckList.value = deckList.value.map(() => true)
+    }
+
+    function removeAllCardsFromDeck() {
+        deckList.value = deckList.value.map(() => false)
     }
 </script>
 
@@ -216,6 +222,7 @@
                     </div>
                 </section>
 
+                <!-- Mana deck editing disabled — see script block comment for full markup + logic to restore.
                 <section class="mana-section">
                     <h3>Mana Cards</h3>
                     <p class="deck-hint">Choose how many mana cards to bring to combat.</p>
@@ -250,6 +257,7 @@
                         </div>
                     </div>
                 </section>
+                -->
             </div>
         </div>
     </div>

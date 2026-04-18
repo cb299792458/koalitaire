@@ -1,5 +1,6 @@
 export enum AREAS {
   Deck = 'deck',
+  Recycling = 'recycling',
   Compost = 'compost',
   Trash = 'trash',
   Hand = 'hand',

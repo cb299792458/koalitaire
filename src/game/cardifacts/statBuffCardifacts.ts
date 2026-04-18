@@ -11,25 +11,6 @@ import { CombatStartRatCardifact } from "./combatStartRatCardifact";
 
 const BUFF = 2;
 
-/** Permanent +Attack when acquired; reversed on remove. */
-export class AttackCardifact extends Cardifact {
-    constructor() {
-        super({
-            id: "stat_attack",
-            name: "Ember Knot",
-            description: `+${BUFF} Attack.`,
-        });
-    }
-
-    onAcquire(player: Player): void {
-        player.attack += BUFF;
-    }
-
-    onRemove(player: Player): void {
-        player.attack -= BUFF;
-    }
-}
-
 /** Permanent +Armor when acquired; reversed on remove. */
 export class ArmorCardifact extends Cardifact {
     constructor() {
@@ -108,7 +89,6 @@ export class AcumenCardifact extends Cardifact {
 
 /** Every cardifact available at run start for the free pick (one choice). */
 export const ALL_STARTING_CARDIFACT_CLASSES = [
-    AttackCardifact,
     ArmorCardifact,
     AppealCardifact,
     AgilityCardifact,

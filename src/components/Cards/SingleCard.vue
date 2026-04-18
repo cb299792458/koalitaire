@@ -57,12 +57,28 @@
     ]
 
     const animation = computed(() => card?.animation);
-    
+
+    /** Cast fly duration must match {@link Card.animationTime} and useCombat cast delay. */
+    const castFlyTransitionStyle = computed(() => {
+        const a = card?.animation;
+        if (a !== 'fly-left' && a !== 'fly-right' && a !== 'fly-up') return {};
+        const ms = card.animationTime ?? 1000;
+        return {
+            transition: `transform ${ms}ms ease, opacity ${ms}ms ease`,
+        };
+    });
+
     const isSpell = computed(() => card.isSpell);
     const spellCard = computed(() => isSpell.value ? card as SpellCard : null);
-    
-    const suitIcon = computed(() => suitIconMap[card.suit] ?? '');
-    const suitClass = computed(() => suitClassMap[card.suit] ?? '');
+
+    const hasSuit = computed(() => card.suit !== null);
+    const suitIcon = computed(() =>
+        hasSuit.value && card.suit != null ? suitIconMap[card.suit] ?? '' : ''
+    );
+    const suitClass = computed(() =>
+        hasSuit.value && card.suit != null ? suitClassMap[card.suit] ?? '' : ''
+    );
+    const suitTopClass = computed(() => (hasSuit.value && card.suit != null ? card.suit : 'card-suit-none'));
 
     const tooltipTitle = computed(() => {
         if (isSpell.value && spellCard.value) {
@@ -138,6 +154,7 @@
             selected: selectedCard === card,
             [card?.animation]: !!animation
         }"
+        :style="castFlyTransitionStyle"
         @mousemove="onMouseMove"
         @mouseenter="onMouseEnter"
         @mouseleave="onMouseLeave"
@@ -153,10 +170,16 @@
                     <div class="card-tooltip-preview-inner card-view">
                         <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
                         <div v-else-if="isSpell && spellCard" class="card-front spell-card-front">
-                            <div class="card-top spell-card-top" :class="card.suit">
+                            <div class="card-top spell-card-top" :class="suitTopClass">
                                 <div class="spell-card-left">
                                     <span class="spell-card-rank">{{ symbols[card.rank] || card.rank }}</span>
-                                    <img :src="suitIcon" :alt="card.suit" class="card-rank-icon" :class="suitClass" />
+                                    <img
+                                        v-if="hasSuit"
+                                        :src="suitIcon"
+                                        :alt="String(card.suit)"
+                                        class="card-rank-icon"
+                                        :class="suitClass"
+                                    />
                                 </div>
                                 <span class="spell-card-name">{{ spellCard.name }}</span>
                             </div>
@@ -169,20 +192,47 @@
                             </div>
                         </div>
                         <div v-else class="card-front playing-card">
-                            <div class="card-top spell-card-top" :class="card.suit">
+                            <div class="card-top spell-card-top" :class="suitTopClass">
                                 <div class="spell-card-left">
                                     <span class="spell-card-rank">{{ symbols[card.rank] || card.rank }}</span>
-                                    <img :src="suitIcon" :alt="card.suit" class="card-rank-icon" :class="suitClass" />
+                                    <img
+                                        v-if="hasSuit"
+                                        :src="suitIcon"
+                                        :alt="String(card.suit)"
+                                        class="card-rank-icon"
+                                        :class="suitClass"
+                                    />
                                 </div>
                                 <span class="spell-card-name"></span>
                             </div>
-                            <div class="card-icons-center" :class="'rank-' + card.rank">
-                                <div v-if="card.rank === 5 || card.rank === 6" class="card-icons-inner">
-                                    <img v-for="index in card.rank" :key="index" :src="suitIcon" :alt="card.suit" class="card-icon" :class="suitClass" />
+                            <div
+                                v-if="hasSuit"
+                                class="card-icons-center"
+                                :class="'rank-' + card.rank"
+                            >
+                                <div v-if="card.rank >= 5 && card.rank <= 9" class="card-icons-inner">
+                                    <img
+                                        v-for="index in card.rank"
+                                        :key="index"
+                                        :src="suitIcon"
+                                        :alt="String(card.suit)"
+                                        class="card-icon"
+                                        :class="suitClass"
+                                    />
                                 </div>
                                 <template v-else>
-                                    <img v-for="index in card.rank" :key="index" :src="suitIcon" :alt="card.suit" class="card-icon" :class="suitClass" />
+                                    <img
+                                        v-for="index in card.rank"
+                                        :key="index"
+                                        :src="suitIcon"
+                                        :alt="String(card.suit)"
+                                        class="card-icon"
+                                        :class="suitClass"
+                                    />
                                 </template>
+                            </div>
+                            <div v-else class="card-icons-center card-icons-center--no-suit">
+                                <span class="card-no-suit-rank">{{ symbols[card.rank] || card.rank }}</span>
                             </div>
                         </div>
                     </div>
@@ -196,10 +246,16 @@
         </Teleport>
         <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
         <div v-else-if="isSpell && spellCard" class="card-front spell-card-front">
-            <div class="card-top spell-card-top" :class="card.suit">
+            <div class="card-top spell-card-top" :class="suitTopClass">
                 <div class="spell-card-left">
                     <span class="spell-card-rank">{{ symbols[card.rank] || card.rank }}</span>
-                    <img :src="suitIcon" :alt="card.suit" class="card-rank-icon" :class="suitClass" />
+                    <img
+                        v-if="hasSuit"
+                        :src="suitIcon"
+                        :alt="String(card.suit)"
+                        class="card-rank-icon"
+                        :class="suitClass"
+                    />
                 </div>
                 <span class="spell-card-name">{{ spellCard.name }}</span>
             </div>
@@ -218,20 +274,30 @@
             </div>
         </div>
         <div v-else class="card-front playing-card">
-            <div class="card-top spell-card-top" :class="card.suit">
+            <div class="card-top spell-card-top" :class="suitTopClass">
                 <div class="spell-card-left">
                     <span class="spell-card-rank">{{ symbols[card.rank] || card.rank }}</span>
-                    <img :src="suitIcon" :alt="card.suit" class="card-rank-icon" :class="suitClass" />
+                    <img
+                        v-if="hasSuit"
+                        :src="suitIcon"
+                        :alt="String(card.suit)"
+                        class="card-rank-icon"
+                        :class="suitClass"
+                    />
                 </div>
                 <span class="spell-card-name"></span>
             </div>
-            <div class="card-icons-center" :class="'rank-' + card.rank">
-                <div v-if="card.rank === 5 || card.rank === 6" class="card-icons-inner">
+            <div
+                v-if="hasSuit"
+                class="card-icons-center"
+                :class="'rank-' + card.rank"
+            >
+                <div v-if="card.rank >= 5 && card.rank <= 9" class="card-icons-inner">
                     <img
                         v-for="index in card.rank"
                         :key="index"
                         :src="suitIcon"
-                        :alt="card.suit"
+                        :alt="String(card.suit)"
                         class="card-icon"
                         :class="suitClass"
                     />
@@ -241,11 +307,14 @@
                         v-for="index in card.rank"
                         :key="index"
                         :src="suitIcon"
-                        :alt="card.suit"
+                        :alt="String(card.suit)"
                         class="card-icon"
                         :class="suitClass"
                     />
                 </template>
+            </div>
+            <div v-else class="card-icons-center card-icons-center--no-suit">
+                <span class="card-no-suit-rank">{{ symbols[card.rank] || card.rank }}</span>
             </div>
         </div>
     </div>
@@ -288,7 +357,6 @@
     left: 50%;
     z-index: 999;
     opacity: 0;
-    transition: transform 2s ease, opacity 2s ease;
 }
 
 .card-view.fly-right {
@@ -470,6 +538,21 @@
     flex-shrink: 0;
 }
 
+.card-icons-center--no-suit {
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.card-no-suit-rank {
+    font-size: 28px;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.spell-card-top.card-suit-none {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
 .card-icons-center.rank-2,
 .card-icons-center.rank-3 {
     gap: 14px;
@@ -518,6 +601,84 @@
     place-items: center;
     width: 72px;
     height: 108px;
+}
+
+/* Ranks 7–9: playing-card style pip grids (not a single column). */
+.card-icons-center.rank-7 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-icons-center.rank-7 .card-icons-inner {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, auto);
+    gap: 5px;
+    place-items: center;
+    width: 88px;
+    height: 112px;
+}
+
+.card-icons-center.rank-7 .card-icons-inner .card-icon:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+}
+.card-icons-center.rank-7 .card-icons-inner .card-icon:nth-child(2) {
+    grid-column: 3;
+    grid-row: 1;
+}
+.card-icons-center.rank-7 .card-icons-inner .card-icon:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+}
+.card-icons-center.rank-7 .card-icons-inner .card-icon:nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+}
+.card-icons-center.rank-7 .card-icons-inner .card-icon:nth-child(5) {
+    grid-column: 3;
+    grid-row: 3;
+}
+.card-icons-center.rank-7 .card-icons-inner .card-icon:nth-child(6) {
+    grid-column: 1;
+    grid-row: 4;
+}
+.card-icons-center.rank-7 .card-icons-inner .card-icon:nth-child(7) {
+    grid-column: 3;
+    grid-row: 4;
+}
+
+.card-icons-center.rank-8 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-icons-center.rank-8 .card-icons-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(4, 1fr);
+    gap: 7px;
+    place-items: center;
+    width: 72px;
+    height: 112px;
+}
+
+.card-icons-center.rank-9 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card-icons-center.rank-9 .card-icons-inner {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 5px;
+    place-items: center;
+    width: 88px;
+    height: 88px;
 }
 
 .card-icon {

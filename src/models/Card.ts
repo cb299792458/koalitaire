@@ -1,20 +1,22 @@
 import { nextTick } from "vue";
 import type { Combat } from "../composables/useCombat";
-import { Suit } from "./Suit";
+import type { Suit } from "./Suit";
 import { Keyword } from "../game/keywords";
 
-const ANIMATION_DELAY = 50;
+/** Stagger before fly-left/right/up; spell cast resolution uses the same offset in useCombat. */
+export const CAST_ANIMATION_DELAY_MS = 50;
 
 function scheduleAnimation(card: Card, name: string, duration: number): void {
     nextTick(() => {
-        setTimeout(() => { card.animation = name; }, ANIMATION_DELAY);
-        setTimeout(() => { card.animation = ''; }, ANIMATION_DELAY + duration);
+        setTimeout(() => { card.animation = name; }, CAST_ANIMATION_DELAY_MS);
+        setTimeout(() => { card.animation = ''; }, CAST_ANIMATION_DELAY_MS + duration);
     });
 }
 
 export interface CardParams {
     rank: number;
-    suit: Suit;
+    /** Null = no suit (not used for mana cards; spells may omit suit). */
+    suit: Suit | null;
 }
 
 export interface SpellCardParams extends CardParams {
@@ -27,21 +29,27 @@ export interface SpellCardParams extends CardParams {
     keywords?: string[];
     /** Optional flavor text shown in italics at the bottom of the tooltip. */
     flavorText?: string;
+    /**
+     * Fly direction when cast (toward player = left, toward enemy = right).
+     * If omitted, {@link SpellCard.getCastAnimationDirection} uses keywords.
+     */
+    castAnimationDirection?: 'left' | 'right' | 'up';
 }
 
 class Card {
     rank: number;
-    suit: Suit;
+    suit: Suit | null;
     revealed: boolean = false;
     animation: string = '';
-    animationTime: number = 1000; // Default animation time in milliseconds
+    /** Fly-out duration (ms) for {@link animate}; SingleCard cast fly transition uses the same value. */
+    animationTime: number = 1000;
     isSpell: boolean = false;
     /** Keyword ids for tooltip explanations. Defaults to empty array. */
     keywords: string[] = [];
     /** Optional flavor text in tooltip (italics, after keywords). */
     flavorText?: string;
 
-    constructor(rank: number, suit: Suit) {
+    constructor(rank: number, suit: Suit | null) {
         this.rank = rank;
         this.suit = suit;
     }
@@ -58,11 +66,11 @@ class Card {
             setTimeout(() => {
                 const dir = this.getCastAnimationDirection();
                 this.animation = dir === 'left' ? 'fly-left' : dir === 'right' ? 'fly-right' : 'fly-up';
-            }, ANIMATION_DELAY);
+            }, CAST_ANIMATION_DELAY_MS);
 
             setTimeout(() => {
                 this.animation = '';
-            }, ANIMATION_DELAY + this.animationTime);
+            }, CAST_ANIMATION_DELAY_MS + this.animationTime);
         });
     }
 
@@ -92,8 +100,10 @@ export class SpellCard extends Card {
     description: string;
     effect: (combat: Combat) => void | Promise<void>;
     charges?: number;
+    castAnimationDirection?: 'left' | 'right' | 'up';
 
     getCastAnimationDirection(): 'left' | 'right' | 'up' {
+        if (this.castAnimationDirection) return this.castAnimationDirection;
         const kw = this.keywords ?? [];
         if (kw.some((k) => CAST_LEFT_KEYWORDS.includes(k))) return 'left';
         if (kw.some((k) => CAST_RIGHT_KEYWORDS.includes(k))) return 'right';
@@ -102,13 +112,14 @@ export class SpellCard extends Card {
 
     constructor(
         rank: number,
-        suit: Suit,
+        suit: Suit | null,
         name: string,
         description: string,
         effect: (combat: Combat) => void | Promise<void>,
         charges?: number,
         keywords?: string[],
-        flavorText?: string
+        flavorText?: string,
+        castAnimationDirection?: 'left' | 'right' | 'up'
     ) {
         super(rank, suit);
         this.name = name;
@@ -117,6 +128,7 @@ export class SpellCard extends Card {
         this.charges = charges ?? Infinity;
         this.keywords = keywords ?? [];
         this.flavorText = flavorText;
+        this.castAnimationDirection = castAnimationDirection;
     }
 }
 
