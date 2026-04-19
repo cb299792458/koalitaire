@@ -2,12 +2,12 @@ import Card, { SpellCard, type SpellCardParams } from "./Card";
 import type { DamageType } from "./DamageType";
 import { Suit, Suits } from "./Suit";
 import Combatant from "./Combatant";
-import type { DamageNumberType } from "./Combatant";
+import type { DamageNumberType, TakeDamageOptions } from "./Combatant";
 import type Cardifact from "./Cardifact";
 import {
     type ActiveCombatStatus,
     CombatStatusId,
-    WONKY_INCOMING_FACTOR,
+    CROOK_INCOMING_FACTOR,
     KNACKERED_OUTGOING_FACTOR,
 } from "../game/combatStatuses";
 import type { CombatEventBus } from "../game/combatEvents";
@@ -162,11 +162,11 @@ class Player extends Combatant {
         this.recomputeCombatStatusMultipliers();
     }
 
-    /** Add or refresh a combat status (refreshes duration if the same id already exists). */
+    /** Add a combat status; if already present, adds to remaining turns. */
     addCombatStatus(id: CombatStatusId, turns: number): void {
         const existing = this.combatStatuses.find((s) => s.id === id);
         if (existing) {
-            existing.turnsRemaining = Math.max(existing.turnsRemaining, turns);
+            existing.turnsRemaining += turns;
         } else {
             this.combatStatuses.push({ id, turnsRemaining: turns });
         }
@@ -192,16 +192,16 @@ class Player extends Combatant {
         let incoming = 1;
         let outgoing = 1;
         for (const s of this.combatStatuses) {
-            if (s.id === CombatStatusId.Wonky) incoming *= WONKY_INCOMING_FACTOR;
+            if (s.id === CombatStatusId.Crook) incoming *= CROOK_INCOMING_FACTOR;
             if (s.id === CombatStatusId.Knackered) outgoing *= KNACKERED_OUTGOING_FACTOR;
         }
         this.incomingDamageMultiplier = incoming;
         this.outgoingDamageMultiplier = outgoing;
     }
 
-    takeDamage(amount: number, damageTypes: DamageType[] = []): void {
+    takeDamage(amount: number, damageTypes: DamageType[] = [], options?: TakeDamageOptions): void {
         const scaled = Math.max(0, Math.floor(amount * this.incomingDamageMultiplier));
-        super.takeDamage(scaled, damageTypes);
+        super.takeDamage(scaled, damageTypes, options);
     }
 
     override gainBlock(amount: number): void {

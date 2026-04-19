@@ -3,9 +3,17 @@ import type Summon from "./Summon";
 
 export type DamageNumberType = 'damage' | 'block-loss' | 'block-gain' | 'heal';
 
+export type TakeDamageOptions = {
+    /** When true, dodge is not checked or consumed (e.g. poison tick). */
+    skipDodge?: boolean;
+};
+
 /**
  * Base class for combat entities that can take damage, have block, armor, and summons.
  * Player and Enemy extend this and implement addDamageNumber for their UI.
+ *
+ * {@link takeDamage} resolves dodge, summons, block, and damage types, then applies remaining HP loss via {@link loseLife}.
+ * {@link loseLife} only reduces health (plus damage numbers and death); it ignores block, summons, dodge, and damage types.
  */
 export default abstract class Combatant {
     name: string;
@@ -35,7 +43,22 @@ export default abstract class Combatant {
     /** Called when this combatant's health drops to 0 or below. Override for player death modal etc. */
     protected onDeath(): void {}
 
-    takeDamage(amount: number, damageTypes: DamageType[] = []): void {
+    /**
+     * Reduces health by `amount` (floored, non-negative). Does not interact with block, summons, dodge, armor, or damage types.
+     * Use {@link takeDamage} for normal combat hits that should respect those rules first.
+     */
+    loseLife(amount: number): void {
+        const n = Math.max(0, Math.floor(amount));
+        if (n <= 0 || this.health <= 0) return;
+        this.health -= n;
+        this.addDamageNumber(n, "damage");
+        if (this.health <= 0) {
+            this.health = 0;
+            this.onDeath();
+        }
+    }
+
+    takeDamage(amount: number, damageTypes: DamageType[] = [], options?: TakeDamageOptions): void {
         const effectiveDamage = amount;
 
         const ignoresBlock = damageTypes.includes(DamageType.Magic);
@@ -83,7 +106,7 @@ export default abstract class Combatant {
         }
 
         // Dodge: if combatant has dodge, ignore this damage and consume 1 dodge
-        if (this.dodge > 0) {
+        if (!options?.skipDodge && this.dodge > 0) {
             this.dodge -= 1;
             return;
         }
@@ -99,13 +122,7 @@ export default abstract class Combatant {
             }
         }
         if (remainingDamage > 0) {
-            this.health -= remainingDamage;
-            this.addDamageNumber(remainingDamage, 'damage');
-        }
-
-        if (this.health <= 0) {
-            this.health = 0;
-            this.onDeath();
+            this.loseLife(remainingDamage);
         }
     }
 

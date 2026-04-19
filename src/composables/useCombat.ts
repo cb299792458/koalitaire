@@ -19,7 +19,8 @@ import { openModal } from '../stores/modalStore';
 import { playSound } from '../utils/sounds';
 import type { ScenarioEntry } from '../game/makeScenario';
 import { CombatEventBus, type DamagePayload } from '../game/combatEvents';
-import type { DamageType } from '../models/DamageType';
+import { DamageType } from '../models/DamageType';
+import { CombatStatusId } from '../game/combatStatuses';
 import { canPlaceCardOnTableau, isValidTableauRun } from '../game/tableauRules';
 import {
     computeEndTurnDamagePreviewAsync,
@@ -185,7 +186,7 @@ export class Combat {
     /**
      * Built-in turn rules on the event bus (registered first after {@link CombatEventBus.clear}).
      * `playerTurnStarted`: reset dodge/block, refresh enemy actions, then external listeners run.
-     * `playerTurnEnded`: {@link recycleTableauAndRecyclingIntoDeck} (tableau + recycling + compost + mana pools if mana full) → shuffle → tableau; trash unchanged.
+     * `playerTurnEnded`: {@link recycleTableauAndRecyclingIntoDeck} (tableau + recycling + compost + mana pools if mana full) → shuffle → tableau; poison end-of-turn damage; if combat continues, tick all combat status durations; trash unchanged.
      */
     /**
      * Runs each owned {@link Player.cardifacts} after tableau/deck setup, before `combatStarted`.
@@ -218,7 +219,15 @@ export class Combat {
             }
             if (event.type === "playerTurnEnded") {
                 await this.recycleTableauAndRecyclingIntoDeck();
-                this.player?.tickCombatStatuses();
+                this.applyPoisonEndOfTurnDamage();
+                if (this.enemy && this.enemy.health <= 0) {
+                    await this.defeatEnemy();
+                    return;
+                }
+                if (!this.player || this.player.health <= 0) {
+                    return;
+                }
+                this.player.tickCombatStatuses();
                 this.enemy?.tickCombatStatuses();
                 return;
             }
@@ -227,7 +236,7 @@ export class Combat {
 
     /**
      * All damage to the player during combat (enemy attacks, etc.). Emits {@link CombatEvent} `beforeDamageToPlayer`,
-     * then applies the enemy's outgoing multipliers (e.g. knackered), then incoming multipliers (e.g. wonky) in
+     * then applies the enemy's outgoing multipliers (e.g. knackered), then incoming multipliers (e.g. crook) in
      * {@link Player.takeDamage}.
      */
     async damagePlayer(rawAmount: number, damageTypes: DamageType[] = []): Promise<void> {
@@ -246,7 +255,7 @@ export class Combat {
     /**
      * All damage from the player to the enemy (spells, summons, etc.). Emits `beforeDamageToEnemy`, then applies
      * the player's outgoing multipliers (e.g. knackered), then {@link Enemy.takeDamage} (which applies the enemy's
-     * incoming multipliers, e.g. wonky).
+     * incoming multipliers, e.g. crook).
      */
     async damageEnemy(rawAmount: number, damageTypes: DamageType[] = []): Promise<void> {
         if (!this.enemy || !this.player) return;
@@ -257,6 +266,26 @@ export class Combat {
         await this.events.emit({ type: "beforeDamageToEnemy", payload });
         const scaled = Math.max(0, Math.floor(payload.amount * this.player.outgoingDamageMultiplier));
         this.enemy.takeDamage(scaled, payload.damageTypes);
+    }
+
+    /**
+     * Runs on `playerTurnEnded` after tableau recycle, before status duration ticks and before player summon attacks.
+     * Each poisoned combatant loses life equal to their poison's remaining turns via `loseLife` (not `takeDamage`:
+     * no summons, block, dodge, status multipliers, or beforeDamage events).
+     */
+    private applyPoisonEndOfTurnDamage(): void {
+        if (!this.player || !this.enemy) return;
+        const playerPoison = this.player.combatStatuses.find((s) => s.id === CombatStatusId.Poisoned);
+        if (playerPoison && playerPoison.turnsRemaining > 0) {
+            this.player.loseLife(playerPoison.turnsRemaining);
+            this.notify();
+        }
+        if (!this.player || this.player.health <= 0) return;
+        const enemyPoison = this.enemy.combatStatuses.find((s) => s.id === CombatStatusId.Poisoned);
+        if (enemyPoison && enemyPoison.turnsRemaining > 0) {
+            this.enemy.loseLife(enemyPoison.turnsRemaining);
+            this.notify();
+        }
     }
 
     async startTurn(): Promise<void> {
@@ -294,6 +323,9 @@ export class Combat {
      */
     private async runRestOfTurn(): Promise<void> {
         if (!this.player || !this.enemy) return;
+        if (this.player.health <= 0 || this.enemy.health <= 0) {
+            return;
+        }
 
         for (const summon of this.player.summons) {
             await this.damageEnemy(summon.damage);

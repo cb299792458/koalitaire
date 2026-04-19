@@ -100,7 +100,8 @@ const CAST_RIGHT_KEYWORDS: string[] = [
     Keyword.Backstab,
     Keyword.Aoe,
     Keyword.Knackered,
-    Keyword.Wonky,
+    Keyword.Crook,
+    Keyword.Poisoned,
 ];
 
 export class SpellCard extends Card {

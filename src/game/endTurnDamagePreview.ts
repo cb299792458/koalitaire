@@ -3,6 +3,7 @@ import type Enemy from "../models/Enemy";
 import type Player from "../models/Player";
 import type Summon from "../models/Summon";
 import { DamageType } from "../models/DamageType";
+import { CombatStatusId } from "./combatStatuses";
 import { Race } from "../models/Summon";
 
 /** HP loss if the current turn were ended immediately (combat resolution only; not tableau recycling). */
@@ -128,7 +129,7 @@ function snapshotSummonHpLosses(initial: Map<number, number>, finalSummons: SimS
 }
 
 /**
- * Simulates {@link Combat}'s post-`playerTurnEnded` combat (summons → enemy actions → enemy summon effects)
+ * Simulates {@link Combat}'s post-`playerTurnEnded` combat (poison ticks → summons → enemy actions → enemy summon effects)
  * without mutating the real combat or emitting events.
  */
 export async function computeEndTurnDamagePreviewAsync(combat: Combat): Promise<EndTurnDamagePreview> {
@@ -215,6 +216,17 @@ export async function computeEndTurnDamagePreviewAsync(combat: Combat): Promise<
             applyDamageToSimBoard(enemySim, scaledIncoming, damageTypes);
         },
     } as Combat;
+
+    const playerPoison = player.combatStatuses.find((s) => s.id === CombatStatusId.Poisoned);
+    if (playerPoison && playerPoison.turnsRemaining > 0) {
+        playerBoard.health = Math.max(0, playerBoard.health - playerPoison.turnsRemaining);
+    }
+    if (playerBoard.health > 0) {
+        const enemyPoison = enemy.combatStatuses.find((s) => s.id === CombatStatusId.Poisoned);
+        if (enemyPoison && enemyPoison.turnsRemaining > 0) {
+            enemySim.health = Math.max(0, enemySim.health - enemyPoison.turnsRemaining);
+        }
+    }
 
     /** Snapshot order at “press End Turn”; skip if that summon is gone before its attack (survive to attack). */
     const playerSummonWave = [...playerBoard.summons];

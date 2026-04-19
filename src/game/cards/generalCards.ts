@@ -82,19 +82,6 @@ const wrath: SpellCardParams = {
     },
 }
 
-// const bde: SpellCardParams = {
-//     rank: 6,
-//     suit: Suit.Earth,
-//     name: 'Big Dig Energy',
-//     description: 'Returns all mana cards from the compost to your hand.',
-//     effect: (combat: Combat) => {
-//         const { compost, hand } = combat;
-//         const manaCards = compost.cards.filter((card) => !card.isSpell);
-//         compost.cards = compost.cards.filter((card) => card.isSpell);
-//         manaCards.forEach((card) => hand.addCard(card));
-//     },
-// }
-
 const regenerate: SpellCardParams = {
     rank: 4,
     suit: Suit.Fire,
@@ -224,7 +211,7 @@ const brineLag: SpellCardParams = {
     rank: 2,
     suit: Suit.Water,
     name: "Brine Lag",
-    description: "Apply Knackered to the enemy for 3 turns (~33% less damage to you from them).",
+    description: "Apply Knackered to the enemy for 3 turns.",
     keywords: [Keyword.Knackered],
     effect: (combat: Combat) => {
         combat.enemy?.addCombatStatus(CombatStatusId.Knackered, 3);
@@ -235,10 +222,41 @@ const riptide: SpellCardParams = {
     rank: 3,
     suit: Suit.Water,
     name: "Riptide",
-    description: "Apply Wonky to the enemy for 3 turns (they take 50% more damage from you).",
-    keywords: [Keyword.Wonky],
+    description: "Apply Crook to the enemy for 3 turns.",
+    keywords: [Keyword.Crook],
     effect: (combat: Combat) => {
-        combat.enemy?.addCombatStatus(CombatStatusId.Wonky, 3);
+        combat.enemy?.addCombatStatus(CombatStatusId.Crook, 3);
+    },
+};
+
+const redTide: SpellCardParams = {
+    rank: 4,
+    suit: Suit.Water,
+    name: "Red Tide",
+    description:
+        "Apply 5 Poisoned to the enemy.",
+    keywords: [Keyword.Poisoned],
+    effect: (combat: Combat) => {
+        combat.enemy?.addCombatStatus(CombatStatusId.Poisoned, 5);
+    },
+};
+
+const venomConcentrate: SpellCardParams = {
+    rank: 3,
+    suit: Suit.Water,
+    name: "Venom Concentrate",
+    description:
+        "If the enemy is Poisoned: double their Poisoned. If not: apply 1 Poisoned.",
+    keywords: [Keyword.Poisoned],
+    effect: (combat: Combat) => {
+        const enemy = combat.enemy;
+        if (!enemy) return;
+        const poisoned = enemy.combatStatuses.find((s) => s.id === CombatStatusId.Poisoned);
+        if (poisoned) {
+            poisoned.turnsRemaining *= 2;
+        } else {
+            enemy.addCombatStatus(CombatStatusId.Poisoned, 1);
+        }
     },
 };
 
@@ -249,8 +267,6 @@ export const generalCards: SpellCardParams[] = [
     summonKoallaborator,
     shieldBash,
     wrath,
-    // Temporarily disabled.
-    // bde,
     regenerate,
     koality,
     summonWarKoala,
@@ -263,4 +279,6 @@ export const generalCards: SpellCardParams[] = [
     thunderstruck,
     brineLag,
     riptide,
+    redTide,
+    venomConcentrate,
 ];

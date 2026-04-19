@@ -18,8 +18,10 @@ export enum Keyword {
     ManaDiamond = 'manaDiamond',
     /** Combat status; same rules as {@link CombatStatusId.Knackered}. */
     Knackered = "knackered",
-    /** Combat status; same rules as {@link CombatStatusId.Wonky}. */
-    Wonky = "wonky",
+    /** Combat status; same rules as {@link CombatStatusId.Crook}. */
+    Crook = "crook",
+    /** Combat status; same rules as {@link CombatStatusId.Poisoned}. */
+    Poisoned = "poisoned",
 }
 
 /** Tooltip explanation for each keyword. Keep tone consistent: "[Keyword]: [concise rule]." */
@@ -37,7 +39,8 @@ export const KEYWORD_EXPLANATIONS: Record<Keyword, string> = {
     [Keyword.Charges]: 'Charges: This spell has limited uses per combat. When the last charge is used, the card is trashed.',
     [Keyword.ManaDiamond]: 'Mana Diamond: Can be used to pay for the difference between the card\'s rank and the number of cards in the corresponding mana pool.',
     [Keyword.Knackered]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Knackered],
-    [Keyword.Wonky]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Wonky],
+    [Keyword.Crook]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Crook],
+    [Keyword.Poisoned]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Poisoned],
 };
 
 export function getKeywordExplanation(keyword: string): string {

@@ -42,7 +42,7 @@
         dodge: 'Dodge: Each point negates one incoming damage instance entirely, before block. Consumed when it stops a hit.',
         block: 'Block: Absorbs incoming damage before it reduces health. Applied after dodge, but before damage to summons. Magic damage ignores block.',
         pendingEndTurnDamage:
-            'If you press End Turn now: net hearts lost after your summons attack, then the enemy acts (their listed actions and summons). Summon rows show extra ♥ loss they would take. Does not include recycling the tableau.',
+            'If you press End Turn now: net hearts lost from poison (if any) before your summons—poison is raw life loss (loseLife), not blocked and not absorbed by summons—then your summons, then the enemy acts. Summon rows show extra ♥ loss they would take. Does not include recycling the tableau.',
         pendingEndTurnBlockLoss:
             'If you press End Turn now: block your shields will lose from enemy hits (damage absorbed by block before HP). Does not include recycling the tableau.',
         appeal: 'Appeal: Charisma and Leadership.',
