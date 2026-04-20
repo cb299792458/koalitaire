@@ -88,10 +88,19 @@ function pickRandom<T>(array: T[], count: number): T[] {
 class Player extends Combatant {
     level: number = 1;
 
-    /** Row in the diamond scenario (0 = start, 12 = boss). */
+    /** Row in the diamond scenario for the current act (0 = start, last row = boss). */
     scenarioRow: number = 0;
     /** Column within the row. */
     scenarioColumn: number = 0;
+
+    /** One full diamond path (start through boss row) is a single act; increments when liberating a vassal state. */
+    actNumber = 1;
+    /** Boss class names (`EnemyConstructor.name`) defeated at least once this run. */
+    defeatedBossIds: string[] = [];
+    /** Finale: chained fights against bosses never faced in prior acts. */
+    inKoalaLumpurGauntlet = false;
+    /** Boss ids queued for the finale (class names); empty when not in gauntlet or all done. */
+    gauntletBossIdsRemaining: string[] = [];
 
     columnCount: number;
     handSlotCount: number;
@@ -325,6 +334,10 @@ class Player extends Combatant {
         playerCopy.level = this.level;
         playerCopy.scenarioRow = this.scenarioRow;
         playerCopy.scenarioColumn = this.scenarioColumn;
+        playerCopy.actNumber = this.actNumber;
+        playerCopy.defeatedBossIds = [...this.defeatedBossIds];
+        playerCopy.inKoalaLumpurGauntlet = this.inKoalaLumpurGauntlet;
+        playerCopy.gauntletBossIdsRemaining = [...this.gauntletBossIdsRemaining];
         playerCopy.health = this.health;
         playerCopy.manaDiamonds = this.startingManaDiamonds;
         playerCopy.dodge = this.dodge;

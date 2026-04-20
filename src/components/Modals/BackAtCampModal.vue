@@ -11,6 +11,8 @@
         player: Player
         onContinue: (player: Player, row: number, col: number) => void
         scenario?: ScenarioEntry[][]
+        /** When set, shown as "Act N" in the header (one diamond path = one act). */
+        actNumber?: number
     }>()
 
     function getEntryLabel(entry: NonNullable<ScenarioEntry>): string {
@@ -135,7 +137,10 @@
 <template>
     <div class="back-at-camp-modal">
         <div class="modal-content">
-            <h2>Meanwhile Back at Camp...</h2>
+            <h2>
+                Meanwhile Back at Camp...
+                <template v-if="props.actNumber != null"> — Act {{ props.actNumber }}</template>
+            </h2>
 
             <div class="tabs">
                 <button

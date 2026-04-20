@@ -10,6 +10,8 @@
     import CombatantInfo from './CombatantInfo.vue'
     import type Enemy from '../models/Enemy'
     import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario'
+    import { bossFromId, bossIdsForGauntlet, pickBossForNewAct, shuffleArray } from '../game/actProgress'
+    import { BOSS_ENCOUNTER_ENEMIES } from '../models/enemies'
     import type Player from '../models/Player'
     import type Cardifact from '../models/Cardifact'
     import { useTown } from '../composables/useTown'
@@ -34,23 +36,81 @@
     const eventState = useEvent()
     const combat = useCombat()
 
-    combat.onEnemyDefeated = () => {}
-    
-    function openMapDeckForPlayer(p: Player, keepOpen = true) {
+    combat.onEnemyDefeated = () => {
+        const p = combat.originalPlayer ?? combat.player
+        const e = combat.enemy
+        if (!p || !e) return
+        const id = e.constructor.name
+        const isBossPool = BOSS_ENCOUNTER_ENEMIES.some((C) => C.name === id)
+        if (!isBossPool) return
+        if (!p.defeatedBossIds.includes(id)) {
+            p.defeatedBossIds.push(id)
+        }
+        if (p.inKoalaLumpurGauntlet && p.gauntletBossIdsRemaining[0] === id) {
+            p.gauntletBossIdsRemaining.shift()
+        }
+    }
+
+    const WIN_KOALA_LUMPUR = `🐨 You Win! 🐨
+
+You defeated your dad and brought democratic socialism to Koala Lumpur!
+All of the remaining monarchs and billionaires have been put to executed,
+and all the animals live in harmony after the abject failure of capitalism.
+
+`
+
+    async function openMapDeckForPlayer(p: Player, keepOpen = true) {
+        if (p.inKoalaLumpurGauntlet) {
+            if (p.gauntletBossIdsRemaining.length === 0) {
+                openMessageModal(WIN_KOALA_LUMPUR)
+                return
+            }
+            const nextId = p.gauntletBossIdsRemaining[0]!
+            const NextBoss = bossFromId(nextId)
+            await combat.start(p, new NextBoss())
+            return
+        }
+
         const nextOptions = getNextRowOptions(p.scenarioRow, p.scenarioColumn)
         if (nextOptions.length === 0) {
-            openMessageModal(`🐨 You Win! 🐨
-
-            You defeated your dad and brought democratic socialism to Koala Lumpur!
-            All of the remaining monarchs and billionaires have been put to executed,
-            and all the animals live in harmony after the abject failure of capitalism.
-
-            `)
+            openModal(
+                'actEndChoice',
+                {
+                    actNumber: p.actNumber,
+                    onLiberateVassal: () => {
+                        closeModal()
+                        p.actNumber += 1
+                        const boss = pickBossForNewAct(p.defeatedBossIds)
+                        scenarioRef.value = makeScenario({ lastRowBoss: boss })
+                        p.scenarioRow = 0
+                        p.scenarioColumn = 0
+                        p.level = 0
+                        openMapDeckForPlayer(p, keepOpen)
+                    },
+                    onChallengeFather: () => {
+                        closeModal()
+                        p.inKoalaLumpurGauntlet = true
+                        p.gauntletBossIdsRemaining = shuffleArray(bossIdsForGauntlet(p.defeatedBossIds))
+                        p.scenarioRow = 0
+                        p.scenarioColumn = 0
+                        p.level = 0
+                        if (p.gauntletBossIdsRemaining.length === 0) {
+                            openMessageModal(WIN_KOALA_LUMPUR)
+                            return
+                        }
+                        const firstId = p.gauntletBossIdsRemaining[0]!
+                        const FirstBoss = bossFromId(firstId)
+                        void combat.start(p, new FirstBoss())
+                    },
+                },
+                { keepOpen: true, transparentOverlay: true }
+            )
             return
         }
         openModal('backAtCamp', {
             player: p,
             scenario: scenarioRef.value ?? [],
+            actNumber: p.actNumber,
             onContinue: (player: Player, row: number, col: number) => {
                 closeModal()
                 startCombatForPlayer(player, row, col)
@@ -448,7 +508,9 @@
         if (!hasChosenCharacterRef.value) {
             openModal('start', {
                 onSelect: (newPlayer: Player) => {
-                    scenarioRef.value = makeScenario()
+                    scenarioRef.value = makeScenario({
+                        lastRowBoss: pickBossForNewAct(newPlayer.defeatedBossIds),
+                    })
                     hasChosenCharacterRef.value = true
                     openModal('cardifactPick', {
                         onPick: (cardifact: Cardifact) => {

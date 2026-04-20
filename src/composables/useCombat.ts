@@ -151,6 +151,11 @@ export class Combat {
 
             await this.applyCardifacts();
 
+            if (this.player && this.enemy) {
+                await this.enemy.runCombatStart(this.player, this);
+                this.notify();
+            }
+
             await this.events.emit({ type: 'combatStarted' });
             await this.startTurn();
 
@@ -189,7 +194,8 @@ export class Combat {
      * `playerTurnEnded`: {@link recycleTableauAndRecyclingIntoDeck} (tableau + recycling + compost + mana pools if mana full) → shuffle → tableau; poison end-of-turn damage; if combat continues, tick all combat status durations; trash unchanged.
      */
     /**
-     * Runs each owned {@link Player.cardifacts} after tableau/deck setup, before `combatStarted`.
+     * Runs each owned {@link Player.cardifacts} after tableau/deck setup, then the enemy's optional
+     * `onCombatStart` hook runs, then `combatStarted` is emitted.
      * Cardifacts may subscribe to the event bus or modify player/enemy for this combat only.
      */
     private async applyCardifacts(): Promise<void> {

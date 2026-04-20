@@ -1,9 +1,5 @@
-import {
-    ELITE_ENCOUNTER_ENEMIES,
-    RANDOM_ENCOUNTER_ENEMIES,
-    type EnemyConstructor,
-    DingorcEnemy,
-} from "../models/enemies";
+import { ELITE_ENCOUNTER_ENEMIES, RANDOM_ENCOUNTER_ENEMIES, type EnemyConstructor } from "../models/enemies";
+import { pickBossForNewAct } from "./actProgress";
 import type { Event } from "../models/Event";
 import { events } from "../models/Event";
 
@@ -28,6 +24,11 @@ function pickRandomEnemyFrom(pool: EnemyConstructor[]): EnemyConstructor {
     return pool[Math.floor(Math.random() * pool.length)]!;
 }
 
+export interface MakeScenarioOptions {
+    /** Boss for the bottom row; if omitted, picks one not yet defeated this run (or any if the pool is empty). */
+    lastRowBoss?: EnemyConstructor;
+}
+
 function pickRandomEntry(): NonNullable<ScenarioEntry> {
     const roll = Math.random();
     if (roll < 0.65) return { enemy: pickRandomEnemyFrom(RANDOM_ENCOUNTER_ENEMIES) };
@@ -36,7 +37,7 @@ function pickRandomEntry(): NonNullable<ScenarioEntry> {
     return { event: pickRandomEvent() };
 }
 
-export default function makeScenario(): ScenarioEntry[][] {
+export default function makeScenario(options?: MakeScenarioOptions): ScenarioEntry[][] {
     const scenario: ScenarioEntry[][] = [];
 
     for (let row = 0; row < ROW_COUNT; row++) {
@@ -46,7 +47,9 @@ export default function makeScenario(): ScenarioEntry[][] {
         if (row === 0) {
             rowEntries.push(null);
         } else if (row === ROW_COUNT - 1) {
-            rowEntries.push({ boss: DingorcEnemy });
+            rowEntries.push({
+                boss: options?.lastRowBoss ?? pickBossForNewAct([]),
+            });
         } else {
             for (let col = 0; col < length; col++) {
                 rowEntries.push(pickRandomEntry());

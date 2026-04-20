@@ -23,6 +23,13 @@ export interface EnemyTurnContext {
 
 export type EnemyTurnActionGenerator = (context: EnemyTurnContext) => EnemyAction[];
 
+/** Runs once when combat opens; same `(enemy, player, combat)` shape as {@link EnemyAction} effects. */
+export type EnemyCombatStartEffect = (
+    enemy: Enemy,
+    player: Player,
+    combat: Combat
+) => void | Promise<void>;
+
 /** Build one action instance from the shared action table. */
 export function enemyActionFromKey(key: string): EnemyAction {
     const actionParams = enemyActions[key];
@@ -113,6 +120,11 @@ export interface EnemyParams {
     appeal?: number;
     agility?: number;
     acumen?: number;
+    /**
+     * Runs once after deck/tableau setup, combat stat reset, and each owned cardifact's combat-start hook —
+     * immediately before the `combatStarted` event and the first player turn.
+     */
+    onCombatStart?: EnemyCombatStartEffect;
 }
 
 class Enemy extends Combatant {
@@ -126,6 +138,7 @@ class Enemy extends Combatant {
     turnNumber: number;
 
     private readonly generateTurnActions: EnemyTurnActionGenerator;
+    private readonly onCombatStart?: EnemyCombatStartEffect;
 
     /** Combat-only debuffs/buffs; duration counts down at end of each player turn. */
     combatStatuses: ActiveCombatStatus[] = [];
@@ -144,6 +157,7 @@ class Enemy extends Combatant {
         });
 
         this.generateTurnActions = enemyParams.generateTurnActions;
+        this.onCombatStart = enemyParams.onCombatStart;
         this.actions = 1;
         this.impendingActions = [];
 
@@ -153,6 +167,15 @@ class Enemy extends Combatant {
         this.acumen = enemyParams.acumen ?? 0;
         this.turnNumber = 0;
         this.recomputeCombatStatusMultipliers();
+    }
+
+    /**
+     * Opening setup for this enemy (buffs, summons, etc.).
+     * Invoked by {@link Combat.start} when present; no-op otherwise.
+     */
+    async runCombatStart(player: Player, combat: Combat): Promise<void> {
+        if (!this.onCombatStart) return;
+        await Promise.resolve(this.onCombatStart(this, player, combat));
     }
 
     /** Add a combat status; if already present, adds to remaining turns. */

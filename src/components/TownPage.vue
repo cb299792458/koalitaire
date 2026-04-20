@@ -214,6 +214,7 @@
                                 v-if="modalState.currentModal?.name === 'backAtCamp' && modalState.currentModal?.props"
                                 :player="modalState.currentModal.props.player"
                                 :scenario="modalState.currentModal.props.scenario"
+                                :act-number="modalState.currentModal.props.actNumber"
                                 :on-continue="modalState.currentModal.props.onContinue"
                                 @close="closeModal"
                             />
