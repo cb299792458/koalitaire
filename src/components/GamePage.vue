@@ -807,24 +807,35 @@ and all the animals live in harmony after the abject failure of capitalism.
     flex-direction: column;
 }
 
+:deep(.game-left h1),
+:deep(.game-right h1) {
+    margin: 0 0 8px;
+    font-size: 2rem;
+    line-height: 1;
+    text-align: center;
+}
+
 .combat-bottom-buttons {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
     gap: 12px;
-    margin-right: 10px;
+    margin-right: 4px;
     min-width: 220px;
-    min-height: 120px;
+    min-height: 100%;
     flex-shrink: 0;
 }
 
 #end-turn-button {
-    width: 200px;
-    height: 100px;
-    margin: 10px;
-    background-color: #f0f0f0;
-    border: none;
-    border-radius: 10px;
+    width: 180px;
+    height: 86px;
+    margin: 0;
+    background: #f4f4f4;
+    border: 1px solid #8b8b8b;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
 }
 
 .cards-top {
@@ -841,7 +852,7 @@ and all the animals live in harmony after the abject failure of capitalism.
     flex-direction: row;
     justify-content: flex-start;
     align-items: flex-start;
-    gap: 12px;
+    gap: 8px;
 }
 
 /* Shared layout for deck and compost so they align and look the same when empty */
@@ -912,6 +923,7 @@ and all the animals live in harmony after the abject failure of capitalism.
     flex-direction: column;
     align-items: flex-end;
     width: 100%;
+    gap: 4px;
 }
 
 .mana-pools-battle {
@@ -924,11 +936,11 @@ and all the animals live in harmony after the abject failure of capitalism.
 
 .mana-pools {
     display: flex;
-    justify-content: space-evenly;
+    justify-content: space-between;
     min-width: max-content;
     width: 100%;
     min-height: 200px;
-    padding: 8px;
+    padding: 4px 8px;
     border-radius: 6px;
     overflow: hidden;
     flex-shrink: 0;
@@ -979,7 +991,7 @@ and all the animals live in harmony after the abject failure of capitalism.
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 0;
+    gap: 6px;
     width: 100%;
 }
 
@@ -987,9 +999,9 @@ and all the animals live in harmony after the abject failure of capitalism.
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    justify-content: space-around;
+    justify-content: space-evenly;
     align-items: stretch;
-    gap: 20px;
+    gap: 12px;
     width: 100%;
     box-sizing: border-box;
     padding: 0 12px;
@@ -998,14 +1010,14 @@ and all the animals live in harmony after the abject failure of capitalism.
 .cast-spell-button,
 .move-to-mana-button {
     margin-top: 0;
-    padding: 8px 18px;
-    font-size: 14px;
+    padding: 10px 16px;
+    font-size: 15px;
     border-radius: 6px;
     border: 1px solid #888;
     background: #f0f0f0;
-    min-width: min(100%, 180px);
-    flex: 1 1 160px;
-    max-width: 280px;
+    min-width: 170px;
+    flex: 1 1 0;
+    max-width: 260px;
     text-align: center;
     line-height: 1.25;
 }
@@ -1020,10 +1032,12 @@ and all the animals live in harmony after the abject failure of capitalism.
 }
 
 .tableau {
-    margin-top: 20px;
+    margin-top: 12px;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: space-evenly;
+    align-items: flex-start;
+    gap: 8px;
     height: 100%;
     width: 100%;
 }
@@ -1031,12 +1045,13 @@ and all the animals live in harmony after the abject failure of capitalism.
 .cards-hand {
     display: flex;
     flex-direction: row;
-    justify-content: space-evenly;
+    justify-content: center;
     align-items: center;
+    gap: 36px;
     flex: 1;
     min-width: 0;
     height: 100%;
-    min-height: 200px;
+    min-height: 150px;
 }
 
 /* Hand slots: same size as mana pool slots (4 fixed slots) */
@@ -1051,10 +1066,10 @@ and all the animals live in harmony after the abject failure of capitalism.
 
 .cards-hand :deep(.card-stack) {
     flex-shrink: 0;
-    width: 126px;
-    min-width: 126px;
-    height: 176px;
-    min-height: 176px;
+    width: 118px;
+    min-width: 118px;
+    height: 166px;
+    min-height: 166px;
     overflow: visible;
     position: relative;
     border-radius: 6px;
@@ -1065,10 +1080,10 @@ and all the animals live in harmony after the abject failure of capitalism.
 
 .cards-hand :deep(.card-stack .card-stack-empty) {
     margin: 0;
-    width: 120px;
-    height: 168px;
-    min-width: 120px;
-    min-height: 168px;
+    width: 112px;
+    height: 158px;
+    min-width: 112px;
+    min-height: 158px;
 }
 
 .cards-hand :deep(.card-stack.pile .card-view) {
@@ -1078,10 +1093,10 @@ and all the animals live in harmony after the abject failure of capitalism.
 /* When hand slot has a card, the inner wrapper needs to size/center like mana pool slot */
 .cards-hand :deep(.card-stack > div:not(.card-stack-empty)) {
     position: relative;
-    width: 126px;
-    min-width: 126px;
-    height: 176px;
-    min-height: 176px;
+    width: 118px;
+    min-width: 118px;
+    height: 166px;
+    min-height: 166px;
     display: flex;
     justify-content: center;
     align-items: center;
