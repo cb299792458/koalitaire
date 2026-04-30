@@ -333,9 +333,13 @@ export class Combat {
             return;
         }
 
-        for (const summon of this.player.summons) {
-            await this.damageEnemy(summon.damage);
-            await Promise.resolve(summon.effect(this));
+        // Snapshot summon order at end-turn click so runtime matches preview behavior.
+        // A summon must still exist when its turn comes up to act.
+        const playerSummonWave = [...this.player.summons];
+        for (const summon of playerSummonWave) {
+            if (this.enemy.health <= 0) break;
+            if (!this.player.summons.includes(summon)) continue;
+            await Promise.resolve(summon.effect(this, summon));
             this.notify();
             await new Promise(resolve => setTimeout(resolve, 500)); // 0.5s pause after each summon
         }

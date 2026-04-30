@@ -6,6 +6,7 @@
     import SingleCard from '../Cards/SingleCard.vue'
     import type { ScenarioEntry } from '../../game/makeScenario'
     import { getNextRowOptions } from '../../game/makeScenario'
+    import { MAP_TIPS } from '../../game/mapTips'
 
     const props = defineProps<{
         player: Player
@@ -62,10 +63,24 @@
     }
 
     const activeTab = ref<'map' | 'deck'>('map')
+    const currentTipIndex = ref(Math.floor(Math.random() * MAP_TIPS.length))
+    const currentMapTip = computed(() => MAP_TIPS[currentTipIndex.value] ?? MAP_TIPS[0]!)
+
+    function rerollMapTip() {
+        if (MAP_TIPS.length <= 1) return
+        let next = currentTipIndex.value
+        while (next === currentTipIndex.value) {
+            next = Math.floor(Math.random() * MAP_TIPS.length)
+        }
+        currentTipIndex.value = next
+    }
 
     watch([() => activeTab.value, () => props.player.scenarioRow, () => props.player.scenarioColumn], () => {
         if (activeTab.value === 'map') scrollToCurrent()
     }, { immediate: true })
+    watch(() => activeTab.value, (tab, prev) => {
+        if (tab === 'map' && prev !== 'map') rerollMapTip()
+    })
 
     const emit = defineEmits<{
         (e: 'close'): void
@@ -162,32 +177,43 @@
             </div>
 
             <div v-if="activeTab === 'map'" class="tab-content map-content">
-                <div class="diamond-map">
-                    <div
-                        v-for="(rowEntries, row) in scenario"
-                        v-show="row >= props.player.scenarioRow"
-                        :key="row"
-                        :ref="(el) => setCurrentRowRef(el, row)"
-                        class="diamond-row"
-                        :class="{ 'diamond-row--first-visible': row === props.player.scenarioRow }"
-                        :style="{ zIndex: scenario.length - row }"
-                    >
-                        <div
-                            v-for="(entry, col) in rowEntries"
-                            :key="col"
-                            class="diamond-card clickable"
-                            :class="{
-                                'disabled': !isNextOption(row, col),
-                                'diamond-card--current': row === props.player.scenarioRow && col === props.player.scenarioColumn,
-                            }"
-                            @click="isNextOption(row, col) && goToEntry(row, col)"
-                        >
-                            <div class="diamond-card-artwork">
-                                <img :src="getEntryImage(entry)" alt="" class="diamond-card-image" />
+                <div class="map-layout">
+                    <aside class="map-tip-column" aria-label="Map tip area">
+                        <div class="map-tip-card" aria-label="Map tip">
+                            <h3 class="map-tip-card__title">{{ currentMapTip.title }}</h3>
+                            <div class="map-tip-card__artwork">
+                                <img :src="currentMapTip.imageSrc ?? '/unknown.jpg'" alt="" class="map-tip-card__image" />
                             </div>
-                            <span class="diamond-card-label">
-                                {{ entry === null ? 'Start' : getEntryLabel(entry) }}
-                            </span>
+                            <p class="map-tip-card__body">"{{ currentMapTip.body }}"<br>- So sayeth the wise Koalaundo</p>
+                        </div>
+                    </aside>
+                    <div class="diamond-map">
+                        <div
+                            v-for="(rowEntries, row) in scenario"
+                            v-show="row >= props.player.scenarioRow"
+                            :key="row"
+                            :ref="(el) => setCurrentRowRef(el, row)"
+                            class="diamond-row"
+                            :class="{ 'diamond-row--first-visible': row === props.player.scenarioRow }"
+                            :style="{ zIndex: scenario.length - row }"
+                        >
+                            <div
+                                v-for="(entry, col) in rowEntries"
+                                :key="col"
+                                class="diamond-card clickable"
+                                :class="{
+                                    'disabled': !isNextOption(row, col),
+                                    'diamond-card--current': row === props.player.scenarioRow && col === props.player.scenarioColumn,
+                                }"
+                                @click="isNextOption(row, col) && goToEntry(row, col)"
+                            >
+                                <div class="diamond-card-artwork">
+                                    <img :src="getEntryImage(entry)" alt="" class="diamond-card-image" />
+                                </div>
+                                <span class="diamond-card-label">
+                                    {{ entry === null ? 'Start' : getEntryLabel(entry) }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -282,6 +308,8 @@
         display: flex;
         flex-direction: column;
         padding: 1.5rem;
+        padding-top: 3rem;
+        padding-left: 5rem;
         overflow: auto;
         gap: 1rem;
         min-height: 0;
@@ -324,8 +352,30 @@
     .map-content {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
         overflow-y: auto;
+        min-height: 0;
+    }
+
+    .map-layout {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 1.25rem;
+        width: 100%;
+    }
+
+    .map-tip-column {
+        flex: 0 0 250px;
+        height: calc(100vh - 220px);
+        min-height: 320px;
+        max-height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
     }
 
     .diamond-map {
@@ -333,6 +383,54 @@
         flex-direction: column;
         align-items: center;
         padding: 1rem 0;
+        flex: 1 1 auto;
+    }
+
+    .map-tip-card {
+        width: 240px;
+        min-height: 336px;
+        flex: 0 0 auto;
+        background-color: #f5f0d0;
+        border: 1px solid #333;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        padding: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .map-tip-card__artwork {
+        width: 100%;
+        height: 130px;
+        border-radius: 6px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.08);
+        flex-shrink: 0;
+    }
+
+    .map-tip-card__image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .map-tip-card__title {
+        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.2;
+        text-align: left;
+        color: #222;
+    }
+
+    .map-tip-card__body {
+        margin: 0;
+        font-size: 0.82rem;
+        line-height: 1.35;
+        color: #333;
+        font-style: italic;
+        text-align: center;
     }
 
     .diamond-row {

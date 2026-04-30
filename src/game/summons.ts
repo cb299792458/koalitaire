@@ -13,7 +13,7 @@ export interface SummonTemplate {
     hp: number;
     damage: number;
     race: Race;
-    effect?: (combat: Combat) => void | Promise<void>;
+    effect: (combat: Combat, summon: Summon) => void | Promise<void>;
 }
 
 export function createSummon(template: SummonTemplate): Summon {
@@ -24,7 +24,7 @@ export function createSummon(template: SummonTemplate): Summon {
         hp: template.hp,
         damage: template.damage,
         race: template.race,
-        effect: template.effect ?? (() => {}),
+        effect: template.effect,
     });
 }
 
@@ -36,6 +36,7 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 1,
         damage: 0,
         race: Race.Koala,
+        effect: () => {},
         tooltip: "A koala guard, fiercely loyal to Prince Koa, but not particularly fierce in any other regard.",
     },
     warKoala: {
@@ -70,8 +71,8 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 3,
         damage: 2,
         race: Race.Salamander,
-        effect: async (combat: Combat) => {
-            await combat.damageEnemy(2);
+        effect: async (combat: Combat, summon: Summon) => {
+            await combat.damageEnemy(summon.damage);
         },
     },
     charLizard: {
@@ -80,6 +81,9 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 20,
         damage: 4,
         race: Race.Salamander,
+        effect: async (combat: Combat, summon: Summon) => {
+            await combat.damageEnemy(summon.damage);
+        },
         tooltip: "Spits fire that is hot enough to melt boulders. Known to cause forest fires unintentionally.",
     },
     
@@ -102,8 +106,8 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 4,
         damage: 5,
         race: Race.Quokka,
-        effect: async (combat: Combat) => {
-            await combat.damageEnemy(5);
+        effect: async (combat: Combat, summon: Summon) => {
+            await combat.damageEnemy(summon.damage);
         },
     },
     
@@ -124,6 +128,9 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 1,
         damage: 5,
         race: Race.Quokka,
+        effect: async (combat: Combat, summon: Summon) => {
+            await combat.damageEnemy(summon.damage);
+        },
         tooltip: "For those about to block (we salute you)",
     },
     
@@ -133,6 +140,9 @@ export const summons: Record<string, SummonTemplate> = {
         hp: 1,
         damage: 1,
         race: Race.Rat,
+        effect: async (combat: Combat, summon: Summon) => {
+            await combat.damageEnemy(summon.damage);
+        },
         tooltip: "A rude little rat that likes to bite.",
     },
 

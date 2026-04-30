@@ -19,6 +19,9 @@ function twinTemplateFor(enemy: Enemy): SummonTemplate {
         hp: enemy.health,
         damage: brawlerStrikeDamage(enemy),
         race: Race.Quokka,
+        effect: async (combat, summon) => {
+            await combat.damagePlayer(summon.damage);
+        },
     };
 }
 

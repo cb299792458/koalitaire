@@ -6,6 +6,7 @@ import {
     type StartingCardifactClass,
 } from '../../game/cardifacts/statBuffCardifacts';
 import type Cardifact from '../../models/Cardifact';
+import CardifactAsCard from '../Cards/CardifactAsCard.vue';
 
 const props = withDefaults(
     defineProps<{
@@ -56,6 +57,13 @@ function finish() {
         emit('close');
     }
 }
+
+function onChoiceKeydown(e: KeyboardEvent, index: number) {
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        takeRelic(index);
+    }
+}
 </script>
 
 <template>
@@ -80,16 +88,18 @@ function finish() {
             <template v-else>
                 <p class="elite-relic-reward-modal__hint">Choose one relic.</p>
                 <div class="elite-relic-reward-modal__grid">
-                    <button
+                    <div
                         v-for="(relic, index) in displayRelicsRef"
                         :key="relic.id"
-                        type="button"
-                        class="elite-relic-reward-modal__item"
+                        role="button"
+                        tabindex="0"
+                        class="elite-relic-reward-modal__choice"
+                        :aria-label="`Take relic: ${relic.name}`"
                         @click="takeRelic(index)"
+                        @keydown="onChoiceKeydown($event, index)"
                     >
-                        <span class="elite-relic-reward-modal__name">{{ relic.name }}</span>
-                        <span class="elite-relic-reward-modal__desc">{{ relic.description }}</span>
-                    </button>
+                        <CardifactAsCard :cardifact="relic" />
+                    </div>
                 </div>
             </template>
         </div>
@@ -140,39 +150,36 @@ h2 {
 }
 
 .elite-relic-reward-modal__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    justify-content: center;
+    align-items: flex-start;
 }
 
-.elite-relic-reward-modal__item {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 0.35rem;
-    padding: 0.85rem 1rem;
-    border: 2px solid #ccc;
-    border-radius: 8px;
-    background: #fafafa;
+.elite-relic-reward-modal__choice {
+    display: block;
+    border: none;
+    background: transparent;
+    padding: 0.35rem;
+    border-radius: 12px;
     cursor: pointer;
     font: inherit;
-    transition: background 0.15s, border-color 0.15s;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
 }
 
-.elite-relic-reward-modal__item:hover {
-    background: #f0f0f0;
-    border-color: #888;
+.elite-relic-reward-modal__choice:hover {
+    transform: scale(1.04);
 }
 
-.elite-relic-reward-modal__name {
-    font-weight: 600;
+.elite-relic-reward-modal__choice:focus-visible {
+    outline: 2px solid #4caf50;
+    outline-offset: 4px;
 }
 
-.elite-relic-reward-modal__desc {
-    font-size: 0.88rem;
-    color: #333;
-    line-height: 1.35;
+.elite-relic-reward-modal__choice :deep(.card-view) {
+    margin: 0;
 }
 
 .continue-button {

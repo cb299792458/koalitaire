@@ -1,19 +1,32 @@
 <script setup lang="ts">
     import type Cardifact from '../../models/Cardifact';
-    import { ALL_STARTING_CARDIFACT_CLASSES } from '../../game/cardifacts/statBuffCardifacts';
+    import { pickRandomUnownedStartingCardifactClasses, type StartingCardifactClass } from '../../game/cardifacts/statBuffCardifacts';
+    import CardifactAsCard from '../Cards/CardifactAsCard.vue';
 
     const props = defineProps<{
         /** Called with a fresh cardifact instance; parent adds it to the player. */
         onPick: (cardifact: Cardifact) => void;
     }>();
 
-    /** Labels only (not added to the player until confirmed). */
-    const choices = ALL_STARTING_CARDIFACT_CLASSES.map((Cls) => new Cls());
+    const STARTING_CHOICES = 3;
+    const pickedClasses: StartingCardifactClass[] = pickRandomUnownedStartingCardifactClasses(
+        new Set<string>(),
+        STARTING_CHOICES
+    );
+    /** Previews only (not added to the player until confirmed). */
+    const choices = pickedClasses.map((Cls) => new Cls());
 
     function pick(index: number) {
-        const Ctor = ALL_STARTING_CARDIFACT_CLASSES[index];
+        const Ctor = pickedClasses[index];
         if (!Ctor) return;
         props.onPick(new Ctor());
+    }
+
+    function onChoiceKeydown(e: KeyboardEvent, index: number) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            pick(index);
+        }
     }
 </script>
 
@@ -22,16 +35,18 @@
         <h2>Choose a cardifact</h2>
         <p class="cardifact-pick-modal__hint">One blessing for your run.</p>
         <div class="cardifact-pick-modal__grid">
-            <button
+            <div
                 v-for="(c, index) in choices"
                 :key="c.id"
-                type="button"
-                class="cardifact-pick-modal__item"
+                role="button"
+                tabindex="0"
+                class="cardifact-pick-modal__choice"
+                :aria-label="`Choose cardifact: ${c.name}`"
                 @click="pick(index)"
+                @keydown="onChoiceKeydown($event, index)"
             >
-                <span class="cardifact-pick-modal__name">{{ c.name }}</span>
-                <span class="cardifact-pick-modal__desc">{{ c.description }}</span>
-            </button>
+                <CardifactAsCard :cardifact="c" />
+            </div>
         </div>
     </div>
 </template>
@@ -57,38 +72,35 @@
 }
 
 .cardifact-pick-modal__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    justify-content: center;
+    align-items: flex-start;
 }
 
-.cardifact-pick-modal__item {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    gap: 0.35rem;
-    padding: 0.85rem 1rem;
-    border: 2px solid #ccc;
-    border-radius: 8px;
-    background: #fafafa;
+.cardifact-pick-modal__choice {
+    display: block;
+    border: none;
+    background: transparent;
+    padding: 0.35rem;
+    border-radius: 12px;
     cursor: pointer;
     font: inherit;
-    transition: background 0.15s, border-color 0.15s;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    outline: none;
 }
 
-.cardifact-pick-modal__item:hover {
-    background: #f0f0f0;
-    border-color: #888;
+.cardifact-pick-modal__choice:hover {
+    transform: scale(1.04);
 }
 
-.cardifact-pick-modal__name {
-    font-weight: 600;
+.cardifact-pick-modal__choice:focus-visible {
+    outline: 2px solid #4caf50;
+    outline-offset: 4px;
 }
 
-.cardifact-pick-modal__desc {
-    font-size: 0.88rem;
-    color: #333;
-    line-height: 1.35;
+.cardifact-pick-modal__choice :deep(.card-view) {
+    margin: 0;
 }
 </style>

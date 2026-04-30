@@ -1,87 +1,72 @@
 <script setup lang="ts">
-const props = defineProps<{
-    message: string;
-    onConfirm?: () => void;
-}>();
+    import ModalSpellCardShell from './ModalSpellCardShell.vue'
 
-const emit = defineEmits<{
-    (e: 'close'): void;
-}>();
+    const props = withDefaults(
+        defineProps<{
+            message: string
+            title?: string
+            imageSrc?: string
+            onConfirm?: () => void
+        }>(),
+        {
+            title: 'Confirm',
+            imageSrc: '/unknown.jpg',
+        }
+    )
 
-function confirm() {
-    props.onConfirm?.();
-    emit('close');
-}
+    const emit = defineEmits<{
+        (e: 'close'): void
+    }>()
+
+    function confirm() {
+        props.onConfirm?.()
+        emit('close')
+    }
 </script>
 
 <template>
-    <div class="confirm-modal">
-        <div class="modal-content">
-            <p class="message">{{ message }}</p>
-            <div class="buttons">
-                <button type="button" class="cancel-button" @click="emit('close')">Cancel</button>
-                <button type="button" class="confirm-button" @click="confirm">Confirm</button>
-            </div>
-        </div>
-    </div>
+    <ModalSpellCardShell
+        :title="title"
+        :description="message"
+        :image-src="imageSrc"
+        image-alt=""
+    >
+        <template #footer>
+            <button type="button" class="confirm-modal__cancel" @click="emit('close')">Cancel</button>
+            <button type="button" class="confirm-modal__confirm" @click="confirm">Confirm</button>
+        </template>
+    </ModalSpellCardShell>
 </template>
 
 <style scoped>
-    .confirm-modal {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .modal-content {
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        min-width: 400px;
-        max-width: 480px;
-    }
-
-    .message {
-        margin: 0 0 1.5rem 0;
-        font-size: 1.1rem;
-        color: #333;
-        line-height: 1.5;
-    }
-
-    .buttons {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-    }
-
-    .buttons button {
+    .confirm-modal__cancel,
+    .confirm-modal__confirm {
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
+        font-family: var(--font-game-mono);
+        font-weight: bold;
         border-radius: 8px;
-        transition: background 0.2s;
+        cursor: pointer;
+        transition: background 0.2s, filter 0.15s;
     }
 
-    .cancel-button {
+    .confirm-modal__cancel {
         background: #e0e0e0;
         color: #333;
         border: 1px solid #ccc;
     }
 
-    .cancel-button:hover {
+    .confirm-modal__cancel:hover {
         background: #d0d0d0;
     }
 
-    .confirm-button {
+    .confirm-modal__confirm {
         background: #d32f2f;
-        color: white;
+        color: #fff;
         border: none;
     }
 
-    .confirm-button:hover {
+    .confirm-modal__confirm:hover {
         background: #b71c1c;
     }
 </style>

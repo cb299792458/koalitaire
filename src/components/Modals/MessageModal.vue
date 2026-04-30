@@ -1,29 +1,24 @@
 <script setup lang="ts">
-    defineProps<{ message: string }>()
+    import ModalSpellCardShell from './ModalSpellCardShell.vue'
+
+    withDefaults(
+        defineProps<{
+            message: string
+            title?: string
+            imageSrc?: string
+        }>(),
+        {
+            title: 'Message',
+            imageSrc: '/unknown.jpg',
+        }
+    )
 </script>
 
 <template>
-    <div class="message-modal">
-        <h2>Message</h2>
-        <p class="message-modal__body">{{ message }}</p>
-    </div>
+    <ModalSpellCardShell
+        :title="title"
+        :description="message"
+        :image-src="imageSrc"
+        image-alt=""
+    />
 </template>
-
-<style scoped>
-.message-modal {
-    background: white;
-    padding: 2rem;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 50%;
-    gap: 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.message-modal__body {
-    white-space: pre-line;
-    text-align: center;
-}
-</style>

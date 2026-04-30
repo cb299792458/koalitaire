@@ -1,5 +1,7 @@
 import type { Combat } from '../composables/useCombat';
 
+export type SummonEffect = (combat: Combat, summon: Summon) => void | Promise<void>;
+
 export enum Race {
     Koala = "koala",
     FlyingSquirrel = "flying squirrel",
@@ -19,7 +21,7 @@ export interface SummonParams {
     hp: number;
     damage: number;
     race: Race;
-    effect?: (combat: Combat) => void | Promise<void>;
+    effect: SummonEffect;
 }
 
 class Summon {
@@ -30,7 +32,7 @@ class Summon {
     hp: number;
     damage: number;
     race: Race;
-    effect: (combat: Combat) => void | Promise<void>;
+    effect: SummonEffect;
 
     constructor(params: SummonParams) {
         const { name, description, hp, damage, race } = params;
@@ -40,7 +42,7 @@ class Summon {
         this.hp = hp;
         this.damage = damage;
         this.race = race;
-        this.effect = params.effect ?? (() => {});
+        this.effect = params.effect;
     }
 }
 

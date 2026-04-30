@@ -11,6 +11,9 @@ const saltyTemplate: SummonTemplate = {
     hp: 18,
     damage: 6,
     race: Race.Salamander,
+    effect: async (combat, summon) => {
+        await combat.damagePlayer(summon.damage);
+    },
 };
 
 const punchOut = buildAttackAction({

@@ -12,6 +12,9 @@ const storytellerTigerTemplate: SummonTemplate = {
     hp: 22,
     damage: 8,
     race: Race.Dingo,
+    effect: async (combat, summon) => {
+        await combat.damagePlayer(summon.damage);
+    },
 };
 
 const releaseTheTiger = new EnemyAction(

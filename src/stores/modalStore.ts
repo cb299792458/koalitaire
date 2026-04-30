@@ -75,8 +75,30 @@ export function openModal(
     }
 }
 
-export function openMessageModal(message: string, keepOpen?: boolean) {
-    openModal('message', { message }, { keepOpen })
+export type MessageModalOptions = {
+    keepOpen?: boolean
+    title?: string
+    imageSrc?: string
+}
+
+/** Second argument can be `keepOpen` (legacy) or an options object with `keepOpen`, `title`, and `imageSrc`. */
+export function openMessageModal(
+    message: string,
+    keepOpenOrOptions?: boolean | MessageModalOptions
+) {
+    const opts: MessageModalOptions =
+        typeof keepOpenOrOptions === 'boolean'
+            ? { keepOpen: keepOpenOrOptions }
+            : (keepOpenOrOptions ?? {})
+    openModal(
+        'message',
+        {
+            message,
+            ...(opts.title != null ? { title: opts.title } : {}),
+            ...(opts.imageSrc != null ? { imageSrc: opts.imageSrc } : {}),
+        },
+        { keepOpen: opts.keepOpen }
+    )
 }
 
 // Close the current modal

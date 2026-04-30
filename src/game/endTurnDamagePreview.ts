@@ -23,7 +23,7 @@ interface SimSummon {
     previewIndex: number;
     race: Race;
     damage: number;
-    effect: (combat: Combat) => void | Promise<void>;
+    effect: (combat: Combat, summon: SimSummon) => void | Promise<void>;
 }
 
 /** Enemy-side state + fields mutated by {@link import("../models/EnemyAction").default} effects. */
@@ -237,9 +237,7 @@ export async function computeEndTurnDamagePreviewAsync(combat: Combat): Promise<
         if (!playerBoard.summons.includes(sim)) {
             continue;
         }
-        const base = Math.max(0, Math.floor(Number(sim.damage) || 0));
-        previewCombat.damageEnemy(base);
-        await sim.effect(previewCombat);
+        await sim.effect(previewCombat, sim);
     }
 
     if (enemySim.health <= 0) {
@@ -264,9 +262,7 @@ export async function computeEndTurnDamagePreviewAsync(combat: Combat): Promise<
         if (!enemySim.summons.includes(sim)) {
             continue;
         }
-        const base = Math.max(0, Math.floor(Number(sim.damage) || 0));
-        previewCombat.damagePlayer(base);
-        await sim.effect(previewCombat);
+        await sim.effect(previewCombat, sim);
     }
 
     return {

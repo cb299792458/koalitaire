@@ -2,6 +2,8 @@
     import { computed, ref } from 'vue'
     import type Player from '../models/Player'
     import type Enemy from '../models/Enemy'
+    import type Cardifact from '../models/Cardifact'
+    import CardifactTooltipContent from './Cards/CardifactTooltipContent.vue'
     import FloatingNumber from './FloatingNumber.vue'
     import SummonDisplay from './SummonDisplay.vue'
     import useDamageNumbers, { getFlashClassForLatest } from '../composables/useDamageNumbers'
@@ -124,6 +126,7 @@
     const infoTooltipY = ref(0)
     const infoTooltipRef = ref<HTMLElement | null>(null)
     const infoTooltipText = ref<string | null>(null)
+    const infoTooltipCardifact = ref<Cardifact | null>(null)
     const showInfoTooltip = ref(false)
     let infoTooltipDelay: ReturnType<typeof setTimeout> | null = null
 
@@ -146,8 +149,27 @@
 
     function onInfoTooltipEnter(e: MouseEvent, text: string) {
         onInfoTooltipMove(e)
+        infoTooltipCardifact.value = null
+        if (infoTooltipDelay !== null) {
+            clearTimeout(infoTooltipDelay)
+            infoTooltipDelay = null
+        }
         infoTooltipDelay = setTimeout(() => {
             infoTooltipText.value = text
+            showInfoTooltip.value = true
+            infoTooltipDelay = null
+        }, INFO_TOOLTIP_DELAY)
+    }
+
+    function onCardifactTooltipEnter(e: MouseEvent, c: Cardifact) {
+        onInfoTooltipMove(e)
+        infoTooltipText.value = null
+        if (infoTooltipDelay !== null) {
+            clearTimeout(infoTooltipDelay)
+            infoTooltipDelay = null
+        }
+        infoTooltipDelay = setTimeout(() => {
+            infoTooltipCardifact.value = c
             showInfoTooltip.value = true
             infoTooltipDelay = null
         }, INFO_TOOLTIP_DELAY)
@@ -160,6 +182,7 @@
         }
         showInfoTooltip.value = false
         infoTooltipText.value = null
+        infoTooltipCardifact.value = null
     }
 </script>
 
@@ -360,7 +383,7 @@
                         v-for="c in playerCardifacts"
                         :key="c.id"
                         class="combatant-info__cardifact-item"
-                        @mouseenter="onInfoTooltipEnter($event, c.description)"
+                        @mouseenter="onCardifactTooltipEnter($event, c)"
                         @mousemove="onInfoTooltipMove"
                         @mouseleave="onInfoTooltipLeave"
                     >
@@ -436,13 +459,21 @@
         </div>
         <Teleport to="body">
             <div
-                v-if="infoTooltipText"
+                v-if="(infoTooltipText || infoTooltipCardifact) && showInfoTooltip"
                 ref="infoTooltipRef"
                 class="cursor-tooltip"
-                :class="{ 'cursor-tooltip--visible': showInfoTooltip }"
+                :class="{
+                    'cursor-tooltip--visible': showInfoTooltip,
+                    'cursor-tooltip--cardifact': !!infoTooltipCardifact,
+                }"
                 :style="infoTooltipStyle"
             >
-                <span v-html="formatStatSymbols(infoTooltipText)"></span>
+                <CardifactTooltipContent
+                    v-if="infoTooltipCardifact"
+                    :key="infoTooltipCardifact.id"
+                    :cardifact="infoTooltipCardifact"
+                />
+                <span v-else v-html="formatStatSymbols(infoTooltipText ?? '')"></span>
             </div>
         </Teleport>
     </div>
@@ -483,6 +514,12 @@
 
     .cursor-tooltip--visible {
         opacity: 1;
+    }
+
+    .cursor-tooltip--cardifact {
+        max-width: 380px;
+        padding: 10px 14px;
+        transition: opacity 0.15s ease;
     }
 
     .combatant-info__stats-gap {

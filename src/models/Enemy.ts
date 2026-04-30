@@ -242,10 +242,12 @@ class Enemy extends Combatant {
         }
         this.impendingActions = [];
 
-        // Enemy summons run after all enemy actions (mirror {@link Combat.runRestOfTurn}: base damage then effect).
-        for (const summon of this.summons) {
-            await combat.damagePlayer(Math.max(0, Math.floor(Number(summon.damage) || 0)));
-            await Promise.resolve(summon.effect(combat));
+        // Snapshot summon order at enemy-summon phase start so runtime matches preview behavior.
+        // A summon must still exist when its turn comes up to act.
+        const enemySummonWave = [...this.summons];
+        for (const summon of enemySummonWave) {
+            if (!this.summons.includes(summon)) continue;
+            await Promise.resolve(summon.effect(combat, summon));
             combat.notify();
             await new Promise((resolve) => setTimeout(resolve, 500)); // 0.5s pause after each enemy summon
         }

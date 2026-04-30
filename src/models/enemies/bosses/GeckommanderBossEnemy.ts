@@ -11,6 +11,9 @@ const geckTemplate: SummonTemplate = {
     hp: 3,
     damage: 1,
     race: Race.Salamander,
+    effect: async (combat, summon) => {
+        await combat.damagePlayer(summon.damage);
+    },
 };
 
 /** Ten Gecks per turn for ten turns → one hundred Gecks. */

@@ -5,6 +5,7 @@
     import { getKeywordExplanation } from '../../game/keywords';
     import { suitIconMap, suitClassMap } from '../../utils/suitAssets';
     import { formatStatSymbols } from '../../utils/damageSymbol';
+    import { cardArtworkFallbackUrls } from '../../utils/cardArtwork';
 
     const { card, selectedCard } = defineProps<{
         card: Card,
@@ -94,34 +95,12 @@
         return kw.map((id) => ({ id, text: getKeywordExplanation(id) }));
     });
 
-    const cardArtworkName = computed(() => {
-        if (isSpell.value && spellCard.value) return spellCard.value.name;
-        return '';
-    });
-
-    const artworkBasePath = computed(() => {
-        const name = String(cardArtworkName.value).replace(/\s+/g, '_');
-        return `/cards/${name}`;
-    });
-
-    const artworkBasePathWithSpaces = computed(() => {
-        const name = String(cardArtworkName.value);
-        return `/cards/${encodeURIComponent(name)}`;
-    });
-
     const artworkSrc = ref<string | null>(null);
     const artworkVisible = ref(false);
 
     const artworkFallbacks = computed(() => {
-        const base = [
-            `${artworkBasePath.value}.png`,
-            `${artworkBasePath.value}.jpg`,
-            `${artworkBasePathWithSpaces.value}.png`,
-            `${artworkBasePathWithSpaces.value}.jpg`,
-        ];
-        // Deduplicate: single-word names (Thunderstruck, Koallaborator) produce identical base + withSpaces paths
-        const unique = [...new Set([...base, '/cards/default.png', '/cards/default.jpg', '/unknown.jpg'])];
-        return unique;
+        if (!isSpell.value || !spellCard.value) return ['/unknown.jpg'];
+        return cardArtworkFallbackUrls(spellCard.value.name);
     });
 
     function resetArtwork() {

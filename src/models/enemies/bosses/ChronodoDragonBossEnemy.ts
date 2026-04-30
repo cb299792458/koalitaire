@@ -13,6 +13,7 @@ const dragonPrinceTemplate: SummonTemplate = {
     hp: 6,
     damage: 0,
     race: Race.Salamander,
+    effect: () => {},
 };
 
 /** Base damage on each scythe cut and each dragonling strike; Chronodo's attack stat is added to every hit. */
