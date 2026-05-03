@@ -5,6 +5,7 @@ import CrocodileHunterBossEnemy from "./bosses/CrocodileHunterBossEnemy";
 import GeckommanderBossEnemy from "./bosses/GeckommanderBossEnemy";
 import PenguinyuForceBossEnemy from "./bosses/PenguinyuForceBossEnemy";
 import LionOfTheNorthBossEnemy from "./bosses/LionOfTheNorthBossEnemy";
+import KoalaKingFinalBossEnemy from "./bosses/KoalaKingFinalBossEnemy";
 import AlternatorEnemy from "./AlternatorEnemy";
 import BarrageEnemy from "./BarrageEnemy";
 import BrawlerTwinsEnemy from "./BrawlerTwinsEnemy";
@@ -36,6 +37,7 @@ export {
     FrighteningFishesEnemy,
     GeckommanderBossEnemy,
     GnokkaEnemy,
+    KoalaKingFinalBossEnemy,
     PenguinyuForceBossEnemy,
     GruntEnemy,
     LionOfTheNorthBossEnemy,

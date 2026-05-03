@@ -382,9 +382,9 @@ export const testCharacterParams: PlayerParams = {
     name: "DJ Testo",
     portrait: platypusPortrait,
 
-    columnCount: 10,
-    handSlotCount: 10,
-    startingManaDiamonds: 100,
+    columnCount: 9,
+    handSlotCount: 9,
+    startingManaDiamonds: 99,
 
     appeal: 0,
     attack: 0,

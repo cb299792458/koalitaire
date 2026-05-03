@@ -7,8 +7,7 @@
     const isTransparentOverlay = computed(
         () =>
             currentModal.value?.transparentOverlay ||
-            currentModal.value?.name === 'backAtCamp' ||
-            currentModal.value?.name === 'actEndChoice'
+            currentModal.value?.name === 'backAtCamp'
     )
     const handleOverlayClick = () => {
         if (!currentModal.value?.keepOpen) closeModal()

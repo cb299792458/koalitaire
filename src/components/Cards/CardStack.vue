@@ -26,7 +26,7 @@ const SELECTED_CARD_Z_INDEX = 1000;
 const HORIZONTAL_CARD_WIDTH = 100;
 const HORIZONTAL_MAX_STACK_WIDTH = 740;
 
-const ANIMATIONS_WITH_POSITION = new Set(['burn', 'move-to-mana', 'tableau-move']);
+const FIXED_POSITION_ANIMATIONS = new Set(['start-animation', 'fly-right', 'fly-left', 'fly-up']);
 
 const manaPoolSuit = computed(() => {
     if (props.name === AREAS.ManaPools && props.arrayIndex !== undefined) {
@@ -46,6 +46,22 @@ const manaPoolSuitClass = computed(() =>
 const isManaPoolPile = computed(
     () => props.name === AREAS.ManaPools && (props.layout === 'pile' || !props.layout)
 );
+const alwaysShowDummy = computed(
+    () => props.name === AREAS.Tableau && (props.layout === 'vertical' || !props.layout)
+);
+
+/** Vertical stack: absolute-positioned cards do not contribute to container height; reserve enough for layout. */
+const VERTICAL_CARD_SPACING_PX = 20;
+const VERTICAL_CARD_VIEW_HEIGHT_PX = 188; /* 168px card + 20px vertical margins from .card-view */
+
+const tableauVerticalMinHeightStyle = computed(() => {
+    if (!alwaysShowDummy.value) return {};
+    if (props.layout !== 'vertical' && props.layout) return {};
+    const n = props.cards.length;
+    if (n <= 0) return {};
+    const minH = (n - 1) * VERTICAL_CARD_SPACING_PX + VERTICAL_CARD_VIEW_HEIGHT_PX;
+    return { minHeight: `${minH}px` };
+});
 
 function shouldShowHighlight(index: number): boolean {
     if (!props.highlighted) return false;
@@ -58,7 +74,9 @@ function shouldShowHighlight(index: number): boolean {
 }
 
 function usesPositionStyle(card: Card): boolean {
-    return !card.animation || ANIMATIONS_WITH_POSITION.has(card.animation);
+    // Keep cards anchored to stack coordinates for normal animations so layout doesn't reflow.
+    // Only skip stack positioning for fixed-position fly-in/fly-out animations.
+    return !card.animation || !FIXED_POSITION_ANIMATIONS.has(card.animation);
 }
 
 function cardPosition(index: number, card: Card) {
@@ -142,19 +160,37 @@ function handleEmptyClick() {
 <template>
     <div
         :class="['card-stack', layout || 'pile', { 'mana-pool-stack': name === AREAS.ManaPools }]"
+        :style="tableauVerticalMinHeightStyle"
         :title="pileTooltip || undefined"
     >
-        <DummyCard
-            v-if="!cards.length"
-            :label="customLabel || name"
-            :mana-pool-icon="name === AREAS.ManaPools ? manaPoolIcon : undefined"
-            :mana-pool-icon-alt="name === AREAS.ManaPools && manaPoolSuit ? String(manaPoolSuit) : undefined"
-            :mana-pool-suit-class="name === AREAS.ManaPools ? manaPoolSuitClass : undefined"
-            :highlighted="highlighted"
-            :highlight-type="highlightType"
-            :title="pileTooltip"
-            @click="handleEmptyClick"
-        />
+        <template v-if="alwaysShowDummy && cards.length > 0">
+            <div class="card-stack__cards" :class="{ 'mana-pool-pile-slot': isManaPoolPile }">
+                <CardView
+                    v-for="(card, index) in cards"
+                    :key="index"
+                    :card="card"
+                    :class="{
+                        'castable-highlight': shouldShowHighlight(index) && highlightType === 'cast',
+                        'burnable-highlight': shouldShowHighlight(index) && highlightType === 'burn',
+                    }"
+                    :style="usesPositionStyle(card) ? cardPosition(index, card) : {}"
+                    :selectedCard="selectedCard"
+                    @click.stop="handleClick(index)"
+                />
+            </div>
+        </template>
+        <template v-else-if="!cards.length">
+            <DummyCard
+                :label="customLabel || name"
+                :mana-pool-icon="name === AREAS.ManaPools ? manaPoolIcon : undefined"
+                :mana-pool-icon-alt="name === AREAS.ManaPools && manaPoolSuit ? String(manaPoolSuit) : undefined"
+                :mana-pool-suit-class="name === AREAS.ManaPools ? manaPoolSuitClass : undefined"
+                :highlighted="highlighted"
+                :highlight-type="highlightType"
+                :title="pileTooltip"
+                @click="handleEmptyClick"
+            />
+        </template>
         <div v-else :class="{ 'mana-pool-pile-slot': isManaPoolPile }">
             <CardView
                 v-for="(card, index) in cards"
@@ -202,6 +238,14 @@ function handleEmptyClick() {
     flex-direction: column;
     position: relative;
     width: 100%;
+}
+
+.card-stack__cards {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    align-self: stretch;
 }
 
 .card-stack-label {

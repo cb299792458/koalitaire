@@ -1,5 +1,6 @@
 <script setup lang="ts">
     import Card from '../models/Card'
+    import KoalaKingFinalBossEnemy from '../models/enemies/bosses/KoalaKingFinalBossEnemy'
     import { Suits } from '../models/Suit'
     import CardStack from './Cards/CardStack.vue'
     import { useCombat } from '../composables/useCombat'
@@ -10,7 +11,7 @@
     import CombatantInfo from './CombatantInfo.vue'
     import type Enemy from '../models/Enemy'
     import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario'
-    import { bossFromId, bossIdsForGauntlet, pickBossForNewAct, shuffleArray } from '../game/actProgress'
+    import { pickBossForNewAct } from '../game/actProgress'
     import { BOSS_ENCOUNTER_ENEMIES } from '../models/enemies'
     import type Player from '../models/Player'
     import type Cardifact from '../models/Cardifact'
@@ -22,6 +23,11 @@
     import { formatStatSymbols } from '../utils/damageSymbol'
     import { diamondSuitSvgInner } from '../utils/suitUiSymbols'
     import type { EndTurnDamagePreview } from '../game/endTurnDamagePreview'
+    import {
+        actEndExpositionCards,
+        GAME_START_EXPOSITION_CARDS,
+        type ExpositionCard,
+    } from '../game/expositionCards'
 
     const DECK_PILE_TOOLTIP = 'Your deck starts here'
     const RECYCLING_PILE_TOOLTIP =
@@ -53,31 +59,79 @@
 
     const WIN_KOALA_LUMPUR = `🐨 You Win! 🐨
 
-You defeated your dad and brought democratic socialism to Koala Lumpur!
-All of the remaining monarchs and billionaires have been put to executed,
-and all the animals live in harmony after the abject failure of capitalism.
+You defeated the final tyrant and brought democratic socialism to Koala Lumpur!
+The old throne has fallen, and all the animals now chart a future together.
 
 `
+    const MAX_ACTS = 5
+    const MIN_ACTS_TO_CHALLENGE_FINAL_BOSS = 2
 
-    async function openMapDeckForPlayer(p: Player, keepOpen = true) {
-        if (p.inKoalaLumpurGauntlet) {
-            if (p.gauntletBossIdsRemaining.length === 0) {
-                openMessageModal(WIN_KOALA_LUMPUR)
-                return
-            }
-            const nextId = p.gauntletBossIdsRemaining[0]!
-            const NextBoss = bossFromId(nextId)
-            await combat.start(p, new NextBoss())
+    const activeExpositionQueue = ref<ExpositionCard[] | null>(null)
+    let onExpositionDone: (() => void) | null = null
+
+    function openNextExpositionCard() {
+        const queue = activeExpositionQueue.value
+        if (!queue || queue.length === 0) {
+            activeExpositionQueue.value = null
+            const done = onExpositionDone
+            onExpositionDone = null
+            done?.()
             return
         }
+        const card = queue.shift()
+        if (!card) return
+        openMessageModal(card.body, {
+            title: card.title,
+            imageSrc: card.imageSrc,
+        })
+    }
 
-        const nextOptions = getNextRowOptions(p.scenarioRow, p.scenarioColumn)
-        if (nextOptions.length === 0) {
-            openModal(
-                'actEndChoice',
+    function playExpositionCards(cards: readonly ExpositionCard[], onDone: () => void) {
+        if (cards.length === 0) {
+            onDone()
+            return
+        }
+        activeExpositionQueue.value = [...cards]
+        onExpositionDone = onDone
+        openNextExpositionCard()
+    }
+
+    watch(
+        () => modalState.currentModal?.name,
+        (current, previous) => {
+            if (!activeExpositionQueue.value) return
+            if (previous === 'message' && current !== 'message') {
+                openNextExpositionCard()
+            }
+        }
+    )
+
+    function openActEndChoiceMessageModal(p: Player, keepOpen: boolean) {
+        const canChallengeFinalBoss = p.actNumber >= MIN_ACTS_TO_CHALLENGE_FINAL_BOSS
+        const canDoAnotherAct = p.actNumber < MAX_ACTS
+        openModal('message', {
+            title: `End of Act ${p.actNumber}`,
+            message:
+                'The act is complete.\n' +
+                `Acts completed: ${p.actNumber}\n\n` +
+                'Choose your path:\n' +
+                `- Challenge Final Boss (available after act ${MIN_ACTS_TO_CHALLENGE_FINAL_BOSS})\n` +
+                `- Do Another Act (available through act ${MAX_ACTS})`,
+            actions: [
                 {
-                    actNumber: p.actNumber,
-                    onLiberateVassal: () => {
+                    label: 'Challenge Final Boss',
+                    disabled: !canChallengeFinalBoss,
+                    onClick: () => {
+                        if (!canChallengeFinalBoss) return
+                        closeModal()
+                        void combat.start(p, new KoalaKingFinalBossEnemy())
+                    },
+                },
+                {
+                    label: 'Do Another Act',
+                    disabled: !canDoAnotherAct,
+                    onClick: () => {
+                        if (!canDoAnotherAct) return
                         closeModal()
                         p.actNumber += 1
                         const boss = pickBossForNewAct(p.defeatedBossIds)
@@ -87,23 +141,16 @@ and all the animals live in harmony after the abject failure of capitalism.
                         p.level = 0
                         openMapDeckForPlayer(p, keepOpen)
                     },
-                    onChallengeFather: () => {
-                        closeModal()
-                        p.inKoalaLumpurGauntlet = true
-                        p.gauntletBossIdsRemaining = shuffleArray(bossIdsForGauntlet(p.defeatedBossIds))
-                        p.scenarioRow = 0
-                        p.scenarioColumn = 0
-                        p.level = 0
-                        if (p.gauntletBossIdsRemaining.length === 0) {
-                            openMessageModal(WIN_KOALA_LUMPUR)
-                            return
-                        }
-                        const firstId = p.gauntletBossIdsRemaining[0]!
-                        const FirstBoss = bossFromId(firstId)
-                        void combat.start(p, new FirstBoss())
-                    },
                 },
-                { keepOpen: true, transparentOverlay: true }
+            ],
+        }, { keepOpen: true, transparentOverlay: true })
+    }
+
+    async function openMapDeckForPlayer(p: Player, keepOpen = true) {
+        const nextOptions = getNextRowOptions(p.scenarioRow, p.scenarioColumn)
+        if (nextOptions.length === 0) {
+            playExpositionCards(actEndExpositionCards(p.actNumber), () =>
+                openActEndChoiceMessageModal(p, keepOpen)
             )
             return
         }
@@ -121,7 +168,12 @@ and all the animals live in harmony after the abject failure of capitalism.
     combat.onEnemyDefeatedContinue = () => {
         closeModal()
         const p = combat.originalPlayer ?? combat.player
-        if (p) openMapDeckForPlayer(p)
+        if (!p) return
+        if (combat.enemy instanceof KoalaKingFinalBossEnemy) {
+            openMessageModal(WIN_KOALA_LUMPUR)
+            return
+        }
+        openMapDeckForPlayer(p)
     }
     const player = computed(() =>
         isInEvent.value ? eventState.player.value : combat.player
@@ -213,6 +265,7 @@ and all the animals live in harmony after the abject failure of capitalism.
 
     const isInEvent = computed(() => eventState.isInEvent.value)
     const isBackAtCampOpen = computed(() => modalState.currentModal?.name === 'backAtCamp')
+    const isMessageModalOpen = computed(() => modalState.currentModal?.name === 'message')
     const isInCombat = computed(() => !isInEvent.value && !isBackAtCampOpen.value)
     const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value)
     const eventEventRoll = computed(() => eventState.lastEventRoll.value)
@@ -516,7 +569,11 @@ and all the animals live in harmony after the abject failure of capitalism.
                         onPick: (cardifact: Cardifact) => {
                             newPlayer.addCardifact(cardifact)
                             closeModal()
-                            nextTick(() => openMapDeckForPlayer(newPlayer))
+                            nextTick(() =>
+                                playExpositionCards(GAME_START_EXPOSITION_CARDS, () =>
+                                    openMapDeckForPlayer(newPlayer)
+                                )
+                            )
                         },
                     }, { keepOpen: true })
                     return false
@@ -760,6 +817,14 @@ and all the animals live in harmony after the abject failure of capitalism.
                                 </div>
                                 <div v-if="isInCombat" class="combat-bottom-buttons">
                                     <button
+                                        v-if="isMessageModalOpen"
+                                        id="message-continue-button"
+                                        type="button"
+                                        @click="closeModal"
+                                    >
+                                        Continue
+                                    </button>
+                                    <button
                                         v-if="!combat.isProcessingTurn"
                                         id="end-turn-button"
                                         type="button"
@@ -836,6 +901,19 @@ and all the animals live in harmony after the abject failure of capitalism.
     border-radius: 8px;
     font-size: 16px;
     font-weight: 600;
+}
+
+#message-continue-button {
+    width: 180px;
+    height: 86px;
+    margin: 0;
+    background: #f4f4f4;
+    border: 1px solid #8b8b8b;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    z-index: 10001;
+    position: relative;
 }
 
 .cards-top {

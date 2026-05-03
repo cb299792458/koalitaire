@@ -1,6 +1,9 @@
 :root {
     /* Card rank/title, spell text, combatant panel, teleported tooltips */
     --font-game-mono: ui-monospace, 'Cascadia Mono', 'Consolas', 'Segoe UI Mono', monospace;
+    --game-card-bg: #f5f0d0;
+    --game-card-border: #000;
+    --game-card-radius: 10px;
 }
 
 html, body {
@@ -96,4 +99,90 @@ input:disabled {
 
 .suit-symbol--damage {
     color: #2d7a2d;
+}
+
+/* Shared card-shell styles for modal card presentations. */
+.game-card-surface {
+    background: var(--game-card-bg);
+    border: 1px solid var(--game-card-border);
+    border-radius: var(--game-card-radius);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    color: #000;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.game-card-header {
+    flex-shrink: 0;
+    padding: 0.65rem 0.9rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.game-card-title {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-weight: bold;
+    font-size: 1.08rem;
+    line-height: 1.2;
+    text-align: left;
+}
+
+.game-card-artwork {
+    flex-shrink: 0;
+    margin: 0.55rem 0.75rem 0;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.game-card-artwork img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.game-card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.55rem 0.9rem 0.85rem;
+}
+
+.game-card-description {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-weight: bold;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    white-space: pre-line;
+    text-align: center;
+}
+
+.game-card-footer {
+    flex-shrink: 0;
+    padding: 0.75rem 1rem 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.game-card-action-btn {
+    min-width: 160px;
+    padding: 0.55rem 0.85rem;
+    border: 1px solid #7d7d7d;
+    border-radius: 8px;
+    background: #f1f1f1;
+    color: #111;
+    font-family: var(--font-game-mono);
+    font-size: 0.9rem;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.game-card-action-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
