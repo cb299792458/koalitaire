@@ -51,6 +51,9 @@ const retinueCompanionBase: Omit<SummonTemplate, "name"> = {
     hp: 30,
     damage: 5,
     race: Race.Dingo,
+    effect: async (combat, summon) => {
+        await combat.damageEnemy(summon.damage);
+    },
 };
 
 export default class LionOfTheNorthBossEnemy extends Enemy {

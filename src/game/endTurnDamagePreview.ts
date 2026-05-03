@@ -2,6 +2,7 @@ import type { Combat } from "../composables/useCombat";
 import type Enemy from "../models/Enemy";
 import type Player from "../models/Player";
 import type Summon from "../models/Summon";
+import type { SummonEffect } from "../models/Summon";
 import { DamageType } from "../models/DamageType";
 import { CombatStatusId } from "./combatStatuses";
 import { Race } from "../models/Summon";
@@ -19,11 +20,14 @@ export interface EndTurnDamagePreview {
 }
 
 interface SimSummon {
+    name: string;
+    description: string;
+    tooltip: string;
     hp: number;
     previewIndex: number;
     race: Race;
     damage: number;
-    effect: (combat: Combat, summon: SimSummon) => void | Promise<void>;
+    effect: SummonEffect;
 }
 
 /** Enemy-side state + fields mutated by {@link import("../models/EnemyAction").default} effects. */
@@ -105,6 +109,9 @@ function applyDamageToSimBoard(
 
 function cloneSummons(summons: Summon[]): SimSummon[] {
     return summons.map((s, previewIndex) => ({
+        name: s.name,
+        description: s.description,
+        tooltip: s.tooltip,
         hp: s.hp,
         previewIndex,
         race: s.race,
