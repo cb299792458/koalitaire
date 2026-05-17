@@ -72,10 +72,17 @@ export function openModal(
     }
 }
 
+export type MessageModalAction = {
+    label: string
+    onClick: () => void
+    disabled?: boolean
+}
+
 export type MessageModalOptions = {
     keepOpen?: boolean
     title?: string
     imageSrc?: string
+    actions?: MessageModalAction[]
 }
 
 /** Second argument can be `keepOpen` (legacy) or an options object with `keepOpen`, `title`, and `imageSrc`. */
@@ -93,6 +100,7 @@ export function openMessageModal(
             message,
             ...(opts.title != null ? { title: opts.title } : {}),
             ...(opts.imageSrc != null ? { imageSrc: opts.imageSrc } : {}),
+            ...(opts.actions != null ? { actions: opts.actions } : {}),
         },
         { keepOpen: opts.keepOpen }
     )

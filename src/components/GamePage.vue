@@ -13,7 +13,7 @@
     import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario'
     import { pickBossForNewAct } from '../game/actProgress'
     import { BOSS_ENCOUNTER_ENEMIES } from '../models/enemies'
-    import type Player from '../models/Player'
+    import Player, { koaParams, testCharacterParams, type PlayerParams } from '../models/Player'
     import type Cardifact from '../models/Cardifact'
     import { useTown } from '../composables/useTown'
     import { useEvent } from '../composables/useEvent'
@@ -67,7 +67,14 @@ The old throne has fallen, and all the animals now chart a future together.
     const MIN_ACTS_TO_CHALLENGE_FINAL_BOSS = 2
 
     const activeExpositionQueue = ref<ExpositionCard[] | null>(null)
+    const showGameStartTestModeButton = ref(false)
     let onExpositionDone: (() => void) | null = null
+
+    function cancelExposition() {
+        activeExpositionQueue.value = null
+        onExpositionDone = null
+        showGameStartTestModeButton.value = false
+    }
 
     function openNextExpositionCard() {
         const queue = activeExpositionQueue.value
@@ -75,6 +82,7 @@ The old throne has fallen, and all the animals now chart a future together.
             activeExpositionQueue.value = null
             const done = onExpositionDone
             onExpositionDone = null
+            showGameStartTestModeButton.value = false
             done?.()
             return
         }
@@ -96,11 +104,39 @@ The old throne has fallen, and all the animals now chart a future together.
         openNextExpositionCard()
     }
 
+    function beginNewRun(characterParams: PlayerParams) {
+        const newPlayer = new Player(characterParams)
+        scenarioRef.value = makeScenario({
+            lastRowBoss: pickBossForNewAct(newPlayer.defeatedBossIds),
+        })
+        hasChosenCharacterRef.value = true
+        openModal('cardifactPick', {
+            onPick: (cardifact: Cardifact) => {
+                newPlayer.addCardifact(cardifact)
+                closeModal()
+                nextTick(() => openMapDeckForPlayer(newPlayer))
+            },
+        }, { keepOpen: true })
+    }
+
+    function onGameStartTestModeClick() {
+        showGameStartTestModeButton.value = false
+        cancelExposition()
+        closeModal()
+        nextTick(() => beginNewRun(testCharacterParams))
+    }
+
+    function startGameIntro() {
+        showGameStartTestModeButton.value = true
+        playExpositionCards(GAME_START_EXPOSITION_CARDS, () => beginNewRun(koaParams))
+    }
+
     watch(
         () => modalState.currentModal?.name,
         (current, previous) => {
             if (!activeExpositionQueue.value) return
             if (previous === 'message' && current !== 'message') {
+                showGameStartTestModeButton.value = false
                 openNextExpositionCard()
             }
         }
@@ -559,26 +595,7 @@ The old throne has fallen, and all the animals now chart a future together.
             if (p) openMapDeckForPlayer(p)
         })
         if (!hasChosenCharacterRef.value) {
-            openModal('start', {
-                onSelect: (newPlayer: Player) => {
-                    scenarioRef.value = makeScenario({
-                        lastRowBoss: pickBossForNewAct(newPlayer.defeatedBossIds),
-                    })
-                    hasChosenCharacterRef.value = true
-                    openModal('cardifactPick', {
-                        onPick: (cardifact: Cardifact) => {
-                            newPlayer.addCardifact(cardifact)
-                            closeModal()
-                            nextTick(() =>
-                                playExpositionCards(GAME_START_EXPOSITION_CARDS, () =>
-                                    openMapDeckForPlayer(newPlayer)
-                                )
-                            )
-                        },
-                    }, { keepOpen: true })
-                    return false
-                },
-            }, { keepOpen: true })
+            startGameIntro()
         }
         updateScale()
         window.addEventListener('resize', updateScale)
@@ -817,6 +834,14 @@ The old throne has fallen, and all the animals now chart a future together.
                                 </div>
                                 <div v-if="isInCombat" class="combat-bottom-buttons">
                                     <button
+                                        v-if="showGameStartTestModeButton && isMessageModalOpen"
+                                        id="test-mode-button"
+                                        type="button"
+                                        @click="onGameStartTestModeClick"
+                                    >
+                                        Test Mode
+                                    </button>
+                                    <button
                                         v-if="isMessageModalOpen"
                                         id="message-continue-button"
                                         type="button"
@@ -903,7 +928,8 @@ The old throne has fallen, and all the animals now chart a future together.
     font-weight: 600;
 }
 
-#message-continue-button {
+#message-continue-button,
+#test-mode-button {
     width: 180px;
     height: 86px;
     margin: 0;
