@@ -14,7 +14,7 @@
         scenario?: ScenarioEntry[][]
         /** When set, shown as "Act N" in the header (one diamond path = one act). */
         actNumber?: number
-        /** Linear finale: town → guardians → Koala King. */
+        /** Linear finale: town → guardians → Kolan Graydad. */
         isFinalAct?: boolean
     }>()
 

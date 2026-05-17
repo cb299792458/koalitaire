@@ -9,7 +9,7 @@ import DiamondTheStingrayGuardianEnemy from "./guardians/DiamondTheStingrayGuard
 import ClubTheSealGuardianEnemy from "./guardians/ClubTheSealGuardianEnemy";
 import HeartTheBarracudaGuardianEnemy from "./guardians/HeartTheBarracudaGuardianEnemy";
 import SpadeTheFalconGuardianEnemy from "./guardians/SpadeTheFalconGuardianEnemy";
-import KoalaKingFinalBossEnemy from "./boss/KoalaKingFinalBossEnemy";
+import KolanGraydadBossEnemy from "./boss/KolanGraydadBossEnemy";
 import AlternatorEnemy from "./AlternatorEnemy";
 import BarrageEnemy from "./BarrageEnemy";
 import BrawlerTwinsEnemy from "./BrawlerTwinsEnemy";
@@ -41,7 +41,7 @@ export {
     FrighteningFishesEnemy,
     GeckommanderChampionEnemy,
     GnokkaEnemy,
-    KoalaKingFinalBossEnemy,
+    KolanGraydadBossEnemy,
     PenguinyuForceChampionEnemy,
     DiamondTheStingrayGuardianEnemy,
     ClubTheSealGuardianEnemy,

@@ -99,7 +99,7 @@ class Player extends Combatant {
     defeatedChampionIds: string[] = [];
     /** Guardian class names defeated at least once this run (final act). */
     defeatedGuardianIds: string[] = [];
-    /** True while playing the linear final act (town → guardians → Koala King). */
+    /** True while playing the linear final act (town → guardians → Kolan Graydad). */
     inFinalAct = false;
 
     columnCount: number;

@@ -1,5 +1,5 @@
 /**
- * Final boss enemy class (Koala King). Act-end fights use champions/; final act guardians use guardians/.
+ * Final boss enemy class (Kolan Graydad). Act-end fights use champions/; final act guardians use guardians/.
  */
 
 export {};

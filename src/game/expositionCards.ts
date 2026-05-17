@@ -8,7 +8,7 @@ export const GAME_START_EXPOSITION_CARDS: ExpositionCard[] = [
     {
         title: 'Once Upon a Time...',
         body:
-            'in the world of Straya, the five nations lived in conflict, trapped in a violent deadlock.\n\n' +
+            'In the world of Straya, the five nations lived in conflict, trapped in a violent deadlock.\n\n' +
             'The Sugar Gliders, dwellers of the treetops, associated with the element of wood.\n' +
             'The Mighty Wombats, in their underground caverns, associated with the element of earth.\n' +
             'The Frilled Lizards, inhabitants of the sun-scorched deserts, associated with the element of fire.\n' +
@@ -53,28 +53,31 @@ const ACT_END_EXPOSITION_BY_ACT: Record<number, ExpositionCard[]> = {
     1: [
         {
             title: 'Act I Complete',
-            body:
-                'The first vassals have broken ranks.\n' +
-                'Word of your victories spreads from market to village.\n' +
-                'Koala Lumpur now sees you as more than a rumor.',
+            body: 'Daisy, Queen of the Sugar Gliders, has joined your cause. However, you will need more support to bring down the Koala\'s reign.'
         },
     ],
     2: [
         {
             title: 'Act II Complete',
-            body:
-                'The old court has started to panic.\n' +
-                'Loyalists fortify the capital while the people whisper your name.\n' +
-                'The next step decides the fate of the kingdom.',
+            body: 'Gabriel, the Great Wombat, has joined your cause. Will you challenge your father now, or continue your campaign to gain more support?'
         },
     ],
     3: [
         {
             title: 'Act III Complete',
-            body:
-                'Only the final circle remains.\n' +
-                'Your father\'s empire is cracking, but a cornered tyrant is dangerous.\n' +
-                'Choose your final road carefully.',
+            body: 'Pickles, the Great Frilled Lizard, has joined your cause. You are now one step closer to liberating the kingdom.'
+        },
+    ],
+    4: [
+        {
+            title: 'Act IV Complete',
+            body: 'Sora, the Great Platypus, has joined your cause. You are now one step closer to liberating the kingdom.'
+        },
+    ],
+    5: [
+        {
+            title: 'Act V Complete',
+            body: 'Oliver, the Great Echidna, has joined your cause. You are now one step closer to liberating the kingdom.'
         },
     ],
 }

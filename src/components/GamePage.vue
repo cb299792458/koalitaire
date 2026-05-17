@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import Card from '../models/Card'
-    import KoalaKingFinalBossEnemy from '../models/enemies/boss/KoalaKingFinalBossEnemy'
+    import KolanGraydadBossEnemy from '../models/enemies/boss/KolanGraydadBossEnemy'
     import { Suits } from '../models/Suit'
     import CardStack from './Cards/CardStack.vue'
     import { useCombat } from '../composables/useCombat'
@@ -223,7 +223,7 @@ The old throne has fallen, and all the animals now chart a future together.
         closeModal()
         const p = combat.originalPlayer ?? combat.player
         if (!p) return
-        if (combat.enemy instanceof KoalaKingFinalBossEnemy) {
+        if (combat.enemy instanceof KolanGraydadBossEnemy) {
             p.inFinalAct = false
             openMessageModal(WIN_KOALA_LUMPUR)
             return

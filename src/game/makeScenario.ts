@@ -1,5 +1,5 @@
 import { ELITE_ENCOUNTER_ENEMIES, RANDOM_ENCOUNTER_ENEMIES, type EnemyConstructor } from "../models/enemies";
-import KoalaKingFinalBossEnemy from "../models/enemies/boss/KoalaKingFinalBossEnemy";
+import KolanGraydadBossEnemy from "../models/enemies/boss/KolanGraydadBossEnemy";
 import { pickChampionForNewAct } from "./actProgress";
 import type { Event } from "../models/Event";
 import { events } from "../models/Event";
@@ -65,7 +65,7 @@ export default function makeScenario(options?: MakeScenarioOptions): ScenarioEnt
     return scenario;
 }
 
-/** Linear final act: start → town → four guardians → Koala King. */
+/** Linear final act: start → town → four guardians → Kolan Graydad. */
 export function makeFinalActScenario(guardians: EnemyConstructor[]): ScenarioEntry[][] {
     if (guardians.length !== 4) {
         throw new Error(`Final act requires exactly 4 guardians, got ${guardians.length}`);
@@ -77,7 +77,7 @@ export function makeFinalActScenario(guardians: EnemyConstructor[]): ScenarioEnt
     for (const g of guardians) {
         scenario.push([{ guardian: g }]);
     }
-    scenario.push([{ boss: KoalaKingFinalBossEnemy }]);
+    scenario.push([{ boss: KolanGraydadBossEnemy }]);
     return scenario;
 }
 
