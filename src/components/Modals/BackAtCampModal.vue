@@ -14,11 +14,15 @@
         scenario?: ScenarioEntry[][]
         /** When set, shown as "Act N" in the header (one diamond path = one act). */
         actNumber?: number
+        /** Linear finale: town → guardians → Koala King. */
+        isFinalAct?: boolean
     }>()
 
     function getEntryLabel(entry: NonNullable<ScenarioEntry>): string {
         if ('enemy' in entry) return 'Combat'
         if ('elite' in entry) return 'Elite'
+        if ('champion' in entry) return 'Champion'
+        if ('guardian' in entry) return 'Guardian'
         if ('boss' in entry) return 'Boss'
         if ('town' in entry) return 'Town'
         if ('event' in entry) return 'Event'
@@ -29,6 +33,8 @@
         if (entry === null) return '/scenarios/town.png'
         if ('enemy' in entry) return '/scenarios/enemy.png'
         if ('elite' in entry) return '/scenarios/elite.png'
+        if ('champion' in entry) return '/scenarios/champion.png'
+        if ('guardian' in entry) return '/scenarios/guardian.png'
         if ('boss' in entry) return '/scenarios/boss.png'
         if ('town' in entry) return '/scenarios/town.png'
         if ('event' in entry) return '/scenarios/event.png'
@@ -38,7 +44,11 @@
     const scenario = computed(() => props.scenario ?? [])
 
     const nextOptions = computed(() => {
-        const options = getNextRowOptions(props.player.scenarioRow, props.player.scenarioColumn)
+        const options = getNextRowOptions(
+            scenario.value,
+            props.player.scenarioRow,
+            props.player.scenarioColumn
+        )
         return new Set(options.map(({ row, col }) => `${row}-${col}`))
     })
 
@@ -154,7 +164,8 @@
         <div class="modal-content">
             <h2>
                 Meanwhile Back at Camp...
-                <template v-if="props.actNumber != null"> — Act {{ props.actNumber }}</template>
+                <template v-if="props.isFinalAct"> — Final Act</template>
+                <template v-else-if="props.actNumber != null"> — Act {{ props.actNumber }}</template>
             </h2>
 
             <div class="tabs">
@@ -187,7 +198,7 @@
                             <p class="map-tip-card__body">"{{ currentMapTip.body }}"<br>- So sayeth the wise Koalaundo</p>
                         </div>
                     </aside>
-                    <div class="diamond-map">
+                    <div class="diamond-map" :class="{ 'diamond-map--linear': props.isFinalAct }">
                         <div
                             v-for="(rowEntries, row) in scenario"
                             v-show="row >= props.player.scenarioRow"
@@ -384,6 +395,10 @@
         align-items: center;
         padding: 1rem 0;
         flex: 1 1 auto;
+    }
+
+    .diamond-map--linear .diamond-row {
+        justify-content: center;
     }
 
     .map-tip-card {

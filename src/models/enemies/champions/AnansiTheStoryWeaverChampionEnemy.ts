@@ -68,12 +68,12 @@ function anansiTurnActions(context: EnemyTurnContext): EnemyAction[] {
     return [enweb];
 }
 
-export default class AnansiTheStoryWeaverBossEnemy extends Enemy {
+export default class AnansiTheStoryWeaverChampionEnemy extends Enemy {
     constructor() {
         super({
             name: "Anansi the Story Weaver",
             health: 40,
-            tooltip: "Boss — opens with a tiger from the story, then weaves block, venom, or binding silk.",
+            tooltip: "Champion — opens with a tiger from the story, then weaves block, venom, or binding silk.",
             generateTurnActions: anansiTurnActions,
         });
     }

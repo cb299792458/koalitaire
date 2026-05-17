@@ -62,12 +62,12 @@ const executionOfThePrinceOnTheHill = new EnemyAction(
     }
 );
 
-export default class ChronodoDragonBossEnemy extends Enemy {
+export default class ChronodoDragonChampionEnemy extends Enemy {
     constructor() {
         super({
             name: "Chronodo Dragon",
             health: 56,
-            tooltip: "Boss — alternates a storm of dragonling strikes with a grim rite upon the hill.",
+            tooltip: "Champion — alternates a storm of dragonling strikes with a grim rite upon the hill.",
             generateTurnActions: createSequentialActionGenerator(() => [
                 chargeOfTheDragonlings,
                 executionOfThePrinceOnTheHill,

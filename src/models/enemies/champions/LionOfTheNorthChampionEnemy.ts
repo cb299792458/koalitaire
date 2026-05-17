@@ -56,12 +56,12 @@ const retinueCompanionBase: Omit<SummonTemplate, "name"> = {
     },
 };
 
-export default class LionOfTheNorthBossEnemy extends Enemy {
+export default class LionOfTheNorthChampionEnemy extends Enemy {
     constructor() {
         super({
             name: "Lion of the North",
             health: 48,
-            tooltip: "Boss — opens with Ryuka and Tomo at their side.",
+            tooltip: "Champion — opens with Ryuka and Tomo at their side.",
             generateTurnActions: lionTurnActions,
             onCombatStart: (enemy) => {
                 enemy.summons.push(

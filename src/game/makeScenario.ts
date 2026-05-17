@@ -1,11 +1,14 @@
 import { ELITE_ENCOUNTER_ENEMIES, RANDOM_ENCOUNTER_ENEMIES, type EnemyConstructor } from "../models/enemies";
-import { pickBossForNewAct } from "./actProgress";
+import KoalaKingFinalBossEnemy from "../models/enemies/boss/KoalaKingFinalBossEnemy";
+import { pickChampionForNewAct } from "./actProgress";
 import type { Event } from "../models/Event";
 import { events } from "../models/Event";
 
 export type ScenarioEntry =
     | { enemy: EnemyConstructor }
     | { elite: EnemyConstructor }
+    | { champion: EnemyConstructor }
+    | { guardian: EnemyConstructor }
     | { boss: EnemyConstructor }
     | { town: true }
     | { event: Event }
@@ -25,8 +28,8 @@ function pickRandomEnemyFrom(pool: EnemyConstructor[]): EnemyConstructor {
 }
 
 export interface MakeScenarioOptions {
-    /** Boss for the bottom row; if omitted, picks one not yet defeated this run (or any if the pool is empty). */
-    lastRowBoss?: EnemyConstructor;
+    /** Champion for the bottom row; if omitted, picks one not yet defeated this run (or any if the pool is empty). */
+    lastRowChampion?: EnemyConstructor;
 }
 
 function pickRandomEntry(): NonNullable<ScenarioEntry> {
@@ -48,7 +51,7 @@ export default function makeScenario(options?: MakeScenarioOptions): ScenarioEnt
             rowEntries.push(null);
         } else if (row === ROW_COUNT - 1) {
             rowEntries.push({
-                boss: options?.lastRowBoss ?? pickBossForNewAct([]),
+                champion: options?.lastRowChampion ?? pickChampionForNewAct([]),
             });
         } else {
             for (let col = 0; col < length; col++) {
@@ -62,21 +65,43 @@ export default function makeScenario(options?: MakeScenarioOptions): ScenarioEnt
     return scenario;
 }
 
-export { DIAMOND_ROW_LENGTHS };
+/** Linear final act: start → town → four guardians → Koala King. */
+export function makeFinalActScenario(guardians: EnemyConstructor[]): ScenarioEntry[][] {
+    if (guardians.length !== 4) {
+        throw new Error(`Final act requires exactly 4 guardians, got ${guardians.length}`);
+    }
+    const scenario: ScenarioEntry[][] = [
+        [null],
+        [{ town: true }],
+    ];
+    for (const g of guardians) {
+        scenario.push([{ guardian: g }]);
+    }
+    scenario.push([{ boss: KoalaKingFinalBossEnemy }]);
+    return scenario;
+}
 
 /** Get valid (row, col) options for the next row from current position. */
-export function getNextRowOptions(currentRow: number, currentCol: number): { row: number; col: number }[] {
+export function getNextRowOptions(
+    scenario: ScenarioEntry[][],
+    currentRow: number,
+    currentCol: number
+): { row: number; col: number }[] {
     const nextRow = currentRow + 1;
-    if (nextRow >= ROW_COUNT) return [];
-    const nextLen = DIAMOND_ROW_LENGTHS[nextRow]!;
+    if (nextRow >= scenario.length) return [];
+    const nextLen = scenario[nextRow]?.length ?? 0;
+    const currentLen = scenario[currentRow]?.length ?? 1;
+
+    if (currentLen === 1 && nextLen === 1) {
+        return [{ row: nextRow, col: 0 }];
+    }
+
     const options: { row: number; col: number }[] = [];
     if (currentRow < 6) {
-        // Expanding: can go to col or col+1
         for (const c of [currentCol, currentCol + 1]) {
             if (c >= 0 && c < nextLen) options.push({ row: nextRow, col: c });
         }
     } else {
-        // Contracting: can go to col-1 or col
         for (const c of [currentCol - 1, currentCol]) {
             if (c >= 0 && c < nextLen) options.push({ row: nextRow, col: c });
         }

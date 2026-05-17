@@ -38,12 +38,12 @@ function crocodileHunterTurn(context: EnemyTurnContext) {
     return [punchOut];
 }
 
-export default class CrocodileHunterBossEnemy extends Enemy {
+export default class CrocodileHunterChampionEnemy extends Enemy {
     constructor() {
         super({
             name: "Crocodile Hunter",
             health: 48,
-            tooltip: "Boss — calls Salty on the first turn, then throws Punch Outs.",
+            tooltip: "Champion — calls Salty on the first turn, then throws Punch Outs.",
             generateTurnActions: crocodileHunterTurn,
         });
     }

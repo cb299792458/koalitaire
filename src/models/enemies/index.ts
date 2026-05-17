@@ -1,11 +1,15 @@
 import type Enemy from "../Enemy";
-import AnansiTheStoryWeaverBossEnemy from "./bosses/AnansiTheStoryWeaverBossEnemy";
-import ChronodoDragonBossEnemy from "./bosses/ChronodoDragonBossEnemy";
-import CrocodileHunterBossEnemy from "./bosses/CrocodileHunterBossEnemy";
-import GeckommanderBossEnemy from "./bosses/GeckommanderBossEnemy";
-import PenguinyuForceBossEnemy from "./bosses/PenguinyuForceBossEnemy";
-import LionOfTheNorthBossEnemy from "./bosses/LionOfTheNorthBossEnemy";
-import KoalaKingFinalBossEnemy from "./bosses/KoalaKingFinalBossEnemy";
+import AnansiTheStoryWeaverChampionEnemy from "./champions/AnansiTheStoryWeaverChampionEnemy";
+import ChronodoDragonChampionEnemy from "./champions/ChronodoDragonChampionEnemy";
+import CrocodileHunterChampionEnemy from "./champions/CrocodileHunterChampionEnemy";
+import GeckommanderChampionEnemy from "./champions/GeckommanderChampionEnemy";
+import PenguinyuForceChampionEnemy from "./champions/PenguinyuForceChampionEnemy";
+import LionOfTheNorthChampionEnemy from "./champions/LionOfTheNorthChampionEnemy";
+import DiamondTheStingrayGuardianEnemy from "./guardians/DiamondTheStingrayGuardianEnemy";
+import ClubTheSealGuardianEnemy from "./guardians/ClubTheSealGuardianEnemy";
+import HeartTheBarracudaGuardianEnemy from "./guardians/HeartTheBarracudaGuardianEnemy";
+import SpadeTheFalconGuardianEnemy from "./guardians/SpadeTheFalconGuardianEnemy";
+import KoalaKingFinalBossEnemy from "./boss/KoalaKingFinalBossEnemy";
 import AlternatorEnemy from "./AlternatorEnemy";
 import BarrageEnemy from "./BarrageEnemy";
 import BrawlerTwinsEnemy from "./BrawlerTwinsEnemy";
@@ -26,21 +30,25 @@ export type EnemyConstructor = new () => Enemy;
 
 export {
     AlternatorEnemy,
-    AnansiTheStoryWeaverBossEnemy,
+    AnansiTheStoryWeaverChampionEnemy,
     BarrageEnemy,
     BrawlerTwinsEnemy,
     BruteEnemy,
-    ChronodoDragonBossEnemy,
-    CrocodileHunterBossEnemy,
+    ChronodoDragonChampionEnemy,
+    CrocodileHunterChampionEnemy,
     DwambatEnemy,
     FibonacciEnemy,
     FrighteningFishesEnemy,
-    GeckommanderBossEnemy,
+    GeckommanderChampionEnemy,
     GnokkaEnemy,
     KoalaKingFinalBossEnemy,
-    PenguinyuForceBossEnemy,
+    PenguinyuForceChampionEnemy,
+    DiamondTheStingrayGuardianEnemy,
+    ClubTheSealGuardianEnemy,
+    HeartTheBarracudaGuardianEnemy,
+    SpadeTheFalconGuardianEnemy,
     GruntEnemy,
-    LionOfTheNorthBossEnemy,
+    LionOfTheNorthChampionEnemy,
     MageEnemy,
     PlatypusEnemy,
     RangerEnemy,
@@ -50,13 +58,21 @@ export {
 };
 
 /** Final scenario row; one constructor per run. */
-export const BOSS_ENCOUNTER_ENEMIES: EnemyConstructor[] = [
-    LionOfTheNorthBossEnemy,
-    GeckommanderBossEnemy,
-    PenguinyuForceBossEnemy,
-    ChronodoDragonBossEnemy,
-    AnansiTheStoryWeaverBossEnemy,
-    CrocodileHunterBossEnemy,
+export const CHAMPION_ENCOUNTER_ENEMIES: EnemyConstructor[] = [
+    LionOfTheNorthChampionEnemy,
+    GeckommanderChampionEnemy,
+    PenguinyuForceChampionEnemy,
+    ChronodoDragonChampionEnemy,
+    AnansiTheStoryWeaverChampionEnemy,
+    CrocodileHunterChampionEnemy,
+];
+
+/** Final act guardians (fought in order, one map node each). */
+export const GUARDIAN_ENCOUNTER_ENEMIES: EnemyConstructor[] = [
+    DiamondTheStingrayGuardianEnemy,
+    ClubTheSealGuardianEnemy,
+    HeartTheBarracudaGuardianEnemy,
+    SpadeTheFalconGuardianEnemy,
 ];
 
 /** Regular encounter pool (random scenario rows). */

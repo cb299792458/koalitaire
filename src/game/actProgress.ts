@@ -1,29 +1,43 @@
-import { BOSS_ENCOUNTER_ENEMIES, type EnemyConstructor } from "../models/enemies";
+import {
+    CHAMPION_ENCOUNTER_ENEMIES,
+    GUARDIAN_ENCOUNTER_ENEMIES,
+    type EnemyConstructor,
+} from "../models/enemies";
 
-/** Stable id for a boss class (used for run tracking). */
-export function bossClassId(C: EnemyConstructor): string {
+/** Stable id for a champion class (used for run tracking). */
+export function championClassId(C: EnemyConstructor): string {
     return C.name;
 }
 
-export function pickBossForNewAct(defeatedBossIds: readonly string[]): EnemyConstructor {
-    const pool = BOSS_ENCOUNTER_ENEMIES.filter((C) => !defeatedBossIds.includes(bossClassId(C)));
+/** Stable id for a guardian class (used for run tracking). */
+export function guardianClassId(C: EnemyConstructor): string {
+    return C.name;
+}
+
+export function pickChampionForNewAct(defeatedChampionIds: readonly string[]): EnemyConstructor {
+    const pool = CHAMPION_ENCOUNTER_ENEMIES.filter((C) => !defeatedChampionIds.includes(championClassId(C)));
     if (pool.length === 0) {
-        return BOSS_ENCOUNTER_ENEMIES[Math.floor(Math.random() * BOSS_ENCOUNTER_ENEMIES.length)]!;
+        return CHAMPION_ENCOUNTER_ENEMIES[Math.floor(Math.random() * CHAMPION_ENCOUNTER_ENEMIES.length)]!;
     }
     return pool[Math.floor(Math.random() * pool.length)]!;
 }
 
-/** Boss classes the player has never defeated this run (for the Koala Lumpur gauntlet). */
-export function bossIdsForGauntlet(defeatedBossIds: readonly string[]): string[] {
-    return BOSS_ENCOUNTER_ENEMIES.filter((C) => !defeatedBossIds.includes(bossClassId(C))).map(bossClassId);
+/** Champion classes the player has never defeated this run. */
+export function championIdsForGauntlet(defeatedChampionIds: readonly string[]): string[] {
+    return CHAMPION_ENCOUNTER_ENEMIES.filter((C) => !defeatedChampionIds.includes(championClassId(C))).map(championClassId);
 }
 
-export function bossFromId(id: string): EnemyConstructor {
-    const found = BOSS_ENCOUNTER_ENEMIES.find((C) => bossClassId(C) === id);
+export function championFromId(id: string): EnemyConstructor {
+    const found = CHAMPION_ENCOUNTER_ENEMIES.find((C) => championClassId(C) === id);
     if (!found) {
-        throw new Error(`Unknown boss class id: ${id}`);
+        throw new Error(`Unknown champion class id: ${id}`);
     }
     return found;
+}
+
+/** All four guardians for the final act, in map order. */
+export function pickGuardiansForFinalAct(): EnemyConstructor[] {
+    return [...GUARDIAN_ENCOUNTER_ENEMIES];
 }
 
 export function shuffleArray<T>(items: readonly T[]): T[] {

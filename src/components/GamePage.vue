@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import Card from '../models/Card'
-    import KoalaKingFinalBossEnemy from '../models/enemies/bosses/KoalaKingFinalBossEnemy'
+    import KoalaKingFinalBossEnemy from '../models/enemies/boss/KoalaKingFinalBossEnemy'
     import { Suits } from '../models/Suit'
     import CardStack from './Cards/CardStack.vue'
     import { useCombat } from '../composables/useCombat'
@@ -10,9 +10,9 @@
     import { openModal, closeModal, useModalState, openMessageModal } from '../stores/modalStore'
     import CombatantInfo from './CombatantInfo.vue'
     import type Enemy from '../models/Enemy'
-    import makeScenario, { getNextRowOptions, type ScenarioEntry } from '../game/makeScenario'
-    import { pickBossForNewAct } from '../game/actProgress'
-    import { BOSS_ENCOUNTER_ENEMIES } from '../models/enemies'
+    import makeScenario, { getNextRowOptions, makeFinalActScenario, type ScenarioEntry } from '../game/makeScenario'
+    import { pickChampionForNewAct, pickGuardiansForFinalAct } from '../game/actProgress'
+    import { CHAMPION_ENCOUNTER_ENEMIES, GUARDIAN_ENCOUNTER_ENEMIES } from '../models/enemies'
     import Player, { koaParams, testCharacterParams, type PlayerParams } from '../models/Player'
     import type Cardifact from '../models/Cardifact'
     import { useTown } from '../composables/useTown'
@@ -47,13 +47,16 @@
         const e = combat.enemy
         if (!p || !e) return
         const id = e.constructor.name
-        const isBossPool = BOSS_ENCOUNTER_ENEMIES.some((C) => C.name === id)
-        if (!isBossPool) return
-        if (!p.defeatedBossIds.includes(id)) {
-            p.defeatedBossIds.push(id)
+        if (CHAMPION_ENCOUNTER_ENEMIES.some((C) => C.name === id)) {
+            if (!p.defeatedChampionIds.includes(id)) {
+                p.defeatedChampionIds.push(id)
+            }
+            return
         }
-        if (p.inKoalaLumpurGauntlet && p.gauntletBossIdsRemaining[0] === id) {
-            p.gauntletBossIdsRemaining.shift()
+        if (GUARDIAN_ENCOUNTER_ENEMIES.some((C) => C.name === id)) {
+            if (!p.defeatedGuardianIds.includes(id)) {
+                p.defeatedGuardianIds.push(id)
+            }
         }
     }
 
@@ -107,7 +110,7 @@ The old throne has fallen, and all the animals now chart a future together.
     function beginNewRun(characterParams: PlayerParams) {
         const newPlayer = new Player(characterParams)
         scenarioRef.value = makeScenario({
-            lastRowBoss: pickBossForNewAct(newPlayer.defeatedBossIds),
+            lastRowChampion: pickChampionForNewAct(newPlayer.defeatedChampionIds),
         })
         hasChosenCharacterRef.value = true
         openModal('cardifactPick', {
@@ -160,7 +163,7 @@ The old throne has fallen, and all the animals now chart a future together.
                     onClick: () => {
                         if (!canChallengeFinalBoss) return
                         closeModal()
-                        void combat.start(p, new KoalaKingFinalBossEnemy())
+                        beginFinalAct(p, keepOpen)
                     },
                 },
                 {
@@ -170,8 +173,8 @@ The old throne has fallen, and all the animals now chart a future together.
                         if (!canDoAnotherAct) return
                         closeModal()
                         p.actNumber += 1
-                        const boss = pickBossForNewAct(p.defeatedBossIds)
-                        scenarioRef.value = makeScenario({ lastRowBoss: boss })
+                        const champion = pickChampionForNewAct(p.defeatedChampionIds)
+                        scenarioRef.value = makeScenario({ lastRowChampion: champion })
                         p.scenarioRow = 0
                         p.scenarioColumn = 0
                         p.level = 0
@@ -182,9 +185,23 @@ The old throne has fallen, and all the animals now chart a future together.
         }, { keepOpen: true, transparentOverlay: true })
     }
 
+    function beginFinalAct(p: Player, keepOpen = true) {
+        p.inFinalAct = true
+        const guardians = pickGuardiansForFinalAct()
+        scenarioRef.value = makeFinalActScenario(guardians)
+        p.scenarioRow = 0
+        p.scenarioColumn = 0
+        p.level = 0
+        openMapDeckForPlayer(p, keepOpen)
+    }
+
     async function openMapDeckForPlayer(p: Player, keepOpen = true) {
-        const nextOptions = getNextRowOptions(p.scenarioRow, p.scenarioColumn)
+        const scenario = scenarioRef.value ?? []
+        const nextOptions = getNextRowOptions(scenario, p.scenarioRow, p.scenarioColumn)
         if (nextOptions.length === 0) {
+            if (p.inFinalAct) {
+                return
+            }
             playExpositionCards(actEndExpositionCards(p.actNumber), () =>
                 openActEndChoiceMessageModal(p, keepOpen)
             )
@@ -192,8 +209,9 @@ The old throne has fallen, and all the animals now chart a future together.
         }
         openModal('backAtCamp', {
             player: p,
-            scenario: scenarioRef.value ?? [],
-            actNumber: p.actNumber,
+            scenario,
+            actNumber: p.inFinalAct ? undefined : p.actNumber,
+            isFinalAct: p.inFinalAct,
             onContinue: (player: Player, row: number, col: number) => {
                 closeModal()
                 startCombatForPlayer(player, row, col)
@@ -206,6 +224,7 @@ The old throne has fallen, and all the animals now chart a future together.
         const p = combat.originalPlayer ?? combat.player
         if (!p) return
         if (combat.enemy instanceof KoalaKingFinalBossEnemy) {
+            p.inFinalAct = false
             openMessageModal(WIN_KOALA_LUMPUR)
             return
         }
@@ -542,6 +561,16 @@ The old throne has fallen, and all the animals now chart a future together.
         if ('elite' in entry && entry.elite) {
             eventState.resetEventState()
             await combat.start(newPlayer, new entry.elite(), { defeatReward: 'relics' })
+            return
+        }
+        if ('champion' in entry && entry.champion) {
+            eventState.resetEventState()
+            await combat.start(newPlayer, new entry.champion())
+            return
+        }
+        if ('guardian' in entry && entry.guardian) {
+            eventState.resetEventState()
+            await combat.start(newPlayer, new entry.guardian())
             return
         }
         if ('boss' in entry && entry.boss) {

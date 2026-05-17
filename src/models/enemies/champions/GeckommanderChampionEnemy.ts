@@ -40,12 +40,12 @@ function geckommanderTurnActions(context: EnemyTurnContext) {
     return [nooneCanDefeat];
 }
 
-export default class GeckommanderBossEnemy extends Enemy {
+export default class GeckommanderChampionEnemy extends Enemy {
     constructor() {
         super({
             name: "Geckommander and the 100 Gecks",
             health: 46,
-            tooltip: "Boss — ten waves of ten Gecks, then pure confidence.",
+            tooltip: "Champion — ten waves of ten Gecks, then pure confidence.",
             generateTurnActions: geckommanderTurnActions,
         });
     }

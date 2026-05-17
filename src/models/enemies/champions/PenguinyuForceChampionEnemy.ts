@@ -1,28 +1,8 @@
 import Enemy, { buildDeckFromPattern, createSequentialActionGenerator } from "../../Enemy";
-import type Summon from "../../Summon";
 import { Race } from "../../Summon";
 import { CombatStatusId } from "../../../game/combatStatuses";
 import type { SummonTemplate } from "../../../game/summons";
 import { createSummon } from "../../../game/summons";
-
-const PENGUIN_SUMMON_MAX_HP = 10;
-
-function maxHpForPenguinSummon(name: string): number {
-    switch (name) {
-        case "Skipper":
-        case "Rico":
-        case "Kowalski":
-        case "Private":
-            return PENGUIN_SUMMON_MAX_HP;
-        default:
-            return 99;
-    }
-}
-
-function healSummon(s: Summon, amount: number): void {
-    const cap = maxHpForPenguinSummon(s.name);
-    s.hp = Math.min(s.hp + amount, cap);
-}
 
 const skipperTemplate: SummonTemplate = {
     name: "Skipper",
@@ -36,7 +16,7 @@ const skipperTemplate: SummonTemplate = {
         if (!captain) return;
         captain.gainHealth(5);
         for (const s of captain.summons) {
-            healSummon(s, 4);
+            s.hp = Math.min(s.hp + 4, 10);
         }
     },
 };
@@ -84,7 +64,7 @@ const privateTemplate: SummonTemplate = {
     },
 };
 
-export default class PenguinyuForceBossEnemy extends Enemy {
+export default class PenguinyuForceChampionEnemy extends Enemy {
     constructor() {
         super({
             name: "Penguinyu Force",
