@@ -1,8 +1,9 @@
-import Enemy, { buildDeckFromCounts, createRandomActionGenerator } from "../Enemy";
+import Enemy, { buildDeckFromCounts, createRandomActionGenerator } from "../../Enemy";
 
 export default class SquirrelfEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Squirrelf",
             health: 25,
             generateTurnActions: createRandomActionGenerator(() =>

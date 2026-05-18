@@ -24,12 +24,17 @@ const chargeOfTheDragonlings = new EnemyAction(
     "The charge of the dragonlings",
     `The Chronodo swings his mighty scythe, La Quinta del Swordo, ${SCYTHE_SWINGS} times. Each dragonling on his side then strikes once. Every hit deals ${DAMAGE_PER_HIT} damage plus the Chronodo's attack. He first calls two Dragon Princes to the field.`,
     async (enemy, _player, combat) => {
-        enemy.summons.push(createSummon(dragonPrinceTemplate));
-        enemy.summons.push(createSummon(dragonPrinceTemplate));
+        const scaledPrince = {
+            ...dragonPrinceTemplate,
+            hp: enemy.scaleHealth(dragonPrinceTemplate.hp),
+            damage: enemy.scaleDamage(dragonPrinceTemplate.damage),
+        };
+        enemy.summons.push(createSummon(scaledPrince));
+        enemy.summons.push(createSummon({ ...scaledPrince }));
         combat.notify();
 
         const hit = async () => {
-            await combat.damagePlayer(DAMAGE_PER_HIT + enemy.attack);
+            await combat.damagePlayer(enemy.scaleDamage(DAMAGE_PER_HIT) + enemy.attack);
             combat.notify();
         };
 
@@ -63,8 +68,9 @@ const executionOfThePrinceOnTheHill = new EnemyAction(
 );
 
 export default class ChronodoDragonChampionEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Chronodo Dragon",
             health: 56,
             tooltip: "Champion — alternates a storm of dragonling strikes with a grim rite upon the hill.",

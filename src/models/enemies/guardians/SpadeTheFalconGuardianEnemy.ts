@@ -9,8 +9,9 @@ const placeholderStrike = buildAttackAction({
 });
 
 export default class SpadeTheFalconGuardianEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Spade, the Falcon",
             health: 40,
             tooltip: "Guardian of the final act.",

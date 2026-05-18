@@ -25,7 +25,7 @@ const eggShell = new EnemyAction(
     "Egg Shell",
     "The Lion curls behind a hardened shell — gains block equal to 5 plus its armor.",
     (enemy) => {
-        enemy.gainBlock(5 + enemy.armor);
+        enemy.gainBlock(enemy.scaleDamage(5) + enemy.armor);
     }
 );
 
@@ -57,25 +57,21 @@ const retinueCompanionBase: Omit<SummonTemplate, "name"> = {
 };
 
 export default class LionOfTheNorthChampionEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Lion of the North",
             health: 48,
             tooltip: "Champion — opens with Ryuka and Tomo at their side.",
             generateTurnActions: lionTurnActions,
             onCombatStart: (enemy) => {
-                enemy.summons.push(
-                    createSummon({
-                        ...retinueCompanionBase,
-                        name: "Ryuka",
-                    })
-                );
-                enemy.summons.push(
-                    createSummon({
-                        ...retinueCompanionBase,
-                        name: "Tomo",
-                    })
-                );
+                const scaled = {
+                    ...retinueCompanionBase,
+                    hp: enemy.scaleHealth(retinueCompanionBase.hp),
+                    damage: enemy.scaleDamage(retinueCompanionBase.damage),
+                };
+                enemy.summons.push(createSummon({ ...scaled, name: "Ryuka" }));
+                enemy.summons.push(createSummon({ ...scaled, name: "Tomo" }));
             },
         });
     }

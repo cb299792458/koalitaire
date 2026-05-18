@@ -11,6 +11,7 @@ export enum Race {
     Platypus = "platypus",
     Dingo = "dingo",
     Rat = "rat",
+    Sheep = "sheep",
 }
 
 export interface SummonParams {

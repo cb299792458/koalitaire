@@ -9,8 +9,9 @@ const placeholderStrike = buildAttackAction({
 });
 
 export default class DiamondTheStingrayGuardianEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Diamond, the Stingray",
             health: 40,
             tooltip: "Guardian of the final act.",

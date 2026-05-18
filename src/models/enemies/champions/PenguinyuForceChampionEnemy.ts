@@ -14,9 +14,11 @@ const skipperTemplate: SummonTemplate = {
     effect: (combat) => {
         const captain = combat.enemy;
         if (!captain) return;
-        captain.gainHealth(5);
+        captain.gainHealth(captain.scaleHealth(5));
+        const healAmount = captain.scaleStat(4);
+        const maxHp = captain.scaleHealth(10);
         for (const s of captain.summons) {
-            s.hp = Math.min(s.hp + 4, 10);
+            s.hp = Math.min(s.hp + healAmount, maxHp);
         }
     },
 };
@@ -60,22 +62,28 @@ const privateTemplate: SummonTemplate = {
     effect: (combat) => {
         const captain = combat.enemy;
         if (!captain) return;
-        captain.gainBlock(5);
+        captain.gainBlock(captain.scaleDamage(5));
     },
 };
 
 export default class PenguinyuForceChampionEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Penguinyu Force",
             health: 44,
             tooltip: "Captain Pingu — Skipper, Rico, Kowalski, and Private back him up.",
             generateTurnActions: createSequentialActionGenerator(() => buildDeckFromPattern(["weakAttack"])),
             onCombatStart: (enemy) => {
-                enemy.summons.push(createSummon(skipperTemplate));
-                enemy.summons.push(createSummon(ricoTemplate));
-                enemy.summons.push(createSummon(kowalskiTemplate));
-                enemy.summons.push(createSummon(privateTemplate));
+                const scale = (t: typeof skipperTemplate) => ({
+                    ...t,
+                    hp: enemy.scaleHealth(t.hp),
+                    damage: enemy.scaleDamage(t.damage),
+                });
+                enemy.summons.push(createSummon(scale(skipperTemplate)));
+                enemy.summons.push(createSummon(scale(ricoTemplate)));
+                enemy.summons.push(createSummon(scale(kowalskiTemplate)));
+                enemy.summons.push(createSummon(scale(privateTemplate)));
             },
         });
     }

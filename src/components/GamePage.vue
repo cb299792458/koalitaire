@@ -560,27 +560,27 @@ The old throne has fallen, and all the animals now chart a future together.
         }
         if ('elite' in entry && entry.elite) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new entry.elite(), { defeatReward: 'relics' })
+            await combat.start(newPlayer, new entry.elite(newPlayer.actNumber), { defeatReward: 'relics' })
             return
         }
         if ('champion' in entry && entry.champion) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new entry.champion())
+            await combat.start(newPlayer, new entry.champion(newPlayer.actNumber))
             return
         }
         if ('guardian' in entry && entry.guardian) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new entry.guardian())
+            await combat.start(newPlayer, new entry.guardian(newPlayer.actNumber))
             return
         }
         if ('boss' in entry && entry.boss) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new entry.boss())
+            await combat.start(newPlayer, new entry.boss(newPlayer.actNumber))
             return
         }
         if ('enemy' in entry && entry.enemy) {
             eventState.resetEventState()
-            await combat.start(newPlayer, new entry.enemy())
+            await combat.start(newPlayer, new entry.enemy(newPlayer.actNumber))
         }
     }
     

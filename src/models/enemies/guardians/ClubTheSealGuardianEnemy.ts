@@ -9,8 +9,9 @@ const placeholderStrike = buildAttackAction({
 });
 
 export default class ClubTheSealGuardianEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Club, the Seal",
             health: 40,
             tooltip: "Guardian of the final act.",

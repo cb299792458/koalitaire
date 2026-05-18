@@ -1,17 +1,16 @@
-import Enemy, { buildDeckFromCounts, createRandomActionGenerator } from "../Enemy";
+import Enemy, { buildDeckFromCounts, createRandomActionGenerator } from "../../Enemy";
 
 export default class DwambatEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Dwambat",
             health: 15,
             generateTurnActions: createRandomActionGenerator(() =>
                 buildDeckFromCounts({
-                    doNothing: 2,
-                    weakAttack: 4,
-                    block: 3,
-                    summonRat: 2,
-                    haste: 1,
+                    doNothing: 4,
+                    weakAttack: 3,
+                    block: 2,
                 })
             ),
         });

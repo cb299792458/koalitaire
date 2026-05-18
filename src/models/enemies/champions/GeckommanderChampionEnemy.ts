@@ -21,8 +21,13 @@ const deployGecks = new EnemyAction(
     "Release the Gecks!",
     "Summons ten Gecks (3 HP, 1 attack each).",
     (enemy) => {
+        const scaled = {
+            ...geckTemplate,
+            hp: enemy.scaleHealth(geckTemplate.hp),
+            damage: enemy.scaleDamage(geckTemplate.damage),
+        };
         for (let i = 0; i < 10; i++) {
-            enemy.summons.push(createSummon(geckTemplate));
+            enemy.summons.push(createSummon(scaled));
         }
     }
 );
@@ -41,8 +46,9 @@ function geckommanderTurnActions(context: EnemyTurnContext) {
 }
 
 export default class GeckommanderChampionEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Geckommander and the 100 Gecks",
             health: 46,
             tooltip: "Champion — ten waves of ten Gecks, then pure confidence.",

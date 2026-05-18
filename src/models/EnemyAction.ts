@@ -40,7 +40,7 @@ export function buildAttackAction(params: BuildAttackActionParams): EnemyAction 
         name,
         description ?? `The enemy attacks you for ${damage} damage, plus its attack.`,
         async (enemy, _player, combat) => {
-            await combat.damagePlayer(damage + enemy.attack, damageTypes);
+            await combat.damagePlayer(enemy.scaleDamage(damage) + enemy.attack, damageTypes);
         }
     );
 }
@@ -55,7 +55,7 @@ const weakAttack: EnemyActionParams = {
     name: "Weak Attack",
     description: "The enemy attacks you for 5 damage, plus its attack.",
     effect: async (enemy, _player, combat) => {
-        await combat.damagePlayer(5 + enemy.attack);
+        await combat.damagePlayer(enemy.scaleDamage(5) + enemy.attack);
     },
 }
 
@@ -63,7 +63,7 @@ const strongAttack: EnemyActionParams = {
     name: "Strong Attack",
     description: "The enemy attacks you for 15 damage, plus its attack.",
     effect: async (enemy, _player, combat) => {
-        await combat.damagePlayer(15 + enemy.attack);
+        await combat.damagePlayer(enemy.scaleDamage(15) + enemy.attack);
     },
 }
 
@@ -71,7 +71,7 @@ const block: EnemyActionParams = {
     name: "Block",
     description: "The enemy blocks for 5, plus its armor.",
     effect: (enemy) => {
-        enemy.gainBlock(5 + enemy.armor);
+        enemy.gainBlock(enemy.scaleDamage(5) + enemy.armor);
     },
 }
 
@@ -79,8 +79,9 @@ const buff: EnemyActionParams = {
     name: "Buff",
     description: "The enemy buffs itself, increasing its attack and armor by 5.",
     effect: (enemy) => {
-        enemy.attack += 5;
-        enemy.armor += 5;
+        const bonus = enemy.scaleStat(5);
+        enemy.attack += bonus;
+        enemy.armor += bonus;
     },
 }
 
@@ -88,7 +89,7 @@ const heal: EnemyActionParams = {
     name: "Heal",
     description: "The enemy heals itself for 10 health.",
     effect: (enemy) => {
-        enemy.gainHealth(10);
+        enemy.gainHealth(enemy.scaleHealth(10));
     },
 }
 
@@ -115,7 +116,7 @@ const weakRangedAttack: EnemyActionParams = {
     name: "Weak Ranged Attack",
     description: "The enemy attacks you for 5 ranged damage, plus its attack.",
     effect: async (enemy, _player, combat) => {
-        await combat.damagePlayer(5 + enemy.attack, [DamageType.Ranged]);
+        await combat.damagePlayer(enemy.scaleDamage(5) + enemy.attack, [DamageType.Ranged]);
     },
 }
 
@@ -123,7 +124,7 @@ const strongRangedAttack: EnemyActionParams = {
     name: "Strong Ranged Attack",
     description: "The enemy attacks you for 15 ranged damage, plus its attack.",
     effect: async (enemy, _player, combat) => {
-        await combat.damagePlayer(15 + enemy.attack, [DamageType.Ranged]);
+        await combat.damagePlayer(enemy.scaleDamage(15) + enemy.attack, [DamageType.Ranged]);
     },
 }
 
@@ -131,7 +132,7 @@ const weakMagicAttack: EnemyActionParams = {
     name: "Weak Magic",
     description: "The enemy hits you for 5 magic damage, plus its attack.",
     effect: async (enemy, _player, combat) => {
-        await combat.damagePlayer(5 + enemy.attack, [DamageType.Magic]);
+        await combat.damagePlayer(enemy.scaleDamage(5) + enemy.attack, [DamageType.Magic]);
     },
 }
 
@@ -139,7 +140,7 @@ const strongMagicAttack: EnemyActionParams = {
     name: "Strong Magic",
     description: "The enemy hits you for 15 magic damage, plus its attack.",
     effect: async (enemy, _player, combat) => {
-        await combat.damagePlayer(15 + enemy.attack, [DamageType.Magic]);
+        await combat.damagePlayer(enemy.scaleDamage(15) + enemy.attack, [DamageType.Magic]);
     },
 }
 

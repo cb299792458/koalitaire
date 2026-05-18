@@ -10,23 +10,24 @@ import ClubTheSealGuardianEnemy from "./guardians/ClubTheSealGuardianEnemy";
 import HeartTheBarracudaGuardianEnemy from "./guardians/HeartTheBarracudaGuardianEnemy";
 import SpadeTheFalconGuardianEnemy from "./guardians/SpadeTheFalconGuardianEnemy";
 import KolanGraydadBossEnemy from "./boss/KolanGraydadBossEnemy";
-import AlternatorEnemy from "./AlternatorEnemy";
-import BarrageEnemy from "./BarrageEnemy";
-import BrawlerTwinsEnemy from "./BrawlerTwinsEnemy";
-import BruteEnemy from "./BruteEnemy";
-import DwambatEnemy from "./DwambatEnemy";
-import FibonacciEnemy from "./FibonacciEnemy";
-import FrighteningFishesEnemy from "./FrighteningFishesEnemy";
-import GnokkaEnemy from "./GnokkaEnemy";
-import GruntEnemy from "./GruntEnemy";
-import MageEnemy from "./MageEnemy";
-import PlatypusEnemy from "./PlatypusEnemy";
-import RangerEnemy from "./RangerEnemy";
-import RatCallerEnemy from "./RatCallerEnemy";
-import SquirrelfEnemy from "./SquirrelfEnemy";
-import TacticianEnemy from "./TacticianEnemy";
+import AlternatorEnemy from "./regular/AlternatorEnemy";
+import BarrageEnemy from "./regular/BarrageEnemy";
+import BrawlerTwinsEnemy from "./regular/BrawlerTwinsEnemy";
+import DwambatEnemy from "./regular/DwambatEnemy";
+import FibonacciEnemy from "./regular/FibonacciEnemy";
+import FrighteningFishesEnemy from "./regular/FrighteningFishesEnemy";
+import GnokkaEnemy from "./regular/GnokkaEnemy";
+import GruntEnemy from "./regular/GruntEnemy";
+import MageEnemy from "./regular/MageEnemy";
+import PlatypusEnemy from "./regular/PlatypusEnemy";
+import RangerEnemy from "./regular/RangerEnemy";
+import RatCallerEnemy from "./regular/RatCallerEnemy";
+import TacticianEnemy from "./regular/TacticianEnemy";
+import BruteEnemy from "./elites/BruteEnemy";
+import HugeJackedRamEnemy from "./elites/HugeJackedRamEnemy";
+import SquirrelfEnemy from "./elites/SquirrelfEnemy";
 
-export type EnemyConstructor = new () => Enemy;
+export type EnemyConstructor = new (act: number) => Enemy;
 
 export {
     AlternatorEnemy,
@@ -41,6 +42,7 @@ export {
     FrighteningFishesEnemy,
     GeckommanderChampionEnemy,
     GnokkaEnemy,
+    HugeJackedRamEnemy,
     KolanGraydadBossEnemy,
     PenguinyuForceChampionEnemy,
     DiamondTheStingrayGuardianEnemy,
@@ -92,4 +94,5 @@ export const RANDOM_ENCOUNTER_ENEMIES: EnemyConstructor[] = [
 export const ELITE_ENCOUNTER_ENEMIES: EnemyConstructor[] = [
     SquirrelfEnemy,
     BruteEnemy,
+    HugeJackedRamEnemy,
 ];

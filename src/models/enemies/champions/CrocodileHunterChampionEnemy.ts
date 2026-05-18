@@ -26,7 +26,11 @@ const summonSalty = new EnemyAction(
     "Summoning Salty",
     "The Hunter whistles up from the mud — Salty, the Saltwater Crocodile, answers the call.",
     (enemy, _player, combat) => {
-        enemy.summons.push(createSummon(saltyTemplate));
+        enemy.summons.push(createSummon({
+            ...saltyTemplate,
+            hp: enemy.scaleHealth(saltyTemplate.hp),
+            damage: enemy.scaleDamage(saltyTemplate.damage),
+        }));
         combat.notify();
     }
 );
@@ -39,8 +43,9 @@ function crocodileHunterTurn(context: EnemyTurnContext) {
 }
 
 export default class CrocodileHunterChampionEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Crocodile Hunter",
             health: 48,
             tooltip: "Champion — calls Salty on the first turn, then throws Punch Outs.",

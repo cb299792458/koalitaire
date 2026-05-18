@@ -9,8 +9,9 @@ const placeholderStrike = buildAttackAction({
 });
 
 export default class HeartTheBarracudaGuardianEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Heart, the Barracuda",
             health: 40,
             tooltip: "Guardian of the final act.",

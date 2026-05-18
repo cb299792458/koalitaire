@@ -1,10 +1,11 @@
-import Enemy, { buildDeckFromPattern, createSequentialActionGenerator } from "../Enemy";
+import Enemy, { buildDeckFromPattern, createSequentialActionGenerator } from "../../Enemy";
 
 export default class RangerEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Ranger",
-            health: 20,
+            health: 18,
             generateTurnActions: createSequentialActionGenerator(() =>
                 buildDeckFromPattern(["weakRangedAttack"])
             ),

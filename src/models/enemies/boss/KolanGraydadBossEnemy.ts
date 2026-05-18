@@ -8,8 +8,9 @@ const throneCrackdown = buildAttackAction({
 });
 
 export default class KolanGraydadBossEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Kolan Graydad",
             health: 80,
             tooltip: "Your father, the Koala King — final boss of the run.",

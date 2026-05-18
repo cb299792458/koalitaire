@@ -1,8 +1,9 @@
-import Enemy, { buildDeckFromPattern, createSequentialActionGenerator } from "../Enemy";
+import Enemy, { buildDeckFromPattern, createSequentialActionGenerator } from "../../Enemy";
 
 export default class PlatypusEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Platypus",
             health: 10,
             tooltip: "A really weird looking animal.",

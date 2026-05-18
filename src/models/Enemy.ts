@@ -11,6 +11,11 @@ import type Player from "./Player";
 import { DamageType } from "./DamageType";
 import type { Combat } from "../composables/useCombat";
 import useDamageNumbers from "../composables/useDamageNumbers";
+import {
+    scaleDamage as scaleDamageByAct,
+    scaleHealth as scaleHealthByAct,
+    scaleStat as scaleStatByAct,
+} from "../game/enemyActScaling";
 
 export type EnemyActionKey = keyof typeof enemyActions;
 export interface EnemyTurnContext {
@@ -107,6 +112,8 @@ export function conditionalActionGenerator(
 }
 
 export interface EnemyParams {
+    /** Current player act; scales base stats and action damage. */
+    act: number;
     name: string;
     portrait?: string;
     /** Tooltip text on portrait hover. Defaults to name if not set. */
@@ -128,6 +135,7 @@ export interface EnemyParams {
 }
 
 class Enemy extends Combatant {
+    readonly act: number;
     actions: number;
     impendingActions: EnemyAction[];
 
@@ -148,23 +156,25 @@ class Enemy extends Combatant {
     outgoingDamageMultiplier: number = 1;
 
     protected constructor(enemyParams: EnemyParams) {
+        const act = Math.max(1, enemyParams.act);
         super({
             name: enemyParams.name,
             portrait: enemyParams.portrait ?? "/unknown.jpg",
-            health: enemyParams.health,
-            armor: enemyParams.armor ?? 0,
+            health: scaleHealthByAct(enemyParams.health, act),
+            armor: scaleStatByAct(enemyParams.armor ?? 0, act),
             tooltip: enemyParams.tooltip,
         });
 
+        this.act = act;
         this.generateTurnActions = enemyParams.generateTurnActions;
         this.onCombatStart = enemyParams.onCombatStart;
         this.actions = 1;
         this.impendingActions = [];
 
-        this.attack = enemyParams.attack ?? 0;
-        this.appeal = enemyParams.appeal ?? 0;
-        this.agility = enemyParams.agility ?? 0;
-        this.acumen = enemyParams.acumen ?? 0;
+        this.attack = scaleStatByAct(enemyParams.attack ?? 0, act);
+        this.appeal = scaleStatByAct(enemyParams.appeal ?? 0, act);
+        this.agility = scaleStatByAct(enemyParams.agility ?? 0, act);
+        this.acumen = scaleStatByAct(enemyParams.acumen ?? 0, act);
         this.turnNumber = 0;
         this.recomputeCombatStatusMultipliers();
     }
@@ -176,6 +186,18 @@ class Enemy extends Combatant {
     async runCombatStart(player: Player, combat: Combat): Promise<void> {
         if (!this.onCombatStart) return;
         await Promise.resolve(this.onCombatStart(this, player, combat));
+    }
+
+    scaleHealth(base: number): number {
+        return scaleHealthByAct(base, this.act);
+    }
+
+    scaleDamage(base: number): number {
+        return scaleDamageByAct(base, this.act);
+    }
+
+    scaleStat(base: number): number {
+        return scaleStatByAct(base, this.act);
     }
 
     /** Add a combat status; if already present, adds to remaining turns. */
@@ -256,8 +278,9 @@ class Enemy extends Combatant {
 
 /** Minimal enemy for combat bootstrap before a real fight starts. */
 export class PlaceholderEnemy extends Enemy {
-    constructor() {
+    constructor(act = 1) {
         super({
+            act,
             name: "",
             health: 0,
             generateTurnActions: () => [],

@@ -21,7 +21,11 @@ const releaseTheTiger = new EnemyAction(
     "The tiger enters the tale",
     "Anansi plucks a thread and a great tiger pads forth from the story.",
     (enemy, _player, combat) => {
-        enemy.summons.push(createSummon(storytellerTigerTemplate));
+        enemy.summons.push(createSummon({
+            ...storytellerTigerTemplate,
+            hp: enemy.scaleHealth(storytellerTigerTemplate.hp),
+            damage: enemy.scaleDamage(storytellerTigerTemplate.damage),
+        }));
         combat.notify();
     }
 );
@@ -30,7 +34,7 @@ const weaveBlock = new EnemyAction(
     "Weave a shield",
     "Anansi spins silk into a bulwark — gains block equal to 8 plus her armor.",
     (enemy, _player, combat) => {
-        enemy.gainBlock(8 + enemy.armor);
+        enemy.gainBlock(enemy.scaleDamage(8) + enemy.armor);
         combat.notify();
     }
 );
@@ -69,8 +73,9 @@ function anansiTurnActions(context: EnemyTurnContext): EnemyAction[] {
 }
 
 export default class AnansiTheStoryWeaverChampionEnemy extends Enemy {
-    constructor() {
+    constructor(act: number) {
         super({
+            act,
             name: "Anansi the Story Weaver",
             health: 40,
             tooltip: "Champion — opens with a tiger from the story, then weaves block, venom, or binding silk.",
