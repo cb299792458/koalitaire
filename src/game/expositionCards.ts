@@ -13,14 +13,13 @@ export const GAME_START_EXPOSITION_CARDS: ExpositionCard[] = [
             'The Mighty Wombats, in their underground caverns, associated with the element of earth.\n' +
             'The Frilled Lizards, inhabitants of the sun-scorched deserts, associated with the element of fire.\n' +
             'The Enigmatic Platypi, at home in the lakes and streams, associated with the element of water.\n' +
-            'The Spiny Echidnas, from the razorback rigdes, associated with the element of metal.\n\n' +
-            
-            'The Friendly Koalas, however, had no natural defenses nor elemental affinity, and were raided and pillaged by the other nations almost to extinction.'
+            'The Spiny Echidnas, from the razorback ridges, associated with the element of metal.\n\n' +
+            'The Friendly Koalas, however, had neither natural defenses nor elemental affinity, and were raided and pillaged by the other nations almost to extinction.'
     },
     {
         title: '...there was a Koala.',
         body:
-            'As they were about to make their final stand in their captial city of Koala Lumpur, a brilliant Koala rose to power.\n\n' +
+            'As they were about to make their final stand in their capital city of Koala Lumpur, a brilliant Koala rose to power.\n\n' +
             'His name was Ku the Engineer, though he was no great inventor, nor fighter, nor military strategist; he was a master of diplomacy and negotiation.\n' +
             'Ku managed to turn the tides of war, by channeling the flood of invading armies against each other.\n' +
             'In the end, a tiny kingdom respected by no one was able to bring an end to the Great War of the Five Nations.\n\n' +
@@ -43,9 +42,8 @@ export const GAME_START_EXPOSITION_CARDS: ExpositionCard[] = [
             'You must travel to as many of the Five Nations as possible, and recruit their leaders to your cause.\n\n' +
             'But the path will be long and perilous, as bandits and brigands roam freely throughout the land, not to mention your father\'s guards. ' +
             'Even then, the leaders of the Five Nations are wise, wary of each other, and of you even more so. They will not risk their people\'s wellbeing for a cause they do not believe in. ' +
-            'In order to earn their truse and respect, you will need to prove yourself in combat against their most fearsome champions.\n\n' +
-
-            'Go forth, Koa XIII, to gain support for your cause, bring down the Koala\'s reign, and liberate the Animals of Straya!'
+            'In order to earn their trust and respect, you will need to prove yourself in combat against their most fearsome champions.\n\n' +
+            'Go forth, Koa XIII, to gain support for your cause, bring down Koala rule, and liberate the Animals of Straya!'
     }
 ]
 
@@ -53,7 +51,7 @@ const ACT_END_EXPOSITION_BY_ACT: Record<number, ExpositionCard[]> = {
     1: [
         {
             title: 'Act I Complete',
-            body: 'Daisy, Queen of the Sugar Gliders, has joined your cause. However, you will need more support to bring down the Koala\'s reign.'
+            body: 'Daisy, Queen of the Sugar Gliders, has joined your cause. However, you will need more support to bring down Koala rule.'
         },
     ],
     2: [

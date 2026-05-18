@@ -30,6 +30,7 @@
         :description="message"
         :image-src="imageSrc"
         image-alt=""
+        size="large"
     >
         <template #footer>
             <button type="button" class="confirm-modal__cancel" @click="emit('close')">Cancel</button>

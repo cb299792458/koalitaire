@@ -28,6 +28,7 @@
         :description="message"
         :image-src="imageSrc"
         image-alt=""
+        size="large"
     >
         <template v-if="actions.length > 0" #footer>
             <button
