@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { computed, ref, watch } from 'vue';
+    import { computed, ref, watch, toRefs } from 'vue';
     import type Card from '../../models/Card';
     import { type SpellCard } from '../../models/Card';
     import { getKeywordExplanation } from '../../game/keywords';
@@ -7,10 +7,16 @@
     import { formatStatSymbols } from '../../utils/damageSymbol';
     import { cardArtworkFallbackUrls } from '../../utils/cardArtwork';
 
-    const { card, selectedCard } = defineProps<{
+    const props = defineProps<{
         card: Card,
         selectedCard?: Card | null
+        /** Overlay deal animation: show the face even when {@link Card.revealed} is false. */
+        displayAsRevealed?: boolean
     }>()
+
+    const { card, selectedCard } = toRefs(props)
+
+    const isSelected = computed(() => selectedCard.value === card.value)
 
     const tooltipX = ref(0);
     const tooltipY = ref(0);
@@ -57,29 +63,32 @@
         '0', 'A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K',
     ]
 
-    const animation = computed(() => card?.animation);
+    const animation = computed(() => card.value?.animation);
 
     /** Cast fly duration must match {@link Card.animationTime} and useCombat cast delay. */
     const castFlyTransitionStyle = computed(() => {
-        const a = card?.animation;
+        const c = card.value;
+        const a = c?.animation;
         if (a !== 'fly-left' && a !== 'fly-right' && a !== 'fly-up') return {};
-        const ms = card.animationTime ?? 1000;
+        const ms = c.animationTime ?? 1000;
         return {
             transition: `transform ${ms}ms ease, opacity ${ms}ms ease`,
         };
     });
 
-    const isSpell = computed(() => card.isSpell);
-    const spellCard = computed(() => isSpell.value ? card as SpellCard : null);
+    const showFaceUp = computed(() => props.displayAsRevealed === true || card.value.revealed);
 
-    const hasSuit = computed(() => card.suit !== null);
+    const isSpell = computed(() => card.value.isSpell);
+    const spellCard = computed(() => isSpell.value ? card.value as SpellCard : null);
+
+    const hasSuit = computed(() => card.value.suit !== null);
     const suitIcon = computed(() =>
-        hasSuit.value && card.suit != null ? suitIconMap[card.suit] ?? '' : ''
+        hasSuit.value && card.value.suit != null ? suitIconMap[card.value.suit] ?? '' : ''
     );
     const suitClass = computed(() =>
-        hasSuit.value && card.suit != null ? suitClassMap[card.suit] ?? '' : ''
+        hasSuit.value && card.value.suit != null ? suitClassMap[card.value.suit] ?? '' : ''
     );
-    const suitTopClass = computed(() => (hasSuit.value && card.suit != null ? card.suit : 'card-suit-none'));
+    const suitTopClass = computed(() => (hasSuit.value && card.value.suit != null ? card.value.suit : 'card-suit-none'));
 
     const titleFormatOpts = { replaceBlock: false } as const;
 
@@ -91,7 +100,7 @@
     });
 
     const keywordExplanations = computed(() => {
-        const kw = card.keywords ?? [];
+        const kw = card.value.keywords ?? [];
         return kw.map((id) => ({ id, text: getKeywordExplanation(id) }));
     });
 
@@ -122,7 +131,7 @@
         artworkVisible.value = true;
     }
 
-    watch(() => card, () => {
+    watch(card, () => {
         if (isSpell.value) resetArtwork();
         else artworkVisible.value = false;
     }, { immediate: true });
@@ -132,7 +141,7 @@
     <div
         class="card-view clickable"
         :class="{
-            selected: selectedCard === card,
+            selected: isSelected,
             [card?.animation]: !!animation
         }"
         :style="castFlyTransitionStyle"
@@ -229,7 +238,7 @@
                 ></div>
             </div>
         </Teleport>
-        <img v-if="!card.revealed" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
+        <img v-if="!showFaceUp" class="card-back" src="/card_backs/koala.jpg" alt="Card Back" />
         <div v-else-if="isSpell && spellCard" class="card-front spell-card-front">
             <div class="card-top spell-card-top" :class="suitTopClass">
                 <div class="spell-card-left">

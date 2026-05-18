@@ -34,7 +34,7 @@ class Tableau {
 
     /**
      * Deal the entire draw pile evenly into all columns (round-robin). Deck is left empty.
-     * All tableau cards are dealt face up.
+     * Cards stay face down until the deal animation reveals them on the tableau.
      */
     deal(drawPile: DrawPile): void {
         for (const column of this.columns) {
@@ -46,7 +46,7 @@ class Tableau {
         for (;;) {
             const card = drawPile.draw();
             if (!card) break;
-            card.revealed = true;
+            card.revealed = false;
             const column = this.columns[col];
             if (column) column.add(card);
             col = (col + 1) % numCols;

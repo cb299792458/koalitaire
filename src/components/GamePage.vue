@@ -21,7 +21,9 @@
     import EventView from './EventView.vue'
     import GameLayout from './GameLayout.vue'
     import CompostCelebrationOverlay from './CompostCelebrationOverlay.vue'
+    import TableauDealOverlay from './TableauDealOverlay.vue'
     import { compostCelebrationState } from '../composables/useCompostCelebration'
+    import { tableauDealState } from '../composables/useTableauDealAnimation'
     import { formatStatSymbols } from '../utils/damageSymbol'
     import { diamondSuitSvgInner } from '../utils/suitUiSymbols'
     import type { EndTurnDamagePreview } from '../game/endTurnDamagePreview'
@@ -335,6 +337,7 @@ The old throne has fallen, and all the animals now chart a future together.
             (compostCelebrationState.phase === 'compost-snake' ||
                 compostCelebrationState.phase === 'both')
     )
+    const isTableauDealing = computed(() => tableauDealState.active)
     const isInCombat = computed(() => !isInEvent.value && !isBackAtCampOpen.value)
     const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value)
     const eventEventRoll = computed(() => eventState.lastEventRoll.value)
@@ -653,6 +656,7 @@ The old throne has fallen, and all the animals now chart a future together.
 <template>
     <div class="game-page">
         <CompostCelebrationOverlay />
+        <TableauDealOverlay />
         <div class="scale-wrapper">
             <div class="scale-container" :style="{ transform: `scale(${scale})` }">
                 <ModalManager/>
@@ -687,7 +691,10 @@ The old throne has fallen, and all the animals now chart a future together.
                             <template v-else-if="isInCombat">
                                 <div class="cards-top">
                                     <div class="cards-top-left">
-                                        <div class="deck-wrapper pile-slot-area">
+                                        <div
+                                            class="deck-wrapper pile-slot-area"
+                                            :class="{ 'deck-wrapper--dealing': isTableauDealing }"
+                                        >
                                             <CardStack
                                                 :cards="deck.cards"
                                                 :name="AREAS.Deck"
@@ -790,7 +797,10 @@ The old throne has fallen, and all the animals now chart a future together.
                                         </div>
                                     </div>
                                 </div>
-                                <div class="tableau">
+                                <div
+                                    class="tableau"
+                                    :class="{ 'tableau--dealing': isTableauDealing }"
+                                >
                                     <CardStack
                                         v-for="(cards, index) in tableau"
                                         :key="index"
@@ -1202,6 +1212,14 @@ The old throne has fallen, and all the animals now chart a future together.
     gap: 8px;
     height: 100%;
     width: 100%;
+}
+
+.tableau--dealing :deep(.card-view) {
+    visibility: hidden;
+}
+
+.deck-wrapper--dealing :deep(.card-view) {
+    visibility: hidden;
 }
 
 .cards-hand {

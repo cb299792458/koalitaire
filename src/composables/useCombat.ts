@@ -27,6 +27,7 @@ import {
     type EndTurnDamagePreview,
 } from '../game/endTurnDamagePreview';
 import { playManaPoolCelebration } from './useCompostCelebration';
+import { playTableauDealAnimation } from './useTableauDealAnimation';
 
 export type DefeatRewardKind = 'cards' | 'relics';
 
@@ -139,7 +140,7 @@ export class Combat {
 
             this.initializeTableau();
             await this.shuffleDeck();
-            this.dealTableau();
+            await this.dealTableau();
             
             // Reset player state
             if (this.player) {
@@ -190,7 +191,7 @@ export class Combat {
             this.manaPools.recycleAllInto(this.deck);
         }
         await this.deck.shuffle();
-        this.dealTableau();
+        await this.dealTableau();
         this.notify();
     }
 
@@ -447,8 +448,17 @@ export class Combat {
         this.tableau = new Tableau(this.player.columnCount);
     }
 
-    dealTableau(): void {
-        this.tableau.deal(this.deck);
+    async dealTableau(): Promise<void> {
+        await playTableauDealAnimation(async () => {
+            this.tableau.deal(this.deck);
+            this.notify();
+            await new Promise<void>((r) => requestAnimationFrame(() => r()));
+        });
+        for (const column of this.tableau.getColumns()) {
+            for (const card of column.cards) {
+                card.revealed = true;
+            }
+        }
         this.notify();
     }
 

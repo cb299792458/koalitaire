@@ -11,6 +11,7 @@ class DrawPile extends CardGroup {
      * Add a card to the bottom of the draw pile
      */
     addCard(card: Card): void {
+        card.revealed = false;
         this.add(card);
     }
 
@@ -18,6 +19,9 @@ class DrawPile extends CardGroup {
      * Add multiple cards to the draw pile
      */
     addCards(cards: Card[]): void {
+        for (const card of cards) {
+            card.revealed = false;
+        }
         this.cards.push(...cards);
     }
 
@@ -70,6 +74,9 @@ class DrawPile extends CardGroup {
      */
     initialize(cards: Card[]): void {
         this.cards = [...cards];
+        for (const card of this.cards) {
+            card.revealed = false;
+        }
     }
 }
 
