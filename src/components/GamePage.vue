@@ -323,7 +323,18 @@ The old throne has fallen, and all the animals now chart a future together.
     const isInEvent = computed(() => eventState.isInEvent.value)
     const isBackAtCampOpen = computed(() => modalState.currentModal?.name === 'backAtCamp')
     const isMessageModalOpen = computed(() => modalState.currentModal?.name === 'message')
-    const isCompostCelebrating = computed(() => compostCelebrationState.active)
+    const isManaPoolCelebrating = computed(
+        () =>
+            compostCelebrationState.active &&
+            (compostCelebrationState.phase === 'mana-bounce' ||
+                compostCelebrationState.phase === 'both')
+    )
+    const isCompostSnakeCelebrating = computed(
+        () =>
+            compostCelebrationState.active &&
+            (compostCelebrationState.phase === 'compost-snake' ||
+                compostCelebrationState.phase === 'both')
+    )
     const isInCombat = computed(() => !isInEvent.value && !isBackAtCampOpen.value)
     const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value)
     const eventEventRoll = computed(() => eventState.lastEventRoll.value)
@@ -698,7 +709,10 @@ The old throne has fallen, and all the animals now chart a future together.
                                             />
                                             <div class="pile-slot-count">{{ recyclingCount }} cards</div>
                                         </div>
-                                        <div class="compost-wrapper pile-slot-area">
+                                        <div
+                                            class="compost-wrapper pile-slot-area"
+                                            :class="{ 'compost-wrapper--celebrating': isCompostSnakeCelebrating }"
+                                        >
                                             <CardStack
                                                 :cards="compost.cards"
                                                 :name="AREAS.Compost"
@@ -722,7 +736,7 @@ The old throne has fallen, and all the animals now chart a future together.
                                     <div class="cards-top-right">
                                         <div
                                             class="mana-pools-battle"
-                                            :class="{ 'mana-pools-battle--celebrating': isCompostCelebrating }"
+                                            :class="{ 'mana-pools-battle--celebrating': isManaPoolCelebrating }"
                                         >
                                             <div
                                                 class="mana-pools"
@@ -1075,6 +1089,10 @@ The old throne has fallen, and all the animals now chart a future together.
 }
 
 .mana-pools-battle--celebrating :deep(.mana-pools .card-view) {
+    visibility: hidden;
+}
+
+.compost-wrapper--celebrating :deep(.card-view) {
     visibility: hidden;
 }
 
