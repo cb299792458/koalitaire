@@ -1,5 +1,5 @@
 import { ELITE_ENCOUNTER_ENEMIES, RANDOM_ENCOUNTER_ENEMIES, type EnemyConstructor } from "../models/enemies";
-import KolanGraydadBossEnemy from "../models/enemies/boss/KolanGraydadBossEnemy";
+import { KolanGraydadBossEnemy } from "../models/enemies";
 import { pickChampionForNewAct } from "./actProgress";
 import type { Event } from "../models/Event";
 import { events } from "../models/Event";

@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import Card from '../models/Card'
-    import KolanGraydadBossEnemy from '../models/enemies/boss/KolanGraydadBossEnemy'
+    import { KolanGraydadBossEnemy } from '../models/enemies'
     import { Suits } from '../models/Suit'
     import CardStack from './Cards/CardStack.vue'
     import { useCombat } from '../composables/useCombat'
@@ -20,6 +20,8 @@
     import { hasChosenCharacterRef, combatRef, scenarioRef } from '../composables/useCombat'
     import EventView from './EventView.vue'
     import GameLayout from './GameLayout.vue'
+    import CompostCelebrationOverlay from './CompostCelebrationOverlay.vue'
+    import { compostCelebrationState } from '../composables/useCompostCelebration'
     import { formatStatSymbols } from '../utils/damageSymbol'
     import { diamondSuitSvgInner } from '../utils/suitUiSymbols'
     import type { EndTurnDamagePreview } from '../game/endTurnDamagePreview'
@@ -321,6 +323,7 @@ The old throne has fallen, and all the animals now chart a future together.
     const isInEvent = computed(() => eventState.isInEvent.value)
     const isBackAtCampOpen = computed(() => modalState.currentModal?.name === 'backAtCamp')
     const isMessageModalOpen = computed(() => modalState.currentModal?.name === 'message')
+    const isCompostCelebrating = computed(() => compostCelebrationState.active)
     const isInCombat = computed(() => !isInEvent.value && !isBackAtCampOpen.value)
     const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value)
     const eventEventRoll = computed(() => eventState.lastEventRoll.value)
@@ -638,6 +641,7 @@ The old throne has fallen, and all the animals now chart a future together.
 
 <template>
     <div class="game-page">
+        <CompostCelebrationOverlay />
         <div class="scale-wrapper">
             <div class="scale-container" :style="{ transform: `scale(${scale})` }">
                 <ModalManager/>
@@ -716,7 +720,10 @@ The old throne has fallen, and all the animals now chart a future together.
                                         </div>
                                     </div>
                                     <div class="cards-top-right">
-                                        <div class="mana-pools-battle">
+                                        <div
+                                            class="mana-pools-battle"
+                                            :class="{ 'mana-pools-battle--celebrating': isCompostCelebrating }"
+                                        >
                                             <div
                                                 class="mana-pools"
                                                 @mouseleave="hoveredManaPoolIndex = null"
@@ -1065,6 +1072,10 @@ The old throne has fallen, and all the animals now chart a future together.
     display: flex;
     flex-direction: column;
     align-items: stretch;
+}
+
+.mana-pools-battle--celebrating :deep(.mana-pools .card-view) {
+    visibility: hidden;
 }
 
 .mana-pools {

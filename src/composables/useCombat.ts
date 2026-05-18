@@ -26,6 +26,7 @@ import {
     computeEndTurnDamagePreviewAsync,
     type EndTurnDamagePreview,
 } from '../game/endTurnDamagePreview';
+import { playManaPoolCelebration } from './useCompostCelebration';
 
 export type DefeatRewardKind = 'cards' | 'relics';
 
@@ -174,12 +175,17 @@ export class Combat {
      * Trash is unchanged; mana pools are only emptied when they participate in this fold.
      */
     private async recycleTableauAndRecyclingIntoDeck(): Promise<void> {
+        const foldCompost = this.shouldFoldCompostIntoDeckAtEndTurn();
+        if (foldCompost) {
+            this.notify();
+            await playManaPoolCelebration();
+        }
         for (const column of this.tableau.getColumns()) {
             this.deck.addCards([...column.cards]);
             column.cards = [];
         }
         this.recycling.recycleInto(this.deck);
-        if (this.shouldFoldCompostIntoDeckAtEndTurn()) {
+        if (foldCompost) {
             this.compost.recycleInto(this.deck);
             this.manaPools.recycleAllInto(this.deck);
         }
