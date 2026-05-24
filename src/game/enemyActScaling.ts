@@ -1,6 +1,9 @@
-/** Multiplier applied to enemy base stats and action damage from act 1 upward. */
+/** Per-act multipliers for enemy HP, stats, and action damage. Acts above 5 use act 5. */
+const ACT_SCALE_FACTORS: readonly [number, number, number, number, number] = [1, 2, 3, 6, 10];
+
 export function actScaleFactor(act: number): number {
-    return 1 + 0.2 * Math.max(0, act - 1);
+    const clamped = Math.min(5, Math.max(1, Math.floor(act)));
+    return ACT_SCALE_FACTORS[clamped - 1]!;
 }
 
 export function scaleHealth(base: number, act: number): number {

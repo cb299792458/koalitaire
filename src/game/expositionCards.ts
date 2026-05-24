@@ -51,13 +51,13 @@ const ACT_END_EXPOSITION_BY_ACT: Record<number, ExpositionCard[]> = {
     1: [
         {
             title: 'Act I Complete',
-            body: 'Daisy, Queen of the Sugar Gliders, has joined your cause. However, you will need more support to bring down Koala rule.'
+            body: 'Jay Lee, the Great Sugar Gliders, has joined your cause. You are now one step closer to liberating the kingdom.'
         },
     ],
     2: [
         {
             title: 'Act II Complete',
-            body: 'Gabriel, the Great Wombat, has joined your cause. Will you challenge your father now, or continue your campaign to gain more support?'
+            body: 'Gabito, the Great Wombat, has joined your cause. You are now one step closer to liberating the kingdom.'
         },
     ],
     3: [
@@ -69,13 +69,13 @@ const ACT_END_EXPOSITION_BY_ACT: Record<number, ExpositionCard[]> = {
     4: [
         {
             title: 'Act IV Complete',
-            body: 'Sora, the Great Platypus, has joined your cause. You are now one step closer to liberating the kingdom.'
+            body: 'Potato, the Great Platypus, has joined your cause. You are now one step closer to liberating the kingdom.'
         },
     ],
     5: [
         {
             title: 'Act V Complete',
-            body: 'Oliver, the Great Echidna, has joined your cause. You are now one step closer to liberating the kingdom.'
+            body: 'Olisong, the Great Echidna, has joined your cause. You are now one step closer to liberating the kingdom.'
         },
     ],
 }
