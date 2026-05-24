@@ -48,8 +48,8 @@ const shawtyTemplate: SummonTemplate = {
 };
 
 const goShawtyItsYourBirthday = new EnemyAction(
-    "Go Shawty, it's your birthday",
-    "Club, the Seal calls Shawty to the stage — summons another seal named Shawty.",
+    "Go Shawty",
+    "It's her birthday.",
     (enemy, _player, combat) => {
         const scaled = {
             ...shawtyTemplate,
