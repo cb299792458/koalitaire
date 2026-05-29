@@ -51,7 +51,7 @@ const ACT_END_EXPOSITION_BY_ACT: Record<number, ExpositionCard[]> = {
     1: [
         {
             title: 'Act I Complete',
-            body: 'Jay Lee, the Great Sugar Gliders, has joined your cause. You are now one step closer to liberating the kingdom.'
+            body: 'Jannilee, the Great Sugar Gliders, has joined your cause. You are now one step closer to liberating the kingdom.'
         },
     ],
     2: [
@@ -63,13 +63,13 @@ const ACT_END_EXPOSITION_BY_ACT: Record<number, ExpositionCard[]> = {
     3: [
         {
             title: 'Act III Complete',
-            body: 'Pickles, the Great Frilled Lizard, has joined your cause. You are now one step closer to liberating the kingdom.'
+            body: 'Soraga, the Great Frilled Lizard, has joined your cause. You are now one step closer to liberating the kingdom.'
         },
     ],
     4: [
         {
             title: 'Act IV Complete',
-            body: 'Potato, the Great Platypus, has joined your cause. You are now one step closer to liberating the kingdom.'
+            body: 'Madelun, the Great Platypus, has joined your cause. You are now one step closer to liberating the kingdom.'
         },
     ],
     5: [
