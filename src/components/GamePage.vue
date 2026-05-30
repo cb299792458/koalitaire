@@ -17,8 +17,14 @@
     import type Cardifact from '../models/Cardifact'
     import { useTown } from '../composables/useTown'
     import { useEvent } from '../composables/useEvent'
+    import { useMinigame } from '../composables/useMinigame'
     import { hasChosenCharacterRef, combatRef, scenarioRef } from '../composables/useCombat'
     import EventView from './EventView.vue'
+    import MinigameView from './MinigameView.vue'
+    import ShellGameBoard from './ShellGameBoard.vue'
+    import BlackjackBoard from './BlackjackBoard.vue'
+    import { useBlackjack } from '../composables/useBlackjack'
+    import { isBlackjackMinigame, isShellGameMinigame } from '../models/minigames'
     import GameLayout from './GameLayout.vue'
     import CompostCelebrationOverlay from './CompostCelebrationOverlay.vue'
     import TableauDealOverlay from './TableauDealOverlay.vue'
@@ -44,6 +50,8 @@
     const modalState = useModalState()
     const town = useTown()
     const eventState = useEvent()
+    const minigameState = useMinigame()
+    const blackjackState = useBlackjack()
     const combat = useCombat()
 
     combat.onEnemyDefeated = () => {
@@ -235,7 +243,11 @@ The old throne has fallen, and all the animals now chart a future together.
         openMapDeckForPlayer(p)
     }
     const player = computed(() =>
-        isInEvent.value ? eventState.player.value : combat.player
+        isInEvent.value
+            ? eventState.player.value
+            : isInMinigame.value
+              ? minigameState.player.value
+              : combat.player
     )
     const enemy = computed(() => combatRef.value?.enemy)
 
@@ -323,6 +335,7 @@ The old throne has fallen, and all the animals now chart a future together.
     }
 
     const isInEvent = computed(() => eventState.isInEvent.value)
+    const isInMinigame = computed(() => minigameState.isInMinigame.value)
     const isBackAtCampOpen = computed(() => modalState.currentModal?.name === 'backAtCamp')
     const isMessageModalOpen = computed(() => modalState.currentModal?.name === 'message')
     const isManaPoolCelebrating = computed(
@@ -338,14 +351,36 @@ The old throne has fallen, and all the animals now chart a future together.
                 compostCelebrationState.phase === 'both')
     )
     const isTableauDealing = computed(() => tableauDealState.active)
-    const isInCombat = computed(() => !isInEvent.value && !isBackAtCampOpen.value)
+    const isInCombat = computed(
+        () => !isInEvent.value && !isInMinigame.value && !isBackAtCampOpen.value
+    )
     const eventPlayerRoll = computed(() => eventState.lastPlayerRoll.value)
     const eventEventRoll = computed(() => eventState.lastEventRoll.value)
     const eventStatBonus = computed(() => eventState.lastStatBonus.value)
     const eventStat = computed(() => eventState.lastStat.value)
     const eventResultMessage = computed(() => eventState.resultMessage.value)
     const eventIsResolving = computed(() => eventState.isResolving.value)
-    const isProcessing = computed(() => (combatRef.value?.isProcessingTurn ?? false) || eventIsResolving.value)
+    const minigamePlayerRoll = computed(() => minigameState.lastPlayerRoll.value)
+    const minigameOpponentRoll = computed(() => minigameState.lastMinigameRoll.value)
+    const minigameStatBonus = computed(() => minigameState.lastStatBonus.value)
+    const minigameStat = computed(() => minigameState.lastStat.value)
+    const minigameResultMessage = computed(() => minigameState.resultMessage.value)
+    const minigameIsResolving = computed(() => minigameState.isResolving.value)
+    const isShellGameMinigameActive = computed(() => {
+        const mg = minigameState.currentMinigame.value
+        return isInMinigame.value && mg != null && isShellGameMinigame(mg)
+    })
+    const isBlackjackMinigameActive = computed(() => {
+        const mg = minigameState.currentMinigame.value
+        return isInMinigame.value && mg != null && isBlackjackMinigame(mg)
+    })
+    const blackjackSession = computed(() => blackjackState.session.value)
+    const isProcessing = computed(
+        () =>
+            (combatRef.value?.isProcessingTurn ?? false) ||
+            eventIsResolving.value ||
+            minigameIsResolving.value
+    )
 
     const endTurnDamagePreview = ref<EndTurnDamagePreview | null>(null)
     let endTurnPreviewRequestId = 0
@@ -513,6 +548,20 @@ The old throne has fallen, and all the animals now chart a future together.
         }
     })
 
+    watch(minigameResultMessage, (msg) => {
+        if (msg && isInMinigame.value) {
+            const p = combat.originalPlayer ?? minigameState.player.value ?? combat.player
+            openModal('cardReward', {
+                title: 'Minigame Complete',
+                player: p,
+                onContinue: () => {
+                    minigameState.onMinigameContinue()
+                    return false
+                },
+            }, { keepOpen: true, transparentOverlay: true })
+        }
+    })
+
     const deckCount = computed(() => combatRef.value?.deck.cards.length ?? 0)
     const recyclingCount = computed(() => combatRef.value?.recycling.cards.length ?? 0)
     const compostCount = computed(() => combatRef.value?.compost.cards.length ?? 0)
@@ -568,35 +617,47 @@ The old throne has fallen, and all the animals now chart a future together.
 
         if ('town' in entry && entry.town) {
             eventState.resetEventState()
+            minigameState.resetMinigameState()
             town.enterTown(newPlayer)
             return
         }
         if ('event' in entry && entry.event) {
+            minigameState.resetMinigameState()
             eventState.enterEvent(newPlayer, entry.event)
+            return
+        }
+        if ('minigame' in entry && entry.minigame) {
+            eventState.resetEventState()
+            minigameState.enterMinigame(newPlayer, new entry.minigame(newPlayer.actNumber))
             return
         }
         if ('elite' in entry && entry.elite) {
             eventState.resetEventState()
+            minigameState.resetMinigameState()
             await combat.start(newPlayer, new entry.elite(newPlayer.actNumber), { defeatReward: 'relics' })
             return
         }
         if ('champion' in entry && entry.champion) {
             eventState.resetEventState()
+            minigameState.resetMinigameState()
             await combat.start(newPlayer, new entry.champion(newPlayer.actNumber))
             return
         }
         if ('guardian' in entry && entry.guardian) {
             eventState.resetEventState()
+            minigameState.resetMinigameState()
             await combat.start(newPlayer, new entry.guardian(newPlayer.actNumber))
             return
         }
         if ('boss' in entry && entry.boss) {
             eventState.resetEventState()
+            minigameState.resetMinigameState()
             await combat.start(newPlayer, new entry.boss(newPlayer.actNumber))
             return
         }
         if ('enemy' in entry && entry.enemy) {
             eventState.resetEventState()
+            minigameState.resetMinigameState()
             await combat.start(newPlayer, new entry.enemy(newPlayer.actNumber))
         }
     }
@@ -634,6 +695,10 @@ The old throne has fallen, and all the animals now chart a future together.
     onMounted(() => {
         eventState.onLeaveEvent(() => {
             const p = eventState.player.value ?? combat.originalPlayer ?? combat.player
+            if (p) openMapDeckForPlayer(p)
+        })
+        minigameState.onLeaveMinigame(() => {
+            const p = minigameState.player.value ?? combat.originalPlayer ?? combat.player
             if (p) openMapDeckForPlayer(p)
         })
         town.onLeaveTown(() => {
@@ -684,10 +749,28 @@ The old throne has fallen, and all the animals now chart a future together.
                                     = {{ eventPlayerRoll! + (eventStatBonus ?? 0) }}
                                 </p>
                             </div>
+                            <div v-if="isInMinigame && minigamePlayerRoll !== null" class="event-roll-display event-roll-display--player">
+                                <p class="event-roll-label">Roll</p>
+                                <p class="event-roll-value">
+                                    {{ minigamePlayerRoll }}{{ minigameStatBonus !== null && minigameStatBonus !== 0 ? ` + ${minigameStatBonus} ${minigameStat}` : '' }}
+                                    = {{ minigamePlayerRoll! + (minigameStatBonus ?? 0) }}
+                                </p>
+                            </div>
                         </template>
 
                         <template #center>
                             <EventView v-if="isInEvent" />
+                            <template v-else-if="isInMinigame && isShellGameMinigameActive">
+                                <MinigameView />
+                                <ShellGameBoard />
+                            </template>
+                            <template v-else-if="isInMinigame && isBlackjackMinigameActive">
+                                <div class="minigame-tableau-stack minigame-tableau-stack--blackjack">
+                                    <MinigameView />
+                                    <BlackjackBoard />
+                                </div>
+                            </template>
+                            <MinigameView v-else-if="isInMinigame" />
                             <template v-else-if="isInCombat">
                                 <div class="cards-top">
                                     <div class="cards-top-left">
@@ -835,6 +918,16 @@ The old throne has fallen, and all the animals now chart a future together.
                                     </div>
                                 </div>
                             </template>
+                            <template v-else-if="isInMinigame">
+                                <h1>Minigame</h1>
+                                <div class="event-name-panel" v-if="minigameState.currentMinigame.value">
+                                    <h2 class="event-name">{{ minigameState.currentMinigame.value.name }}</h2>
+                                    <div v-if="minigameOpponentRoll !== null" class="event-roll-display event-roll-display--event">
+                                        <p class="event-roll-label">Roll</p>
+                                        <p class="event-roll-value">{{ minigameOpponentRoll }}</p>
+                                    </div>
+                                </div>
+                            </template>
                             <template v-else>
                                 <h1 v-if="isInCombat">Enemy</h1>
                                 <CombatantInfo
@@ -864,6 +957,54 @@ The old throne has fallen, and all the animals now chart a future together.
                                     </div>
                                     <div v-else class="event-result">
                                         <p class="event-result-message" v-html="eventResultMessage ? formatStatSymbols(eventResultMessage) : ''"></p>
+                                    </div>
+                                </div>
+                            </template>
+                            <template v-else-if="isInMinigame">
+                                <div class="event-choices-area">
+                                    <div v-if="minigameResultMessage" class="event-result">
+                                        <p
+                                            class="event-result-message"
+                                            v-html="minigameResultMessage ? formatStatSymbols(minigameResultMessage) : ''"
+                                        ></p>
+                                    </div>
+                                    <div
+                                        v-else-if="isBlackjackMinigameActive && blackjackSession?.canHit"
+                                        class="event-choices"
+                                    >
+                                        <button
+                                            type="button"
+                                            class="event-choice"
+                                            @click="blackjackState.hit()"
+                                        >
+                                            Hit
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="event-choice"
+                                            @click="blackjackState.stay()"
+                                        >
+                                            Stay
+                                        </button>
+                                    </div>
+                                    <div
+                                        v-else-if="
+                                            !isShellGameMinigameActive &&
+                                            !isBlackjackMinigameActive &&
+                                            !minigameResultMessage
+                                        "
+                                        class="event-choices"
+                                    >
+                                        <button
+                                            v-for="(option, index) in minigameState.currentMinigame.value?.options ?? []"
+                                            :key="index"
+                                            type="button"
+                                            class="event-choice"
+                                            :disabled="minigameIsResolving"
+                                            @click="minigameState.resolveChoice(option)"
+                                        >
+                                            <span v-html="formatStatSymbols(minigameState.choiceLabel(option))"></span>
+                                        </button>
                                     </div>
                                 </div>
                             </template>
@@ -1322,6 +1463,27 @@ The old throne has fallen, and all the animals now chart a future together.
     margin: 0;
     font-size: 1rem;
     color: #333;
+}
+
+.minigame-tableau-stack {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 0;
+}
+
+.minigame-tableau-stack--blackjack :deep(.minigame-view) {
+    flex: 0 1 auto;
+    padding: 8px 24px 0;
+}
+
+.minigame-tableau-stack--blackjack :deep(.blackjack-tableau) {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 0;
 }
 
 .event-choices-area {

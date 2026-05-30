@@ -26,6 +26,7 @@
         if ('boss' in entry) return 'Boss'
         if ('town' in entry) return 'Town'
         if ('event' in entry) return 'Event'
+        if ('minigame' in entry) return 'Minigame'
         return 'Unknown'
     }
 
@@ -38,6 +39,7 @@
         if ('boss' in entry) return '/scenarios/boss.png'
         if ('town' in entry) return '/scenarios/town.png'
         if ('event' in entry) return '/scenarios/event.png'
+        if ('minigame' in entry) return '/scenarios/minigame.png'
         return '/scenarios/town.png'
     }
 

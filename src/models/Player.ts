@@ -19,6 +19,7 @@ import useDamageNumbers from "../composables/useDamageNumbers";
 // import { starterCards } from "../game/cards/starterCards";
 import { basicCards } from "../game/cards/basicCards";
 import { generalCards } from "../game/cards/generalCards";
+import { starterCards } from "../game/cards/starterCards";
 import { debugCards } from "../game/cards/debugCards";
 
 /** Per-suit count of mana cards to bring to combat (ranks 1 through N). */
@@ -49,6 +50,11 @@ export interface PlayerParams {
 
     /** All spell cards the player owns. */
     collection: SpellCard[];
+    /**
+     * Per-collection-slot flags for combat deck inclusion.
+     * Defaults to all true when omitted; length must match {@link collection}.
+     */
+    spellDeck?: boolean[];
     /** Per-suit count of mana cards to bring to combat. For Koa, starts at 6 per suit. */
     manaDeck: ManaCardsBySuit;
 
@@ -83,6 +89,20 @@ function spellCardsFromParams(params: SpellCardParams[]): SpellCard[] {
 function pickRandom<T>(array: T[], count: number): T[] {
     const shuffled = [...array].sort(() => Math.random() - 0.5);
     return shuffled.slice(0, Math.min(count, array.length));
+}
+
+/** One params entry per unique spell name (first occurrence wins). */
+function uniqueSpellParamsByName(pools: readonly SpellCardParams[][]): SpellCardParams[] {
+    const seen = new Set<string>();
+    const out: SpellCardParams[] = [];
+    for (const pool of pools) {
+        for (const params of pool) {
+            if (seen.has(params.name)) continue;
+            seen.add(params.name);
+            out.push(params);
+        }
+    }
+    return out;
 }
 
 class Player extends Combatant {
@@ -147,7 +167,7 @@ class Player extends Combatant {
     combatEvents: CombatEventBus | null = null;
 
     constructor(params: PlayerParams) {
-        const { name, portrait, tooltip, columnCount, handSlotCount, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, manaDeck, townTraderCards, cardifacts = [], maxCardifacts } = params;
+        const { name, portrait, tooltip, columnCount, handSlotCount, startingManaDiamonds = 0, appeal, attack, armor, agility, acumen, health, koallarbucks, bytecoins = 0, collection, spellDeck, manaDeck, townTraderCards, cardifacts = [], maxCardifacts } = params;
         super({ name, portrait, health, armor, tooltip });
 
         this.columnCount = columnCount;
@@ -162,7 +182,12 @@ class Player extends Combatant {
         this.bytecoins = bytecoins;
 
         this.collection = [...collection];
-        this.spellDeck = collection.map(() => true);
+        if (spellDeck != null && spellDeck.length !== collection.length) {
+            throw new Error(
+                `spellDeck length (${spellDeck.length}) must match collection length (${collection.length})`
+            );
+        }
+        this.spellDeck = spellDeck != null ? [...spellDeck] : collection.map(() => true);
         this.manaDeck = { ...manaDeck };
 
         this.townTraderCards = townTraderCards ?? pickRandom([...generalCards], 3);
@@ -376,7 +401,17 @@ export const koaParams: PlayerParams = {
     maxCardifacts: 5,
 };
 
-const testSpellCards = spellCardsFromParams([...generalCards, ...debugCards]);
+const testSpellParams = uniqueSpellParamsByName([
+    generalCards,
+    basicCards,
+    starterCards,
+    debugCards,
+]);
+const testSpellCards = spellCardsFromParams(testSpellParams);
+const debugKillDeckIndex = testSpellParams.findIndex((p) => p.name === "Debug Kill");
+if (debugKillDeckIndex === -1) {
+    throw new Error("DJ Testo collection requires Debug Kill in debugCards");
+}
 
 export const testCharacterParams: PlayerParams = {
     name: "DJ Testo",
@@ -397,7 +432,8 @@ export const testCharacterParams: PlayerParams = {
     bytecoins: 0,
 
     collection: testSpellCards,
-    manaDeck: defaultManaCards(1),
+    spellDeck: testSpellCards.map((_, i) => i === debugKillDeckIndex),
+    manaDeck: defaultManaCards(3),
 
     /** High cap so debug / test builds can equip many cardifacts. */
     maxCardifacts: 99,

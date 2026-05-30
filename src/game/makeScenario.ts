@@ -1,8 +1,13 @@
-import { ELITE_ENCOUNTER_ENEMIES, RANDOM_ENCOUNTER_ENEMIES, type EnemyConstructor } from "../models/enemies";
+import {
+    ELITE_ENCOUNTER_ENEMIES,
+    RANDOM_ENCOUNTER_ENEMIES,
+    type EnemyConstructor,
+} from "../models/enemies";
 import { KolanGraydadBossEnemy } from "../models/enemies";
 import { pickChampionForNewAct } from "./actProgress";
 import type { Event } from "../models/Event";
-import { events } from "../models/Event";
+import type { MinigameConstructor } from "../models/minigames";
+import { pickRandomMinigameConstructor } from "../models/minigames";
 
 export type ScenarioEntry =
     | { enemy: EnemyConstructor }
@@ -12,16 +17,13 @@ export type ScenarioEntry =
     | { boss: EnemyConstructor }
     | { town: true }
     | { event: Event }
+    | { minigame: MinigameConstructor }
     | null;
 
 const ROW_COUNT = 13;
 
 /** Row lengths for the diamond: 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1 */
 const DIAMOND_ROW_LENGTHS = [1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1] as const;
-
-function pickRandomEvent(): Event {
-    return events[Math.floor(Math.random() * events.length)]!;
-}
 
 function pickRandomEnemyFrom(pool: EnemyConstructor[]): EnemyConstructor {
     return pool[Math.floor(Math.random() * pool.length)]!;
@@ -37,7 +39,8 @@ function pickRandomEntry(): NonNullable<ScenarioEntry> {
     if (roll < 0.65) return { enemy: pickRandomEnemyFrom(RANDOM_ENCOUNTER_ENEMIES) };
     if (roll < 0.8) return { elite: pickRandomEnemyFrom(ELITE_ENCOUNTER_ENEMIES) };
     if (roll < 0.9) return { town: true };
-    return { event: pickRandomEvent() };
+    // Events disabled for now; former event weight goes to minigames.
+    return { minigame: pickRandomMinigameConstructor() };
 }
 
 export default function makeScenario(options?: MakeScenarioOptions): ScenarioEntry[][] {
