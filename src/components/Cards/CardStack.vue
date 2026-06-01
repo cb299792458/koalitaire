@@ -6,6 +6,7 @@ import { AREAS, type Area } from '../../models/Areas';
 import { toRaw, computed } from 'vue';
 import { Suits } from '../../models/Suit';
 import { suitIconMap, suitClassMap } from '../../utils/suitAssets';
+import { combatPileCardStyle } from '../../game/combatPileStack';
 
 const props = defineProps<{
     cards: Card[];
@@ -116,14 +117,16 @@ function cardPosition(index: number, card: Card) {
             break;
         }
         case 'pile':
-        default:
+        default: {
+            const pilePos = combatPileCardStyle(index, props.cards.length);
             base = {
-                position: 'absolute',
-                top: `-${index * 0.25}px`,
-                left: `-${index * 0.25}px`,
-                zIndex: props.cards.length + index,
+                position: "absolute",
+                top: pilePos.top as string,
+                left: pilePos.left as string,
+                zIndex: pilePos.zIndex as number,
             };
             break;
+        }
     }
     return isSelected ? { ...base, zIndex: SELECTED_CARD_Z_INDEX } : base;
 }

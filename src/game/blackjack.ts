@@ -11,23 +11,11 @@ export function cardBlackjackValue(rank: number): number {
     return rank;
 }
 
-/** Best total ≤ 21, counting aces as 1 or 11. */
+/** Hand total; aces always count as 1. */
 export function handTotal(cards: readonly Card[]): number {
     let total = 0;
-    let aces = 0;
     for (const card of cards) {
-        if (card.rank === 1) {
-            aces += 1;
-            total += 1;
-        } else if (card.rank >= 10) {
-            total += 10;
-        } else if (card.rank > 0) {
-            total += card.rank;
-        }
-    }
-    while (aces > 0 && total + 10 <= 21) {
-        total += 10;
-        aces -= 1;
+        total += cardBlackjackValue(card.rank);
     }
     return total;
 }

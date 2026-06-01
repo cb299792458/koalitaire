@@ -21,10 +21,12 @@
     import { hasChosenCharacterRef, combatRef, scenarioRef } from '../composables/useCombat'
     import EventView from './EventView.vue'
     import MinigameView from './MinigameView.vue'
-    import ShellGameBoard from './ShellGameBoard.vue'
-    import BlackjackBoard from './BlackjackBoard.vue'
     import { useBlackjack } from '../composables/useBlackjack'
-    import { isBlackjackMinigame, isShellGameMinigame } from '../models/minigames'
+    import {
+        minigameHasCustomBoard,
+        resolveMinigameBoard,
+    } from '../composables/minigameBoards'
+    import { isBlackjackMinigame } from '../models/minigames'
     import GameLayout from './GameLayout.vue'
     import CompostCelebrationOverlay from './CompostCelebrationOverlay.vue'
     import TableauDealOverlay from './TableauDealOverlay.vue'
@@ -366,9 +368,15 @@ The old throne has fallen, and all the animals now chart a future together.
     const minigameStat = computed(() => minigameState.lastStat.value)
     const minigameResultMessage = computed(() => minigameState.resultMessage.value)
     const minigameIsResolving = computed(() => minigameState.isResolving.value)
-    const isShellGameMinigameActive = computed(() => {
-        const mg = minigameState.currentMinigame.value
-        return isInMinigame.value && mg != null && isShellGameMinigame(mg)
+    const activeMinigameBoard = computed(() => {
+        if (!isInMinigame.value) return null
+        return resolveMinigameBoard(minigameState.currentMinigame.value)
+    })
+    const minigameStackClass = computed(() => {
+        const modifier = activeMinigameBoard.value?.stackModifier
+        return modifier
+            ? `minigame-tableau-stack minigame-tableau-stack--${modifier}`
+            : 'minigame-tableau-stack'
     })
     const isBlackjackMinigameActive = computed(() => {
         const mg = minigameState.currentMinigame.value
@@ -760,14 +768,10 @@ The old throne has fallen, and all the animals now chart a future together.
 
                         <template #center>
                             <EventView v-if="isInEvent" />
-                            <template v-else-if="isInMinigame && isShellGameMinigameActive">
-                                <MinigameView />
-                                <ShellGameBoard />
-                            </template>
-                            <template v-else-if="isInMinigame && isBlackjackMinigameActive">
-                                <div class="minigame-tableau-stack minigame-tableau-stack--blackjack">
-                                    <MinigameView />
-                                    <BlackjackBoard />
+                            <template v-else-if="isInMinigame && activeMinigameBoard">
+                                <div :class="minigameStackClass">
+                                    <MinigameView v-if="activeMinigameBoard.showDescription" />
+                                    <component :is="activeMinigameBoard.board" />
                                 </div>
                             </template>
                             <MinigameView v-else-if="isInMinigame" />
@@ -989,8 +993,7 @@ The old throne has fallen, and all the animals now chart a future together.
                                     </div>
                                     <div
                                         v-else-if="
-                                            !isShellGameMinigameActive &&
-                                            !isBlackjackMinigameActive &&
+                                            !minigameHasCustomBoard(minigameState.currentMinigame.value) &&
                                             !minigameResultMessage
                                         "
                                         class="event-choices"
@@ -1481,6 +1484,60 @@ The old throne has fallen, and all the animals now chart a future together.
 }
 
 .minigame-tableau-stack--blackjack :deep(.blackjack-tableau) {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 0;
+}
+
+.minigame-tableau-stack--monty {
+    justify-content: center;
+}
+
+.minigame-tableau-stack--monty :deep(.monty-tableau) {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 0;
+}
+
+.minigame-tableau-stack--war :deep(.minigame-view) {
+    flex: 0 1 auto;
+    padding: 8px 24px 0;
+}
+
+.minigame-tableau-stack--war :deep(.war-tableau) {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 0;
+}
+
+.minigame-tableau-stack--memory :deep(.minigame-view) {
+    flex: 0 1 auto;
+    padding: 8px 24px 0;
+}
+
+.minigame-tableau-stack--memory :deep(.memory-tableau) {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 0;
+}
+
+.minigame-tableau-stack--hol :deep(.minigame-view) {
+    flex: 0 1 auto;
+    padding: 8px 24px 0;
+}
+
+.minigame-tableau-stack--hol :deep(.hol-tableau) {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-height: 0;
+}
+
+.minigame-tableau-stack--ratscrew :deep(.minigame-view) {
+    flex: 0 1 auto;
+    padding: 8px 24px 0;
+}
+
+.minigame-tableau-stack--ratscrew :deep(.ratscrew-tableau) {
     flex: 1 1 auto;
     justify-content: center;
     min-height: 0;

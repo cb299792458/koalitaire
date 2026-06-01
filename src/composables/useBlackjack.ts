@@ -9,11 +9,21 @@ import {
     shuffleInPlace,
     type BlackjackRoundResult,
 } from "../game/blackjack";
-import BlackjackMinigame from "../models/minigames/BlackjackMinigame";
+import { buildShuffledCombatDeck } from "../game/minigameDeck";
+import { revealWithDealAnimation } from "../game/minigameCardAnimation";
+import BlackjackMinigame, {
+    BLACKJACK_LOSS_DAMAGE_BASE,
+} from "../models/minigames/BlackjackMinigame";
 import type Player from "../models/Player";
+import { publishMinigameResult } from "./minigameResult";
 import { useMinigame } from "./useMinigame";
 
-export type BlackjackPhase = "player" | "dealer" | "round-result" | "complete";
+export type BlackjackPhase =
+    | "intro"
+    | "player"
+    | "dealer"
+    | "round-result"
+    | "complete";
 
 export interface BlackjackSession {
     wins: number;
@@ -64,12 +74,12 @@ function isAnimationActive(token: number): boolean {
 }
 
 function revealCard(card: Card): void {
-    card.revealed = true;
+    revealWithDealAnimation(card);
 }
 
 /** Snapshot of the combat deck once per minigame (getCombatDeck() returns new instances each call). */
 function buildPlayerShoe(player: Player): Card[] {
-    return shuffleInPlace(player.getCombatDeck());
+    return buildShuffledCombatDeck(player, false);
 }
 
 function reshufflePlayerDiscardIntoShoe(session: BlackjackSession): void {
@@ -201,7 +211,7 @@ async function runDealerTurn(session: BlackjackSession): Promise<void> {
     } else if (outcome === "dealer-win") {
         finishRound(session, "dealer-win", "Dealer wins this hand.");
     } else {
-        finishRound(session, "tie", "Push — it's a tie.");
+        finishRound(session, "player-win", "Tie — you win this hand.");
     }
 }
 
@@ -235,26 +245,21 @@ function applyRoundOutcome(
         return session.roundMessage;
     }
     if (result === "dealer-win") {
-        const damage = minigame.lossDamage();
-        if (damage > 0) {
-            player.takeDamage(damage);
-        }
+        const damage = minigame.damagePlayer(player, BLACKJACK_LOSS_DAMAGE_BASE);
         return `${session.roundMessage} You take ${damage} damage.`;
     }
     return session.roundMessage;
 }
 
 function completeMinigame(): void {
-    const minigameState = useMinigame();
     sessionRef.value = {
         ...sessionRef.value!,
         phase: "complete",
         canHit: false,
         canStay: false,
-        roundMessage: "You won three hands! The table is yours.",
+        roundMessage: "You won the hand! The table is yours.",
     };
-    minigameState.resultMessage.value =
-        "You won three hands at blackjack and leave the table victorious.";
+    publishMinigameResult("You won at blackjack and leave the table victorious.");
 }
 
 function scheduleNextRound(session: BlackjackSession, minigame: BlackjackMinigame): void {
@@ -297,10 +302,17 @@ function finishRound(
     scheduleNextRound(session, minigame);
 }
 
+function beginBlackjackPlay(): void {
+    const session = sessionRef.value;
+    if (!session || session.phase !== "intro") return;
+    startRound(session);
+}
+
 export function useBlackjack(): {
     session: Ref<BlackjackSession | null>;
     startBlackjack: (player: Player, minigame: BlackjackMinigame) => void;
     resetBlackjack: () => void;
+    beginPlay: () => void;
     hit: () => void;
     stay: () => void;
 } {
@@ -313,18 +325,19 @@ export function useBlackjack(): {
             sessionRef.value = {
                 wins: 0,
                 winsRequired: minigame.winsRequired,
-                phase: "player",
+                phase: "intro",
                 playerHand: [],
                 dealerHand: [],
                 shoe,
                 discard: [],
                 dealerHoleHidden: true,
-                roundMessage: "Place your bets…",
+                roundMessage:
+                    "Blackjack with your combat deck. Win one hand to leave; ties go to you.",
                 canHit: false,
                 canStay: false,
             };
-            startRound(sessionRef.value);
         },
+        beginPlay: beginBlackjackPlay,
         resetBlackjack() {
             cancelDealerAnimation();
             clearRoundTimer();

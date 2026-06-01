@@ -2,7 +2,7 @@ import Minigame, { type MinigameOutcomeBranch } from "../Minigame";
 
 export type ShellCardKind = "queen" | "jester";
 
-const JESTER_DAMAGE_PER_ACT = 10;
+const JESTER_DAMAGE_BASE = 10;
 
 export function createShuffledShellLayout(): ShellCardKind[] {
     const layout: ShellCardKind[] = ["jester", "jester", "jester"];
@@ -18,10 +18,7 @@ export default class ShellGameMinigame extends Minigame {
 
     readonly failure: MinigameOutcomeBranch = {
         effect: (player, minigame) => {
-            const damage = JESTER_DAMAGE_PER_ACT * minigame.act;
-            if (damage > 0) {
-                player.takeDamage(damage);
-            }
+            minigame.damagePlayer(player, JESTER_DAMAGE_BASE);
         },
         message: "", // set in resolvePick so it can include act-scaled damage
     };
@@ -37,7 +34,7 @@ export default class ShellGameMinigame extends Minigame {
     }
 
     jesterDamage(): number {
-        return JESTER_DAMAGE_PER_ACT * this.act;
+        return this.damageForAct(JESTER_DAMAGE_BASE);
     }
 
     resolvePick(slotIndex: number, layout: readonly ShellCardKind[]): MinigameOutcomeBranch {

@@ -6,7 +6,9 @@ import { useBlackjack } from "../composables/useBlackjack";
 import { useMinigame } from "../composables/useMinigame";
 import { isBlackjackMinigame } from "../models/minigames/BlackjackMinigame";
 
-const { session } = useBlackjack();
+const { session, beginPlay } = useBlackjack();
+
+const isIntro = computed(() => session.value?.phase === "intro");
 const { currentMinigame } = useMinigame();
 
 const blackjackMinigame = computed(() => {
@@ -35,6 +37,23 @@ function showDealerCard(index: number): boolean {
 
 <template>
     <div v-if="session && blackjackMinigame" class="blackjack-tableau">
+        <div v-if="isIntro" class="minigame-intro">
+            <p class="minigame-intro__lead">
+                Play blackjack with your combat deck against the dealer. Beat the dealer’s
+                total without going over 21.
+            </p>
+            <ul class="minigame-intro__rules">
+                <li>Get as close to <strong>21</strong> as you can — going over is a <strong>bust</strong> and you lose the hand</li>
+                <li><strong>Hit</strong> to draw another card or <strong>stay</strong> to hold your total</li>
+                <li>Win <strong>one hand</strong> to leave the table; <strong>ties go to you</strong></li>
+                <li>Each loss deals <strong>3×act damage</strong></li>
+            </ul>
+            <button type="button" class="minigame-intro__start" @click="beginPlay()">
+                Start
+            </button>
+        </div>
+
+        <template v-else>
         <p class="blackjack-tableau__meta">
             Wins: {{ session.wins }} / {{ session.winsRequired }}
             <span v-if="session.phase === 'player'" class="blackjack-tableau__total">
@@ -52,7 +71,12 @@ function showDealerCard(index: number): boolean {
                     v-for="(card, index) in session.dealerHand"
                     :key="`d-${index}-${card.rank}-${card.suit}-${session.dealerHand.length}`"
                     class="blackjack-tableau__card"
-                    :class="{ 'blackjack-tableau__card--new': index === session.dealerHand.length - 1 && session.phase === 'dealer' }"
+                    :class="{
+                        'blackjack-tableau__card--new':
+                            session.phase === 'dealer' &&
+                            (index === session.dealerHand.length - 1 ||
+                                (index === 1 && !session.dealerHoleHidden)),
+                    }"
                     :card="card"
                     :display-as-revealed="showDealerCard(index)"
                 />
@@ -72,11 +96,18 @@ function showDealerCard(index: number): boolean {
                 <SingleCard
                     v-for="(card, index) in session.playerHand"
                     :key="`p-${index}-${card.rank}-${card.suit}-${card.isSpell ? (card as { name?: string }).name : ''}`"
+                    class="blackjack-tableau__card"
+                    :class="{
+                        'blackjack-tableau__card--new':
+                            index === session.playerHand.length - 1 &&
+                            session.phase === 'player',
+                    }"
                     :card="card"
                     :display-as-revealed="true"
                 />
             </div>
         </div>
+        </template>
     </div>
 </template>
 

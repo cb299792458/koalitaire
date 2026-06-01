@@ -1,4 +1,3 @@
-import { scaleDamage as scaleDamageByAct } from "../game/enemyActScaling";
 import type { EventOption } from "./Event";
 import type Player from "./Player";
 
@@ -36,15 +35,17 @@ export default class Minigame {
         this.options = params.options;
     }
 
-    scaleDamage(base: number): number {
-        return scaleDamageByAct(base, this.act);
+    /** Minigame penalty damage: base amount × act. */
+    damageForAct(base: number): number {
+        return Math.max(0, Math.round(base * this.act));
     }
 
-    damagePlayer(player: Player, baseDamage: number): void {
-        const amount = this.scaleDamage(baseDamage);
+    damagePlayer(player: Player, baseDamage: number): number {
+        const amount = this.damageForAct(baseDamage);
         if (amount > 0) {
             player.takeDamage(amount);
         }
+        return amount;
     }
 }
 

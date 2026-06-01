@@ -1,13 +1,16 @@
 import { ref, type Ref } from "vue";
 import type Minigame from "../models/Minigame";
 import type { MinigameOption } from "../models/Minigame";
-import { resetBlackjackSession, startBlackjackSession } from "./useBlackjack";
 import ShellGameMinigame, {
     type ShellCardKind,
 } from "../models/minigames/ShellGameMinigame";
-import BlackjackMinigame from "../models/minigames/BlackjackMinigame";
+import MontyHallMinigame, { type MontyCardKind } from "../models/minigames/MontyHallMinigame";
 import type Player from "../models/Player";
 import { playSound } from "../utils/sounds";
+import {
+    resetAllMinigameSessions,
+    startMinigameSession,
+} from "./minigameSessions";
 
 const playerRef = ref<Player | null>(null);
 const currentMinigameRef = ref<Minigame | null>(null);
@@ -52,6 +55,7 @@ export function useMinigame(): {
     resetMinigameState: () => void;
     resolveChoice: (option: MinigameOption) => void;
     resolveShellGamePick: (slotIndex: number, layout: readonly ShellCardKind[]) => void;
+    resolveMontyHallFinal: (finalIndex: number, layout: readonly MontyCardKind[]) => void;
     onMinigameContinue: () => void;
     choiceLabel: (option: MinigameOption) => string;
     enterMinigame: (player: Player, minigame: Minigame) => void;
@@ -69,7 +73,7 @@ export function useMinigame(): {
         resultMessage: resultMessageRef,
         isResolving: isResolvingRef,
         resetMinigameState() {
-            resetBlackjackSession();
+            resetAllMinigameSessions();
             isInMinigameRef.value = false;
             currentMinigameRef.value = null;
             playerRef.value = null;
@@ -127,6 +131,17 @@ export function useMinigame(): {
             resultMessageRef.value = outcome.message;
             isResolvingRef.value = false;
         },
+        resolveMontyHallFinal(finalIndex: number, layout: readonly MontyCardKind[]) {
+            const p = playerRef.value;
+            const minigame = currentMinigameRef.value;
+            if (!p || !(minigame instanceof MontyHallMinigame) || isResolvingRef.value) return;
+
+            isResolvingRef.value = true;
+            const outcome = minigame.resolveFinal(finalIndex, layout);
+            outcome.effect(p as Player, minigame);
+            resultMessageRef.value = outcome.message;
+            isResolvingRef.value = false;
+        },
         onMinigameContinue() {
             this.leaveMinigame();
         },
@@ -140,12 +155,10 @@ export function useMinigame(): {
             resultMessageRef.value = null;
             isResolvingRef.value = false;
             clearRollRefs();
-            if (minigame instanceof BlackjackMinigame) {
-                startBlackjackSession(player, minigame);
-            }
+            startMinigameSession(player, minigame);
         },
         leaveMinigame() {
-            resetBlackjackSession();
+            resetAllMinigameSessions();
             resultMessageRef.value = null;
             isResolvingRef.value = false;
             isInMinigameRef.value = false;

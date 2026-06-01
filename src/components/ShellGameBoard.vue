@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { useMinigame } from "../composables/useMinigame";
 import { createShellSpellCard } from "../game/cards/shellGameCards";
@@ -10,7 +10,7 @@ import {
 } from "../models/minigames/ShellGameMinigame";
 import type { SpellCard } from "../models/Card";
 
-type Phase = "peeking" | "covering" | "shuffling" | "picking" | "revealed";
+type Phase = "intro" | "peeking" | "covering" | "shuffling" | "picking" | "revealed";
 
 interface ShellSlot {
     id: number;
@@ -29,7 +29,7 @@ const REVEAL_BEFORE_RESULT_MS = 900;
 
 const { currentMinigame, resolveShellGamePick, resultMessage, isResolving } = useMinigame();
 
-const phase = ref<Phase>("peeking");
+const phase = ref<Phase>("intro");
 const slots = ref<ShellSlot[]>([]);
 const pickedSlotId = ref<number | null>(null);
 const statusText = ref("Watch the cards…");
@@ -171,11 +171,10 @@ watch(phase, (p) => {
     }
 });
 
-onMounted(() => {
-    if (shellMinigame.value) {
-        startSequence();
-    }
-});
+function beginPlay() {
+    if (phase.value !== "intro" || !shellMinigame.value) return;
+    startSequence();
+}
 
 onBeforeUnmount(() => {
     clearScheduled();
@@ -184,6 +183,17 @@ onBeforeUnmount(() => {
 
 <template>
     <div v-if="shellMinigame" class="shell-game-tableau">
+        <div v-if="phase === 'intro'" class="minigame-intro">
+            <p class="minigame-intro__lead">
+                Three cards are shown briefly, then shuffled face down. Find the Queen of
+                Hearts to win a spell card; a Joker costs you.
+            </p>
+            <button type="button" class="minigame-intro__start" @click="beginPlay()">
+                Start
+            </button>
+        </div>
+
+        <template v-else>
         <p class="shell-game-tableau__status">{{ statusText }}</p>
 
         <div
@@ -223,6 +233,7 @@ onBeforeUnmount(() => {
                 </div>
             </button>
         </div>
+        </template>
     </div>
 </template>
 
