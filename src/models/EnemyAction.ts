@@ -2,7 +2,7 @@ import type Enemy from "./Enemy";
 import type Player from "./Player";
 import type { Combat } from "../composables/useCombat";
 import { DamageType } from "./DamageType";
-import { createSummon, summons } from "../game/summons";
+import { createSummon, enemySummonAttackEffect, summons } from "../game/summons";
 
 export type EnemyActionEffect = (enemy: Enemy, player: Player, combat: Combat) => void | Promise<void>;
 
@@ -107,7 +107,7 @@ const summonRat: EnemyActionParams = {
     effect: (enemy) => {
         const rat = summons.rat;
         if (rat) {
-            enemy.summons.push(createSummon(rat));
+            enemy.summons.push(createSummon({ ...rat, effect: enemySummonAttackEffect() }));
         }
     },
 }

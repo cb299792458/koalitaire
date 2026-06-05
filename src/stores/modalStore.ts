@@ -6,6 +6,7 @@ import CardRewardModal from '../components/Modals/CardRewardModal.vue'
 import ConfirmModal from '../components/Modals/ConfirmModal.vue'
 import BackAtCampModal from '../components/Modals/BackAtCampModal.vue'
 import CardifactPickModal from '../components/Modals/CardifactPickModal.vue'
+import StarterCardPickModal from '../components/Modals/StarterCardPickModal.vue'
 import EliteRelicRewardModal from '../components/Modals/EliteRelicRewardModal.vue'
 
 export type ModalName =
@@ -17,6 +18,7 @@ export type ModalName =
     | 'cardReward'
     | 'confirmNoReshuffles'
     | 'backAtCamp'
+    | 'starterCardPick'
     | 'cardifactPick'
     | 'eliteRelicReward'
 
@@ -47,6 +49,7 @@ const modals: Record<ModalName, unknown> = {
     cardReward: markRaw(CardRewardModal),
     confirmNoReshuffles: markRaw(ConfirmModal),
     backAtCamp: markRaw(BackAtCampModal),
+    starterCardPick: markRaw(StarterCardPickModal),
     cardifactPick: markRaw(CardifactPickModal),
     eliteRelicReward: markRaw(EliteRelicRewardModal),
 }

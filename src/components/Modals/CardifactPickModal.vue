@@ -33,7 +33,7 @@
 <template>
     <div class="cardifact-pick-modal">
         <h2>Choose a cardifact</h2>
-        <p class="cardifact-pick-modal__hint">One blessing for your run.</p>
+        <p class="cardifact-pick-modal__hint">A family heirloom, it's effects will be applied to you at the start of each combat.</p>
         <div class="cardifact-pick-modal__grid">
             <div
                 v-for="(c, index) in choices"

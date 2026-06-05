@@ -385,13 +385,13 @@ export const koaParams: PlayerParams = {
     columnCount: 5,
     handSlotCount: 1,
 
-    appeal: 10,
-    attack: 7,
-    armor: 7,
-    agility: 7,
-    acumen: 7,
+    appeal: 5,
+    attack: 3,
+    armor: 3,
+    agility: 3,
+    acumen: 3,
 
-    health: 200,
+    health: 100,
     koallarbucks: 150,
     bytecoins: 0,
 

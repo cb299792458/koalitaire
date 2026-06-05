@@ -136,7 +136,7 @@ function snapshotSummonHpLosses(initial: Map<number, number>, finalSummons: SimS
 }
 
 /**
- * Simulates {@link Combat}'s post-`playerTurnEnded` combat (poison ticks → summons → enemy actions → enemy summon effects)
+ * Simulates {@link Combat}'s post-`playerTurnEnded` combat (summons → poison ticks → enemy actions → enemy summon effects)
  * without mutating the real combat or emitting events.
  */
 export async function computeEndTurnDamagePreviewAsync(combat: Combat): Promise<EndTurnDamagePreview> {
@@ -225,16 +225,6 @@ export async function computeEndTurnDamagePreviewAsync(combat: Combat): Promise<
     } as Combat;
 
     const playerPoison = player.combatStatuses.find((s) => s.id === CombatStatusId.Poisoned);
-    if (playerPoison && playerPoison.turnsRemaining > 0) {
-        playerBoard.health = Math.max(0, playerBoard.health - playerPoison.turnsRemaining);
-    }
-    if (playerBoard.health > 0) {
-        const enemyPoison = enemy.combatStatuses.find((s) => s.id === CombatStatusId.Poisoned);
-        if (enemyPoison && enemyPoison.turnsRemaining > 0) {
-            enemySim.health = Math.max(0, enemySim.health - enemyPoison.turnsRemaining);
-        }
-    }
-
     /** Snapshot order at “press End Turn”; skip if that summon is gone before its attack (survive to attack). */
     const playerSummonWave = [...playerBoard.summons];
     for (const sim of playerSummonWave) {
@@ -245,6 +235,26 @@ export async function computeEndTurnDamagePreviewAsync(combat: Combat): Promise<
             continue;
         }
         await sim.effect(previewCombat, sim);
+    }
+
+    if (enemySim.health <= 0) {
+        return {
+            playerHpLoss: Math.max(0, initialPlayerHp - playerBoard.health),
+            playerBlockLoss: Math.max(0, initialPlayerBlock - playerBoard.block),
+            playerSummonHpLosses: snapshotSummonHpLosses(playerSummonInitial, playerBoard.summons),
+            enemyHpLoss: Math.max(0, initialEnemyHp - enemySim.health),
+            enemySummonHpLosses: snapshotSummonHpLosses(enemySummonInitial, enemySim.summons),
+        };
+    }
+
+    if (playerPoison && playerPoison.turnsRemaining > 0) {
+        playerBoard.health = Math.max(0, playerBoard.health - playerPoison.turnsRemaining);
+    }
+    if (playerBoard.health > 0) {
+        const enemyPoison = enemy.combatStatuses.find((s) => s.id === CombatStatusId.Poisoned);
+        if (enemyPoison && enemyPoison.turnsRemaining > 0) {
+            enemySim.health = Math.max(0, enemySim.health - enemyPoison.turnsRemaining);
+        }
     }
 
     if (enemySim.health <= 0) {

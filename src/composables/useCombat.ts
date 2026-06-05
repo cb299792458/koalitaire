@@ -171,9 +171,8 @@ export class Combat {
     // ==================== Turn Management ====================
 
     /**
-     * End turn only (via `playerTurnEnded`): tableau + recycling → deck; if mana pools are full for the
-     * compost cycle, compost and all mana pool cards → deck as well. Then shuffle the deck and deal to the tableau.
-     * Trash is unchanged; mana pools are only emptied when they participate in this fold.
+     * Tableau + recycling → deck; if mana pools are full for the compost cycle, compost and all mana
+     * pool cards → deck as well. Then shuffle the deck and deal to the tableau. Trash is unchanged.
      */
     private async recycleTableauAndRecyclingIntoDeck(): Promise<void> {
         const foldCompost = this.shouldFoldCompostIntoDeckAtEndTurn();
@@ -198,7 +197,7 @@ export class Combat {
     /**
      * Built-in turn rules on the event bus (registered first after {@link CombatEventBus.clear}).
      * `playerTurnStarted`: reset dodge/block, refresh enemy actions, then external listeners run.
-     * `playerTurnEnded`: {@link recycleTableauAndRecyclingIntoDeck} (tableau + recycling + compost + mana pools if mana full) → shuffle → tableau; poison end-of-turn damage; if combat continues, tick all combat status durations; trash unchanged.
+     * `playerTurnEnded`: external card triggers only; poison, status ticks, and tableau recycle run in {@link runRestOfTurn}.
      */
     /**
      * Runs each owned {@link Player.cardifacts} after tableau/deck setup, then the enemy's optional
@@ -231,17 +230,6 @@ export class Combat {
                 return;
             }
             if (event.type === "playerTurnEnded") {
-                await this.recycleTableauAndRecyclingIntoDeck();
-                this.applyPoisonEndOfTurnDamage();
-                if (this.enemy && this.enemy.health <= 0) {
-                    await this.defeatEnemy();
-                    return;
-                }
-                if (!this.player || this.player.health <= 0) {
-                    return;
-                }
-                this.player.tickCombatStatuses();
-                this.enemy?.tickCombatStatuses();
                 return;
             }
         });
@@ -279,10 +267,11 @@ export class Combat {
         await this.events.emit({ type: "beforeDamageToEnemy", payload });
         const scaled = Math.max(0, Math.floor(payload.amount * this.player.outgoingDamageMultiplier));
         this.enemy.takeDamage(scaled, payload.damageTypes);
+        this.notify();
     }
 
     /**
-     * Runs on `playerTurnEnded` after tableau recycle, before status duration ticks and before player summon attacks.
+     * Runs after player summons attack, before status duration ticks and enemy actions.
      * Each poisoned combatant loses life equal to their poison's remaining turns via `loseLife` (not `takeDamage`:
      * no summons, block, dodge, status multipliers, or beforeDamage events).
      */
@@ -318,7 +307,6 @@ export class Combat {
         this.notify();
 
         // Hand slots are not shuffled; leave them as-is.
-        // Tableau + recycling (+ compost + mana pools when mana full) → deck → tableau runs in registerCombatLifecycleListeners.
         await this.events.emit({ type: 'playerTurnEnded' });
 
         try {
@@ -332,13 +320,11 @@ export class Combat {
     }
 
     /**
-     * Summons, enemy actions, reshuffle if needed, then start new turn.
+     * Player summons, poison and status ticks, enemy actions, then recycle/shuffle/redeal, then start new turn.
      */
     private async runRestOfTurn(): Promise<void> {
         if (!this.player || !this.enemy) return;
-        if (this.player.health <= 0 || this.enemy.health <= 0) {
-            return;
-        }
+        if (this.player.health <= 0) return;
 
         // Snapshot summon order at end-turn click so runtime matches preview behavior.
         // A summon must still exist when its turn comes up to act.
@@ -355,6 +341,16 @@ export class Combat {
             return;
         }
 
+        this.applyPoisonEndOfTurnDamage();
+        if (this.enemy.health <= 0) {
+            await this.defeatEnemy();
+            return;
+        }
+        if (this.player.health <= 0) return;
+
+        this.player.tickCombatStatuses();
+        this.enemy?.tickCombatStatuses();
+
         this.enemy.dodge = 0;
         this.enemy.block = 0;
         await this.enemy.executeActions(this.player, this);
@@ -363,10 +359,11 @@ export class Combat {
             return;
         }
 
-        if (this.deck.isEmpty()) {
-            this.recycling.recycleInto(this.deck);
-            await this.deck.shuffle();
+        if (this.player.health <= 0) {
+            return;
         }
+
+        await this.recycleTableauAndRecyclingIntoDeck();
 
         await this.startTurn();
     }

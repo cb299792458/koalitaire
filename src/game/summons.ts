@@ -1,5 +1,5 @@
 import type { Combat } from '../composables/useCombat';
-import Summon, { Race } from '../models/Summon';
+import Summon, { type SummonEffect, Race } from '../models/Summon';
 
 function koalaCount(combat: Combat): number {
     return combat.player?.summons.filter((s) => s.race === Race.Koala).length ?? 0;
@@ -26,6 +26,16 @@ export function createSummon(template: SummonTemplate): Summon {
         race: template.race,
         effect: template.effect,
     });
+}
+
+/** End-of-turn effect for summons on the enemy's side — deals damage to the player. */
+export function enemySummonAttackEffect(
+    amount: (summon: Summon) => number = (s) => s.damage
+): SummonEffect {
+    return async (combat, summon) => {
+        const dmg = amount(summon);
+        if (dmg > 0) await combat.damagePlayer(dmg);
+    };
 }
 
 // Summon definitions

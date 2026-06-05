@@ -4,7 +4,7 @@
  * On the **player**: Crook increases damage taken; Knackered reduces damage dealt to the enemy.
  * On the **enemy**: Crook increases damage taken from the player; Knackered reduces damage the enemy deals to the player.
  *
- * **Poisoned**: At end of each player turn (after recycling the tableau, before your summons attack), applies
+ * **Poisoned**: At end of each player turn (after your summons attack, before the enemy acts), applies
  * `loseLife` for an amount equal to remaining duration, then duration ticks down with other statuses.
  * Does not use `takeDamage` (no summons, block, dodge, knackered, crook, or beforeDamage hooks).
  * Re-applying any status **adds** to its remaining turns.

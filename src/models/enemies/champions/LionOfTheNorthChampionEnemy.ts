@@ -3,7 +3,7 @@ import EnemyAction, { buildAttackAction } from "../../EnemyAction";
 import { Race } from "../../Summon";
 import { CombatStatusId } from "../../../game/combatStatuses";
 import type { SummonTemplate } from "../../../game/summons";
-import { createSummon } from "../../../game/summons";
+import { createSummon, enemySummonAttackEffect } from "../../../game/summons";
 
 const blindingBaldness = new EnemyAction(
     "Blinding Baldness",
@@ -51,9 +51,7 @@ const retinueCompanionBase: Omit<SummonTemplate, "name"> = {
     hp: 30,
     damage: 5,
     race: Race.Dingo,
-    effect: async (combat, summon) => {
-        await combat.damageEnemy(summon.damage);
-    },
+    effect: enemySummonAttackEffect(),
 };
 
 export default class LionOfTheNorthChampionEnemy extends Enemy {

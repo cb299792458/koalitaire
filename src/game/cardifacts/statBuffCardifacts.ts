@@ -1,5 +1,5 @@
-import Cardifact from "../../models/Cardifact";
-import type Player from "../../models/Player";
+// import Cardifact from "../../models/Cardifact";
+// import type Player from "../../models/Player";
 import { PostCombatGoldCardifact } from "./postCombatGoldCardifact";
 import {
     FirstTurnBlockCardifact,
@@ -9,90 +9,90 @@ import {
 import { BlockGainDamageCardifact } from "./blockGainDamageCardifact";
 import { CombatStartRatCardifact } from "./combatStartRatCardifact";
 
-const BUFF = 2;
+// const BUFF = 2;
 
-/** Permanent +Armor when acquired; reversed on remove. */
-export class ArmorCardifact extends Cardifact {
-    constructor() {
-        super({
-            id: "stat_armor",
-            name: "Barkplate Charm",
-            description: `+${BUFF} Armor.`,
-        });
-    }
+// /** Permanent +Armor when acquired; reversed on remove. */
+// export class ArmorCardifact extends Cardifact {
+//     constructor() {
+//         super({
+//             id: "stat_armor",
+//             name: "Barkplate Charm",
+//             description: `+${BUFF} Armor.`,
+//         });
+//     }
+//
+//     onAcquire(player: Player): void {
+//         player.armor += BUFF;
+//     }
+//
+//     onRemove(player: Player): void {
+//         player.armor -= BUFF;
+//     }
+// }
 
-    onAcquire(player: Player): void {
-        player.armor += BUFF;
-    }
+// /** Permanent +Appeal when acquired; reversed on remove. */
+// export class AppealCardifact extends Cardifact {
+//     constructor() {
+//         super({
+//             id: "stat_appeal",
+//             name: "Courtiers' Favor",
+//             description: `+${BUFF} Appeal.`,
+//         });
+//     }
+//
+//     onAcquire(player: Player): void {
+//         player.appeal += BUFF;
+//     }
+//
+//     onRemove(player: Player): void {
+//         player.appeal -= BUFF;
+//     }
+// }
 
-    onRemove(player: Player): void {
-        player.armor -= BUFF;
-    }
-}
+// /** Permanent +Agility when acquired; reversed on remove. */
+// export class AgilityCardifact extends Cardifact {
+//     constructor() {
+//         super({
+//             id: "stat_agility",
+//             name: "Windthread",
+//             description: `+${BUFF} Agility.`,
+//         });
+//     }
+//
+//     onAcquire(player: Player): void {
+//         player.agility += BUFF;
+//     }
+//
+//     onRemove(player: Player): void {
+//         player.agility -= BUFF;
+//     }
+// }
 
-/** Permanent +Appeal when acquired; reversed on remove. */
-export class AppealCardifact extends Cardifact {
-    constructor() {
-        super({
-            id: "stat_appeal",
-            name: "Courtiers' Favor",
-            description: `+${BUFF} Appeal.`,
-        });
-    }
-
-    onAcquire(player: Player): void {
-        player.appeal += BUFF;
-    }
-
-    onRemove(player: Player): void {
-        player.appeal -= BUFF;
-    }
-}
-
-/** Permanent +Agility when acquired; reversed on remove. */
-export class AgilityCardifact extends Cardifact {
-    constructor() {
-        super({
-            id: "stat_agility",
-            name: "Windthread",
-            description: `+${BUFF} Agility.`,
-        });
-    }
-
-    onAcquire(player: Player): void {
-        player.agility += BUFF;
-    }
-
-    onRemove(player: Player): void {
-        player.agility -= BUFF;
-    }
-}
-
-/** Permanent +Acumen when acquired; reversed on remove. */
-export class AcumenCardifact extends Cardifact {
-    constructor() {
-        super({
-            id: "stat_acumen",
-            name: "Ledger Lens",
-            description: `+${BUFF} Acumen.`,
-        });
-    }
-
-    onAcquire(player: Player): void {
-        player.acumen += BUFF;
-    }
-
-    onRemove(player: Player): void {
-        player.acumen -= BUFF;
-    }
-}
+// /** Permanent +Acumen when acquired; reversed on remove. */
+// export class AcumenCardifact extends Cardifact {
+//     constructor() {
+//         super({
+//             id: "stat_acumen",
+//             name: "Ledger Lens",
+//             description: `+${BUFF} Acumen.`,
+//         });
+//     }
+//
+//     onAcquire(player: Player): void {
+//         player.acumen += BUFF;
+//     }
+//
+//     onRemove(player: Player): void {
+//         player.acumen -= BUFF;
+//     }
+// }
 
 /** Every cardifact available at run start for the free pick (one choice). */
 export const ALL_STARTING_CARDIFACT_CLASSES = [
-    ArmorCardifact,
-    AppealCardifact,
-    AgilityCardifact,
-    AcumenCardifact,
+    // ArmorCardifact,
+    // AppealCardifact,
+    // AgilityCardifact,
+    // AcumenCardifact,
     FirstTurnBlockCardifact,
     SecondTurnBlockCardifact,
     ThirdTurnBlockCardifact,

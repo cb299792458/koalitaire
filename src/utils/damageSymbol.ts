@@ -1,7 +1,7 @@
-import { damageSuitIconHtml, manaDiamondSuitIconHtml } from './suitUiSymbols';
+import { manaDiamondSuitIconHtml } from './suitUiSymbols';
 
 /**
- * Replaces "damage" with a club suit icon, "block" with a gray shield icon (optional), and mana diamond phrases with a diamond suit icon.
+ * Replaces "block" with a gray shield icon (optional) and mana diamond phrases with a diamond suit icon.
  * Returns HTML string; use with v-html. Escapes existing HTML in the text.
  */
 function escapeHtml(s: string): string {
@@ -12,7 +12,6 @@ function escapeHtml(s: string): string {
         .replace(/"/g, '&quot;');
 }
 
-const DAMAGE_SYMBOL = damageSuitIconHtml;
 const MANA_DIAMOND_SYMBOL = manaDiamondSuitIconHtml;
 
 /** Same geometry as `public/icons/shield-minimalistic-svgrepo-com.svg`; color from `.suit-symbol--block` (currentColor). */
@@ -32,11 +31,11 @@ export interface FormatStatSymbolsOptions {
     replaceBlock?: boolean;
 }
 
-/** Replaces "damage" / "mana diamond(s)" with suit SVGs; "block" with shield (unless disabled). Use with v-html. */
+/** Replaces "mana diamond(s)" with suit SVGs; "block" with shield (unless disabled). Use with v-html. */
 export function formatStatSymbols(text: string, options?: FormatStatSymbolsOptions): string {
     const replaceBlock = options?.replaceBlock !== false;
     const escaped = escapeHtml(text);
-    let out = escaped.replace(/\bdamage\b/gi, DAMAGE_SYMBOL);
+    let out = escaped;
     if (replaceBlock) {
         out = out.replace(/\bblock\b/gi, BLOCK_SYMBOL);
     }

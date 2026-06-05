@@ -43,9 +43,9 @@
 
     const DECK_PILE_TOOLTIP = 'Your deck starts here'
     const RECYCLING_PILE_TOOLTIP =
-        'At the end of each turn, recycling and the tableau are gathered, shuffled into the deck, and the tableau is redealt. If your mana pools are not full, compost stays separate; trash is never mixed in.'
+        'After your summons attack and the enemy acts, recycling and the tableau are gathered, shuffled into the deck, and the tableau is redealt. If your mana pools are not full, compost stays separate; trash is never mixed in.'
     const COMPOST_PILE_TOOLTIP =
-        'Spells go to compost when cast. When you end your turn with every mana card in the mana pools, compost and those mana pool cards are shuffled into the deck with the tableau and recycling, then redealt to the tableau.'
+        'Spells go to compost when cast. When you end your turn with every mana card in the mana pools, compost and those mana pool cards are shuffled into the deck with the tableau and recycling after the enemy turn, then redealt to the tableau.'
     const TRASH_PILE_TOOLTIP =
         'Trashed cards stay here until the end of combat, then they are removed from play.'
 
@@ -121,17 +121,27 @@ The old throne has fallen, and all the animals now chart a future together.
         openNextExpositionCard()
     }
 
+    function openCardifactPickForRun(newPlayer: Player) {
+        openModal('cardifactPick', {
+            onPick: (cardifact: Cardifact) => {
+                newPlayer.addCardifact(cardifact)
+                closeModal()
+                nextTick(() => openMapDeckForPlayer(newPlayer))
+            },
+        }, { keepOpen: true })
+    }
+
     function beginNewRun(characterParams: PlayerParams) {
         const newPlayer = new Player(characterParams)
         scenarioRef.value = makeScenario({
             lastRowChampion: pickChampionForNewAct(newPlayer.defeatedChampionIds),
         })
         hasChosenCharacterRef.value = true
-        openModal('cardifactPick', {
-            onPick: (cardifact: Cardifact) => {
-                newPlayer.addCardifact(cardifact)
+        openModal('starterCardPick', {
+            player: newPlayer,
+            onPick: () => {
                 closeModal()
-                nextTick(() => openMapDeckForPlayer(newPlayer))
+                nextTick(() => openCardifactPickForRun(newPlayer))
             },
         }, { keepOpen: true })
     }
