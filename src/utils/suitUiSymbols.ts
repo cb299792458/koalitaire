@@ -23,7 +23,7 @@ export const heartSuitSvgInner = suitSvgInner(HEART_D);
 export const clubSuitSvgInner = suitSvgInner(CLUB_D);
 export const diamondSuitSvgInner = suitSvgInner(DIAMOND_D);
 
-export type SuitStatModifier = 'damage' | 'health' | 'mana-diamonds';
+export type SuitStatModifier = 'mana-diamonds';
 
 export function wrapSuitStat(
     modifier: SuitStatModifier,
@@ -35,8 +35,4 @@ export function wrapSuitStat(
 }
 
 /** For {@link import("./damageSymbol").formatStatSymbols} and other v-html. */
-export const damageSuitIconHtml = wrapSuitStat('damage', 'Damage', clubSuitSvgInner);
-
 export const manaDiamondSuitIconHtml = wrapSuitStat('mana-diamonds', 'Mana Diamonds', diamondSuitSvgInner);
-
-export const healthSuitIconHtml = wrapSuitStat('health', 'Health', heartSuitSvgInner);

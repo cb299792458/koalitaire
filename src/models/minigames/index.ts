@@ -8,38 +8,13 @@ import RatscrewMinigame from "./RatscrewMinigame";
 import WarMinigame from "./WarMinigame";
 
 export type { MinigameConstructor } from "../Minigame";
-export { default as Minigame } from "../Minigame";
-export {
-    BlackjackMinigame,
-    MontyHallMinigame,
-    ShellGameMinigame,
-    HigherOrLowerMinigame,
-    MemoryMinigame,
-    RatscrewMinigame,
-    WarMinigame,
-};
-export { isBlackjackMinigame, BLACKJACK_WINS_REQUIRED } from "./BlackjackMinigame";
-export {
-    isHigherOrLowerMinigame,
-    HIGHER_LOWER_WINS_REQUIRED,
-} from "./HigherOrLowerMinigame";
-export {
-    isRatscrewMinigame,
-    RATSCREW_MISS_DAMAGE_BASE,
-    RATSCREW_FALSE_SLAP_DAMAGE_BASE,
-    RATSCREW_CREW_LABEL,
-} from "./RatscrewMinigame";
-export { isMemoryMinigame, MEMORY_MISMATCH_DAMAGE_BASE } from "./MemoryMinigame";
-export { isWarMinigame, WAR_WINS_REQUIRED } from "./WarMinigame";
-export {
-    isMontyHallMinigame,
-    createMontyLayout,
-    pickDoorToReveal,
-    switchDoorIndex,
-} from "./MontyHallMinigame";
-export type { MontyCardKind } from "./MontyHallMinigame";
-export { isShellGameMinigame, createShuffledShellLayout } from "./ShellGameMinigame";
-export type { ShellCardKind } from "./ShellGameMinigame";
+export { isBlackjackMinigame } from "./BlackjackMinigame";
+export { isHigherOrLowerMinigame } from "./HigherOrLowerMinigame";
+export { isRatscrewMinigame } from "./RatscrewMinigame";
+export { isMemoryMinigame } from "./MemoryMinigame";
+export { isWarMinigame } from "./WarMinigame";
+export { isMontyHallMinigame } from "./MontyHallMinigame";
+export { isShellGameMinigame } from "./ShellGameMinigame";
 
 export const MINIGAME_CONSTRUCTORS: MinigameConstructor[] = [
     ShellGameMinigame,

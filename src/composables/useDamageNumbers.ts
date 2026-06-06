@@ -9,8 +9,7 @@ export interface DamageNumber {
 
 export type DamageNumberType = DamageNumber['type'];
 
-/** Maps damage number type to container flash class (used by CombatantInfo). */
-export const FLASH_CLASS_MAP: Record<DamageNumberType, string> = {
+const FLASH_CLASS_MAP: Record<DamageNumberType, string> = {
     damage: 'flash-red',
     heal: 'flash-green',
     'block-gain': 'flash-gray',

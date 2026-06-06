@@ -530,47 +530,6 @@
         border-radius: 4px;
     }
 
-    .map-stack {
-        position: relative;
-        width: 120px;
-        min-height: 300px;
-        flex-shrink: 0;
-    }
-
-    .map-card {
-        position: absolute;
-        left: 0;
-        width: 120px;
-        aspect-ratio: 5 / 7;
-        background-color: #f5f0d0;
-        border: 1px solid #333;
-        border-radius: 10px;
-        display: flex;
-        flex-direction: column;
-        align-items: stretch;
-        font-weight: bold;
-        font-size: 0.9rem;
-        color: #333;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-        box-sizing: border-box;
-    }
-
-    .map-card:not(.disabled):hover {
-        border-color: #4CAF50;
-        box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.3);
-    }
-
-    .map-card-label {
-        flex-shrink: 0;
-        padding: 6px 8px;
-        text-align: center;
-        font-size: 10px;
-        line-height: 1.2;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
     .deck-content {
         display: flex;
         flex-direction: column;

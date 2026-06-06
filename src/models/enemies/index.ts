@@ -2,17 +2,13 @@ import type Enemy from "../Enemy";
 
 import {
     AlternatorEnemy,
-    BarrageEnemy,
     DwambatEnemy,
     FibonacciEnemy,
     FrighteningFishesEnemy,
     GnokkaEnemy,
     GruntEnemy,
-    MageEnemy,
     PlatypusEnemy,
-    RangerEnemy,
     RatCallerEnemy,
-    TacticianEnemy,
 } from "./regular";
 
 import {
@@ -42,35 +38,7 @@ import { KolanGraydadBossEnemy } from "./boss";
 
 export type EnemyConstructor = new (act: number) => Enemy;
 
-export {
-    AlternatorEnemy,
-    AnansiTheStoryWeaverChampionEnemy,
-    BarrageEnemy,
-    BrawlerTwinsEnemy,
-    BruteEnemy,
-    ChronodoDragonChampionEnemy,
-    ClubTheSealGuardianEnemy,
-    CrocodileHunterChampionEnemy,
-    DiamondTheStingrayGuardianEnemy,
-    DwambatEnemy,
-    FibonacciEnemy,
-    FrighteningFishesEnemy,
-    GeckommanderChampionEnemy,
-    GnokkaEnemy,
-    GruntEnemy,
-    HeartTheBarracudaGuardianEnemy,
-    HugeJackedRamEnemy,
-    KolanGraydadBossEnemy,
-    LionOfTheNorthChampionEnemy,
-    MageEnemy,
-    PenguinyuForceChampionEnemy,
-    PlatypusEnemy,
-    RangerEnemy,
-    RatCallerEnemy,
-    SpadeTheFalconGuardianEnemy,
-    SquirrelfEnemy,
-    TacticianEnemy,
-};
+export { KolanGraydadBossEnemy };
 
 /** Final scenario row; one constructor per run. */
 export const CHAMPION_ENCOUNTER_ENEMIES: EnemyConstructor[] = [

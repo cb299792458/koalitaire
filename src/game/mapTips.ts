@@ -17,4 +17,8 @@ export const MAP_TIPS: MapTip[] = [
         title: 'On Editing Your Deck',
         body: 'You can choose which spells to include in your deck with the deck button above. Try to balance your spells\' ranks and suits as well as their effects, as spell cards can be stacked by rank and suit just like mana cards.'
     },
+    {
+        title: 'On Spell Card Suits and Ranks',
+        body: 'Consider the Suits and Ranks of the spell cards in your deck. It\'s generally helpful to try to stack many spell cards in the same column, to be able to move your mana cards to the mana pools.',
+    }
 ];

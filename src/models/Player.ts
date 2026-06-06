@@ -16,7 +16,6 @@ import koaPortrait from "/player_portraits/koa.png";
 import platypusPortrait from "/enemy_portraits/platypus.png";
 import { openMessageModal } from "../stores/modalStore";
 import useDamageNumbers from "../composables/useDamageNumbers";
-// import { starterCards } from "../game/cards/starterCards";
 import { basicCards } from "../game/cards/basicCards";
 import { generalCards } from "../game/cards/generalCards";
 import { starterCards } from "../game/cards/starterCards";
@@ -374,7 +373,6 @@ class Player extends Combatant {
     }
 }
 
-// const koaSpellCards = spellCardsFromParams(starterCards);
 const koaSpellCards = spellCardsFromParams(basicCards);
 
 export const koaParams: PlayerParams = {
@@ -382,8 +380,8 @@ export const koaParams: PlayerParams = {
     portrait: koaPortrait,
     tooltip: "Crown Prince Koa XIII of Koala Lumpur",
 
-    columnCount: 5,
-    handSlotCount: 1,
+    columnCount: 7,
+    handSlotCount: 2,
 
     appeal: 5,
     attack: 3,
