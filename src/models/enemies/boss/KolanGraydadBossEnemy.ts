@@ -4,16 +4,16 @@ import { CombatStatusId } from "../../../game/combatStatuses";
 
 /** Base hit before Kolan's attack stat; scales with act like other enemy actions. */
 const KNIFE_HAND_DAMAGE = 24;
-const CROOK_TURNS = 2;
+const DECRODED_TURNS = 2;
 const TITLE_CARD_BLOCK = 16;
 const MIMIC_POWER_STAT_BONUS = 5;
 
 const viltrumiteKnifeHand = new EnemyAction(
     "Viltrumite Knife Hand",
-    `Kolan Graydad drives a brutal knife-hand strike for ${KNIFE_HAND_DAMAGE} damage plus attack, then leaves you Crooked for ${CROOK_TURNS} turns — you take 50% more damage from all sources.`,
+    `Kolan Graydad drives a brutal knife-hand strike for ${KNIFE_HAND_DAMAGE} damage plus attack, then leaves you Decroded for ${DECRODED_TURNS} turns — you take 50% more damage from all sources.`,
     async (enemy, player, combat) => {
         await combat.damagePlayer(enemy.scaleDamage(KNIFE_HAND_DAMAGE) + enemy.attack);
-        player.addCombatStatus(CombatStatusId.Crook, CROOK_TURNS);
+        player.addCombatStatus(CombatStatusId.Decroded, DECRODED_TURNS);
         combat.notify();
     }
 );

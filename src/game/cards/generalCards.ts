@@ -98,7 +98,7 @@ const regenerate: SpellCardParams = {
 const koality: SpellCardParams = {
     rank: 2,
     suit: Suit.Metal,
-    name: 'A Chance to Show His Quality',
+    name: 'A Chance to Show His Koality',
     description: 'Gain +5 to all stats this combat.',
     effect: (combat: Combat) => {
         const { player } = combat;
@@ -222,10 +222,10 @@ const riptide: SpellCardParams = {
     rank: 3,
     suit: Suit.Water,
     name: "Riptide",
-    description: "Apply Crook to the enemy for 3 turns.",
-    keywords: [Keyword.Crook],
+    description: "Apply Decroded to the enemy for 3 turns.",
+    keywords: [Keyword.Decroded],
     effect: (combat: Combat) => {
-        combat.enemy?.addCombatStatus(CombatStatusId.Crook, 3);
+        combat.enemy?.addCombatStatus(CombatStatusId.Decroded, 3);
     },
 };
 

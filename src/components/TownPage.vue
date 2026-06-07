@@ -1,10 +1,11 @@
 <script setup lang="ts">
     import { onMounted, onBeforeUnmount, ref, unref, computed } from 'vue'
     import { useTown, type StatStoreId, STAT_STORE_IDS } from '../composables/useTown'
-    import { useModalState, closeModal } from '../stores/modalStore'
+    import { useModalState, closeModal, openModal } from '../stores/modalStore'
     import CombatantInfo from './CombatantInfo.vue'
     import SingleCard from './Cards/SingleCard.vue'
     import BackAtCampModal from './Modals/BackAtCampModal.vue'
+    import ModalManager from './ModalManager.vue'
     import { SpellCard } from '../models/Card'
     import type { SpellCardParams } from '../models/Card'
     import GameLayout from './GameLayout.vue'
@@ -191,6 +192,22 @@
 
     const booster5InStock = computed(() => town.storeBooster5Available.value)
     const booster10InStock = computed(() => town.storeBooster10Available.value)
+
+    function buyBoosterPack(size: 5 | 10) {
+        const p = unref(player)
+        if (!p) return
+        const cards = town.buyBoosterPack(size)
+        if (!cards?.length) return
+        openModal(
+            'cardReward',
+            {
+                title: size === 5 ? '5-Card Booster Pack' : '10-Card Booster Pack',
+                player: p,
+                rewardCards: cards,
+            },
+            { keepOpen: true }
+        )
+    }
 </script>
 
 <template>
@@ -251,13 +268,13 @@
                                             <div class="town-store-booster">
                                                 <div class="town-store-booster-info">
                                                     <span class="town-store-booster-title">5-card booster pack</span>
-                                                    <span class="town-store-booster-detail">Five random spell cards added to your collection and deck.</span>
+                                                    <span class="town-store-booster-detail">Five random spell cards — choose which to add to your deck.</span>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     class="town-choice-button town-store-booster-buy"
                                                     :disabled="!town.canBuyBoosterPack(5)"
-                                                    @click="town.buyBoosterPack(5)"
+                                                    @click="buyBoosterPack(5)"
                                                 >
                                                     <template v-if="!booster5InStock">Sold out this visit</template>
                                                     <template v-else>Buy ({{ town.getBoosterPack5Price() }} 💵)</template>
@@ -266,13 +283,13 @@
                                             <div class="town-store-booster">
                                                 <div class="town-store-booster-info">
                                                     <span class="town-store-booster-title">10-card booster pack</span>
-                                                    <span class="town-store-booster-detail">Ten random spell cards added to your collection and deck.</span>
+                                                    <span class="town-store-booster-detail">Ten random spell cards — choose which to add to your deck.</span>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     class="town-choice-button town-store-booster-buy"
                                                     :disabled="!town.canBuyBoosterPack(10)"
-                                                    @click="town.buyBoosterPack(10)"
+                                                    @click="buyBoosterPack(10)"
                                                 >
                                                     <template v-if="!booster10InStock">Sold out this visit</template>
                                                     <template v-else>Buy ({{ town.getBoosterPack10Price() }} 💵)</template>
@@ -375,6 +392,7 @@
                 </div>
             </div>
         </div>
+        <ModalManager />
     </div>
 </template>
 

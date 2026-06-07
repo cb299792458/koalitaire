@@ -20,10 +20,10 @@ const talonStrike = buildAttackAction({
 
 const investigate = new EnemyAction(
     "Investigate",
-    "Spade, the Falcon investigates — you are Knackered and Crooked for two turns each.",
+    "Spade, the Falcon investigates — you are Knackered and Decroded for two turns each.",
     (_enemy, player, combat) => {
         player.addCombatStatus(CombatStatusId.Knackered, STATUS_TURNS);
-        player.addCombatStatus(CombatStatusId.Crook, STATUS_TURNS);
+        player.addCombatStatus(CombatStatusId.Decroded, STATUS_TURNS);
         combat.notify();
     }
 );

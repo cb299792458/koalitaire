@@ -40,7 +40,7 @@ const ricoTemplate: SummonTemplate = {
 const kowalskiTemplate: SummonTemplate = {
     name: "Kowalski",
     description: "Analysis: debuff the opposition.",
-    tooltip: "Each turn: applies 1 Knackered and 1 Crook to you.",
+    tooltip: "Each turn: applies 1 Knackered and 1 Decroded to you.",
     hp: 10,
     damage: 0,
     race: Race.Platypus,
@@ -48,7 +48,7 @@ const kowalskiTemplate: SummonTemplate = {
         const player = combat.player;
         if (!player) return;
         player.addCombatStatus(CombatStatusId.Knackered, 1);
-        player.addCombatStatus(CombatStatusId.Crook, 1);
+        player.addCombatStatus(CombatStatusId.Decroded, 1);
     },
 };
 

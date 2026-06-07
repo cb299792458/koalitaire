@@ -15,9 +15,9 @@ const blindingBaldness = new EnemyAction(
 
 const bindingOfCords = new EnemyAction(
     "The Binding of Cords",
-    "Cord and knot tighten around you: Crook for 3 turns — you take more damage from all sources.",
+    "Cord and knot tighten around you: Decroded for 3 turns — you take more damage from all sources.",
     (_enemy, player) => {
-        player.addCombatStatus(CombatStatusId.Crook, 3);
+        player.addCombatStatus(CombatStatusId.Decroded, 3);
     }
 );
 

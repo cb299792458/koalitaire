@@ -12,6 +12,8 @@ const props = withDefaults(defineProps<{
     title?: string;
     /** Player to add reward cards to. Required for card reward UI. */
     player?: Player | null;
+    /** Pre-selected cards to offer; defaults to 3 random from the reward pool. */
+    rewardCards?: SpellCardParams[];
     /** Called when Accept is clicked. Return false to prevent closing. */
     onContinue?: () => void | boolean;
 }>(), {
@@ -50,7 +52,9 @@ function pickRandomCards(count: number): SpellCardParams[] {
 }
 
 onMounted(() => {
-    const params = pickRandomCards(REWARD_COUNT);
+    const params = props.rewardCards?.length
+        ? props.rewardCards
+        : pickRandomCards(REWARD_COUNT);
     rewardParams.value = params;
     displayCards.value = params.map((p) => {
         const card = createSpellCardFromParams(p);

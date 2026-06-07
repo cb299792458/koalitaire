@@ -100,7 +100,7 @@ const CAST_RIGHT_KEYWORDS: string[] = [
     Keyword.Backstab,
     Keyword.Aoe,
     Keyword.Knackered,
-    Keyword.Crook,
+    Keyword.Decroded,
     Keyword.Poisoned,
 ];
 

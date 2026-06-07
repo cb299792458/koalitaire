@@ -4,7 +4,7 @@ import type { ActiveCombatStatus } from "../game/combatStatuses";
 import {
     CombatStatusId,
     KNACKERED_OUTGOING_FACTOR,
-    CROOK_INCOMING_FACTOR,
+    DECRODED_INCOMING_FACTOR,
 } from "../game/combatStatuses";
 import EnemyAction, { enemyActions } from "./EnemyAction";
 import type Player from "./Player";
@@ -228,7 +228,7 @@ class Enemy extends Combatant {
         let incoming = 1;
         let outgoing = 1;
         for (const s of this.combatStatuses) {
-            if (s.id === CombatStatusId.Crook) incoming *= CROOK_INCOMING_FACTOR;
+            if (s.id === CombatStatusId.Decroded) incoming *= DECRODED_INCOMING_FACTOR;
             if (s.id === CombatStatusId.Knackered) outgoing *= KNACKERED_OUTGOING_FACTOR;
         }
         this.incomingDamageMultiplier = incoming;

@@ -7,7 +7,7 @@ import type Cardifact from "./Cardifact";
 import {
     type ActiveCombatStatus,
     CombatStatusId,
-    CROOK_INCOMING_FACTOR,
+    DECRODED_INCOMING_FACTOR,
     KNACKERED_OUTGOING_FACTOR,
 } from "../game/combatStatuses";
 import type { CombatEventBus } from "../game/combatEvents";
@@ -225,7 +225,7 @@ class Player extends Combatant {
         let incoming = 1;
         let outgoing = 1;
         for (const s of this.combatStatuses) {
-            if (s.id === CombatStatusId.Crook) incoming *= CROOK_INCOMING_FACTOR;
+            if (s.id === CombatStatusId.Decroded) incoming *= DECRODED_INCOMING_FACTOR;
             if (s.id === CombatStatusId.Knackered) outgoing *= KNACKERED_OUTGOING_FACTOR;
         }
         this.incomingDamageMultiplier = incoming;

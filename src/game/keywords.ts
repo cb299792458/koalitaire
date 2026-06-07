@@ -18,8 +18,8 @@ export enum Keyword {
     ManaDiamond = 'manaDiamond',
     /** Combat status; same rules as {@link CombatStatusId.Knackered}. */
     Knackered = "knackered",
-    /** Combat status; same rules as {@link CombatStatusId.Crook}. */
-    Crook = "crook",
+    /** Combat status; same rules as {@link CombatStatusId.Decroded}. */
+    Decroded = "decroded",
     /** Combat status; same rules as {@link CombatStatusId.Poisoned}. */
     Poisoned = "poisoned",
 }
@@ -39,7 +39,7 @@ export const KEYWORD_EXPLANATIONS: Record<Keyword, string> = {
     [Keyword.Charges]: 'Charges: This spell has limited uses per combat. When the last charge is used, the card is trashed.',
     [Keyword.ManaDiamond]: 'Mana Diamond: Can be used to pay for the difference between the card\'s rank and the number of cards in the corresponding mana pool.',
     [Keyword.Knackered]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Knackered],
-    [Keyword.Crook]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Crook],
+    [Keyword.Decroded]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Decroded],
     [Keyword.Poisoned]: COMBAT_STATUS_TOOLTIPS[CombatStatusId.Poisoned],
 };
 

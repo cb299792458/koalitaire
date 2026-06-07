@@ -118,7 +118,7 @@ export function useTown(): {
     getBoosterPack5Price: () => number;
     getBoosterPack10Price: () => number;
     canBuyBoosterPack: (size: 5 | 10) => boolean;
-    buyBoosterPack: (size: 5 | 10) => void;
+    buyBoosterPack: (size: 5 | 10) => SpellCardParams[] | null;
     traderOffers: Ref<TraderOffer[]>;
     refreshTraderOffers: () => void;
     doTrade: (slotIndex: number) => void;
@@ -217,25 +217,22 @@ export function useTown(): {
             if (!storeBooster10AvailableRef.value) return false;
             return p.koallarbucks >= BOOSTER_PACK_10_PRICE;
         },
-        buyBoosterPack(size: 5 | 10) {
+        buyBoosterPack(size: 5 | 10): SpellCardParams[] | null {
             const p = playerRef.value;
-            if (!p) return;
+            if (!p) return null;
             const count = size === 5 ? BOOSTER_PACK_5_SIZE : BOOSTER_PACK_10_SIZE;
             const price = size === 5 ? BOOSTER_PACK_5_PRICE : BOOSTER_PACK_10_PRICE;
             if (size === 5) {
-                if (!storeBooster5AvailableRef.value) return;
+                if (!storeBooster5AvailableRef.value) return null;
             } else {
-                if (!storeBooster10AvailableRef.value) return;
+                if (!storeBooster10AvailableRef.value) return null;
             }
-            if (p.koallarbucks < price) return;
+            if (p.koallarbucks < price) return null;
             const paramsList = pickRandom(BOOSTER_CARD_POOL, count);
             p.koallarbucks -= price;
             if (size === 5) storeBooster5AvailableRef.value = false;
             else storeBooster10AvailableRef.value = false;
-            for (const params of paramsList) {
-                p.collection.push(createSpellCardFromParams(params));
-                p.spellDeck.push(true);
-            }
+            return paramsList;
         },
         traderOffers: traderOffersRef,
         refreshTraderOffers() {

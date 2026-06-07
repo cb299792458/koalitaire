@@ -7,7 +7,7 @@ import type { SummonTemplate } from "../../../game/summons";
 import { createSummon } from "../../../game/summons";
 
 const HEARTBREAKER_DAMAGE = 8;
-const CROOK_TURNS = 2;
+const DECRODED_TURNS = 2;
 const POISON_STING_TURNS = 3;
 
 const heartbreaker = buildAttackAction({
@@ -18,9 +18,9 @@ const heartbreaker = buildAttackAction({
 
 const youreVulnerable = new EnemyAction(
     "You're Vulnerable",
-    "You're Vulnerable — you are Crooked. You are not a robot.",
+    "You're Vulnerable — you are Decroded. You are not a robot.",
     (_enemy, player, combat) => {
-        player.addCombatStatus(CombatStatusId.Crook, CROOK_TURNS);
+        player.addCombatStatus(CombatStatusId.Decroded, DECRODED_TURNS);
         combat.notify();
     }
 );
@@ -53,7 +53,7 @@ export default class DiamondTheStingrayGuardianEnemy extends Enemy {
             name: "Diamond, the Stingray",
             health: 40,
             tooltip:
-                "Guardian — opens with Caroline; cycles Heartbreaker, You're Vulnerable (Crook: you are not a robot), and Poison Sting.",
+                "Guardian — opens with Caroline; cycles Heartbreaker, You're Vulnerable (Decroded: you are not a robot), and Poison Sting.",
             generateTurnActions: createSequentialActionGenerator(() => [
                 heartbreaker,
                 youreVulnerable,

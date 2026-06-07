@@ -50,10 +50,10 @@ const venomOfTheTale = new EnemyAction(
 
 const enweb = new EnemyAction(
     "Enweb",
-    "Silk and story bind you: Knackered and Crook for two turns each.",
+    "Silk and story bind you: Knackered and Decroded for two turns each.",
     (_enemy, player, combat) => {
         player.addCombatStatus(CombatStatusId.Knackered, 2);
-        player.addCombatStatus(CombatStatusId.Crook, 2);
+        player.addCombatStatus(CombatStatusId.Decroded, 2);
         combat.notify();
     }
 );

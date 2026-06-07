@@ -237,7 +237,7 @@ export class Combat {
 
     /**
      * All damage to the player during combat (enemy attacks, etc.). Emits {@link CombatEvent} `beforeDamageToPlayer`,
-     * then applies the enemy's outgoing multipliers (e.g. knackered), then incoming multipliers (e.g. crook) in
+     * then applies the enemy's outgoing multipliers (e.g. knackered), then incoming multipliers (e.g. decroded) in
      * {@link Player.takeDamage}.
      */
     async damagePlayer(rawAmount: number, damageTypes: DamageType[] = []): Promise<void> {
@@ -256,7 +256,7 @@ export class Combat {
     /**
      * All damage from the player to the enemy (spells, summons, etc.). Emits `beforeDamageToEnemy`, then applies
      * the player's outgoing multipliers (e.g. knackered), then {@link Enemy.takeDamage} (which applies the enemy's
-     * incoming multipliers, e.g. crook).
+     * incoming multipliers, e.g. decroded).
      */
     async damageEnemy(rawAmount: number, damageTypes: DamageType[] = []): Promise<void> {
         if (!this.enemy || !this.player) return;
