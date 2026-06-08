@@ -47,7 +47,7 @@ function deckStackStyle(layer: number): Record<string, string> {
                 <li>Each loss deals <strong>rank-difference × act</strong> damage</li>
                 <li>Run out of cards — <strong>10×act damage</strong></li>
             </ul>
-            <button type="button" class="minigame-intro__start" @click="beginPlay()">
+            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
                 Start
             </button>
         </div>

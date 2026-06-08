@@ -28,16 +28,5 @@
 
 .minigame-intro__start {
     padding: 12px 32px;
-    font-family: var(--font-game-mono);
     font-size: 1.1rem;
-    font-weight: 700;
-    border-radius: 6px;
-    border: 1px solid #5c3d2e;
-    background: #f5e6d3;
-    color: #5c3d2e;
-    cursor: pointer;
-}
-
-.minigame-intro__start:hover {
-    background: #edd9c4;
 }

@@ -75,14 +75,14 @@ function onChoiceKeydown(e: KeyboardEvent, index: number) {
                 <p class="elite-relic-reward-modal__message">
                     Your relic slots are full. You cannot take another relic.
                 </p>
-                <button type="button" class="continue-button" @click="finish">Continue</button>
+                <button type="button" class="continue-button primary-action-button" @click="finish">Continue</button>
             </template>
 
             <template v-else-if="displayRelicsRef.length === 0">
                 <p class="elite-relic-reward-modal__message">
                     You already carry every relic from this path.
                 </p>
-                <button type="button" class="continue-button" @click="finish">Continue</button>
+                <button type="button" class="continue-button primary-action-button" @click="finish">Continue</button>
             </template>
 
             <template v-else>
@@ -185,15 +185,6 @@ h2 {
 .continue-button {
     padding: 1rem 2rem;
     font-size: 1.2rem;
-    background: #4caf50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
     align-self: center;
-}
-
-.continue-button:hover {
-    background: #43a047;
 }
 </style>

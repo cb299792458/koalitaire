@@ -20,6 +20,12 @@
             actions: () => [],
         }
     )
+
+    const PRIMARY_ACTION_LABEL = /^(continue|next|accept|start|ok|got it)$/i
+
+    function isPrimaryAction(label: string): boolean {
+        return PRIMARY_ACTION_LABEL.test(label.trim())
+    }
 </script>
 
 <template>
@@ -36,6 +42,7 @@
                 :key="index"
                 type="button"
                 class="message-modal__action game-card-action-btn"
+                :class="{ 'primary-action-button': isPrimaryAction(action.label) }"
                 :disabled="action.disabled"
                 @click="action.onClick"
             >

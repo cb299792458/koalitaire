@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
                 Three cards are shown briefly, then shuffled face down. Find the Queen of
                 Hearts to win a spell card; a Joker costs you.
             </p>
-            <button type="button" class="minigame-intro__start" @click="beginPlay()">
+            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
                 Start
             </button>
         </div>

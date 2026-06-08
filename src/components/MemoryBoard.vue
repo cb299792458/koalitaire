@@ -33,7 +33,7 @@ const pairsRemaining = computed(() => {
                 <li>Clear the board to win</li>
                 <li>Each miss deals <strong>1×act damage</strong></li>
             </ul>
-            <button type="button" class="minigame-intro__start" @click="beginPlay()">
+            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
                 Start
             </button>
         </div>

@@ -48,7 +48,7 @@ function showDealerCard(index: number): boolean {
                 <li>Win <strong>one hand</strong> to leave the table; <strong>ties go to you</strong></li>
                 <li>Each loss deals <strong>3×act damage</strong></li>
             </ul>
-            <button type="button" class="minigame-intro__start" @click="beginPlay()">
+            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
                 Start
             </button>
         </div>

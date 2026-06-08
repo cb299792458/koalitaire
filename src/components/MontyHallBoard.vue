@@ -208,7 +208,7 @@ onBeforeUnmount(() => {
             <button
                 v-if="phase === 'intro'"
                 type="button"
-                class="monty-hall-tableau__ready"
+                class="monty-hall-tableau__ready primary-action-button"
                 @click="beginPicking"
             >
                 Start
@@ -311,7 +311,12 @@ onBeforeUnmount(() => {
     color: #333;
 }
 
-.monty-hall-tableau__ready,
+.monty-hall-tableau__ready {
+    margin-top: 4px;
+    padding: 12px 32px;
+    font-size: 1.1rem;
+}
+
 .monty-hall-tableau__choice {
     margin-top: 4px;
     padding: 10px 18px;
@@ -324,7 +329,6 @@ onBeforeUnmount(() => {
     cursor: pointer;
 }
 
-.monty-hall-tableau__ready:hover,
 .monty-hall-tableau__choice:hover {
     background: #e4e4e4;
 }

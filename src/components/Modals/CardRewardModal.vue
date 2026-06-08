@@ -121,7 +121,7 @@ function toggleIncludeInDeck(index: number) {
                     </label>
                 </div>
             </div>
-            <button type="button" class="accept-button" @click="accept">Accept</button>
+            <button type="button" class="accept-button primary-action-button" @click="accept">Accept</button>
         </div>
     </div>
 </template>
@@ -205,19 +205,5 @@ h2 {
 .accept-button {
     padding: 1rem 2rem;
     font-size: 1.2rem;
-    background: #4caf50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    transition: background 0.2s;
-    cursor: pointer;
-}
-
-.accept-button:hover {
-    background: #43a047;
-}
-
-.accept-button:active {
-    background: #388e3c;
 }
 </style>

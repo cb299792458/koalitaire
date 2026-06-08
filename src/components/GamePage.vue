@@ -350,6 +350,11 @@ The old throne has fallen, and all the animals now chart a future together.
     const isInMinigame = computed(() => minigameState.isInMinigame.value)
     const isBackAtCampOpen = computed(() => modalState.currentModal?.name === 'backAtCamp')
     const isMessageModalOpen = computed(() => modalState.currentModal?.name === 'message')
+    const showMessageContinueButton = computed(() => {
+        if (!isMessageModalOpen.value) return false
+        const actions = modalState.currentModal?.props?.actions as unknown[] | undefined
+        return !actions?.length
+    })
     const isManaPoolCelebrating = computed(
         () =>
             compostCelebrationState.active &&
@@ -1048,7 +1053,7 @@ The old throne has fallen, and all the animals now chart a future together.
                                 </div>
                                 <div v-if="isInCombat" class="combat-bottom-buttons">
                                     <button
-                                        v-if="showGameStartTestModeButton && isMessageModalOpen"
+                                        v-if="showGameStartTestModeButton && showMessageContinueButton"
                                         id="test-mode-button"
                                         type="button"
                                         @click="onGameStartTestModeClick"
@@ -1056,9 +1061,10 @@ The old throne has fallen, and all the animals now chart a future together.
                                         Test Mode
                                     </button>
                                     <button
-                                        v-if="isMessageModalOpen"
+                                        v-if="showMessageContinueButton"
                                         id="message-continue-button"
                                         type="button"
+                                        class="primary-action-button"
                                         @click="closeModal"
                                     >
                                         Continue
@@ -1147,13 +1153,16 @@ The old throne has fallen, and all the animals now chart a future together.
     width: 180px;
     height: 86px;
     margin: 0;
-    background: #f4f4f4;
-    border: 1px solid #8b8b8b;
     border-radius: 8px;
     font-size: 16px;
     font-weight: 600;
     z-index: 10001;
     position: relative;
+}
+
+#test-mode-button {
+    background: #f4f4f4;
+    border: 1px solid #8b8b8b;
 }
 
 .cards-top {

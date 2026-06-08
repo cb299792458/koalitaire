@@ -28,7 +28,7 @@ const holMinigame = computed(() => {
                 <li><strong>Ties</strong> count as a win</li>
                 <li>Each wrong guess deals <strong>3×act damage</strong></li>
             </ul>
-            <button type="button" class="minigame-intro__start" @click="beginPlay()">
+            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
                 Start
             </button>
         </div>

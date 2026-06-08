@@ -186,3 +186,51 @@ input:disabled {
     opacity: 0.55;
     cursor: not-allowed;
 }
+
+/** Forward-progress actions: Continue, Next, Start, Accept. */
+.primary-action-button {
+    background: #4caf50;
+    color: #fff;
+    border: 2px solid #388e3c;
+    border-radius: 8px;
+    font-family: var(--font-game-mono);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow:
+        0 0 0 2px rgba(76, 175, 80, 0.35),
+        0 4px 14px rgba(76, 175, 80, 0.4);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+    animation: primary-action-pulse 2.4s ease-in-out infinite;
+}
+
+.primary-action-button:hover:not(:disabled) {
+    background: #43a047;
+    box-shadow:
+        0 0 0 3px rgba(76, 175, 80, 0.45),
+        0 6px 18px rgba(76, 175, 80, 0.5);
+}
+
+.primary-action-button:active:not(:disabled) {
+    background: #388e3c;
+    transform: translateY(1px);
+}
+
+.primary-action-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    animation: none;
+    box-shadow: none;
+}
+
+@keyframes primary-action-pulse {
+    0%, 100% {
+        box-shadow:
+            0 0 0 2px rgba(76, 175, 80, 0.35),
+            0 4px 14px rgba(76, 175, 80, 0.4);
+    }
+    50% {
+        box-shadow:
+            0 0 0 4px rgba(76, 175, 80, 0.5),
+            0 4px 18px rgba(76, 175, 80, 0.55);
+    }
+}

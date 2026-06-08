@@ -91,7 +91,7 @@ function pileCardStyle(index: number, cardCount: number) {
                 <li>Slap with no pattern — <strong>{{ falseSlapDamage }} damage</strong></li>
                 <li>Survive until every card is flipped to win</li>
             </ul>
-            <button type="button" class="ratscrew-tableau__start" @click="beginPlay()">
+            <button type="button" class="ratscrew-tableau__start primary-action-button" @click="beginPlay()">
                 Start
             </button>
         </div>
@@ -256,18 +256,7 @@ function pileCardStyle(index: number, cardCount: number) {
 
 .ratscrew-tableau__start {
     padding: 12px 32px;
-    font-family: var(--font-game-mono);
     font-size: 1.1rem;
-    font-weight: 700;
-    border-radius: 6px;
-    border: 1px solid #5c3d2e;
-    background: #f5e6d3;
-    color: #5c3d2e;
-    cursor: pointer;
-}
-
-.ratscrew-tableau__start:hover {
-    background: #edd9c4;
 }
 
 .ratscrew-tableau__meta,
