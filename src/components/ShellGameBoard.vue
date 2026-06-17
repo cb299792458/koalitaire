@@ -125,7 +125,7 @@ function startSequence() {
     slots.value = buildSlots(layout);
     pickedSlotId.value = null;
     phase.value = "peeking";
-    statusText.value = "Find the Queen…";
+    statusText.value = "Find Rocko…";
     setAllCardsRevealed(true);
 
     schedule(() => {
@@ -183,20 +183,26 @@ onBeforeUnmount(() => {
 
 <template>
     <div v-if="shellMinigame" class="shell-game-tableau">
-        <div v-if="phase === 'intro'" class="minigame-intro">
-            <p class="minigame-intro__lead">
-                Three cards are shown briefly, then shuffled face down. Find the Queen of
-                Hearts to win a spell card; a Joker costs you.
+        <div class="shell-game-tableau__host" role="region" aria-label="Rocko the wallaby">
+            <span class="shell-game-tableau__host-icon" aria-hidden="true">🦘</span>
+            <p class="shell-game-tableau__host-label">Rocko</p>
+            <p v-if="phase === 'intro'" class="shell-game-tableau__host-line">
+                Three cards — me, Heffer, and Filburt — get a quick peek, then I shuffle.
+                Find me to win; pick Heffer or Filburt and you take a hit.
             </p>
-            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
+            <p v-else class="shell-game-tableau__host-line">{{ statusText }}</p>
+            <button
+                v-if="phase === 'intro'"
+                type="button"
+                class="shell-game-tableau__start primary-action-button"
+                @click="beginPlay()"
+            >
                 Start
             </button>
         </div>
 
-        <template v-else>
-        <p class="shell-game-tableau__status">{{ statusText }}</p>
-
         <div
+            v-if="phase !== 'intro'"
             class="shell-game-tableau__track"
             :style="{ width: `${trackWidthPx}px` }"
         >
@@ -233,7 +239,6 @@ onBeforeUnmount(() => {
                 </div>
             </button>
         </div>
-        </template>
     </div>
 </template>
 
@@ -244,17 +249,53 @@ onBeforeUnmount(() => {
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
+    gap: 16px;
     width: 100%;
     margin-top: 12px;
     min-height: 0;
+    padding: 8px 12px;
 }
 
-.shell-game-tableau__status {
-    margin: 0 0 8px;
+.shell-game-tableau__host {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    max-width: 520px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(57, 78, 89, 0.25);
+    border-radius: 10px;
+}
+
+.shell-game-tableau__host-icon {
+    font-size: 2.25rem;
+    line-height: 1;
+}
+
+.shell-game-tableau__host-label {
+    margin: 0;
     font-family: var(--font-game-mono);
-    font-size: 1.05rem;
-    color: #333;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #444;
+}
+
+.shell-game-tableau__host-line {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-size: 1rem;
+    line-height: 1.45;
     text-align: center;
+    color: #333;
+}
+
+.shell-game-tableau__start {
+    margin-top: 4px;
+    padding: 12px 32px;
+    font-size: 1.1rem;
 }
 
 .shell-game-tableau__track {

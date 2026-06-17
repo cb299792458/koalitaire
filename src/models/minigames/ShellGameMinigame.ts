@@ -1,24 +1,29 @@
 import Minigame, { type MinigameOutcomeBranch } from "../Minigame";
 
-export type ShellCardKind = "queen" | "jester";
+export type ShellCardKind = "rocko" | "heffer" | "filburt";
 
-const JESTER_DAMAGE_BASE = 10;
+const WRONG_PICK_DAMAGE_BASE = 10;
 
 export function createShuffledShellLayout(): ShellCardKind[] {
-    const layout: ShellCardKind[] = ["jester", "jester", "jester"];
-    layout[Math.floor(Math.random() * 3)] = "queen";
+    const layout: ShellCardKind[] = ["rocko", "heffer", "filburt"];
+    for (let i = layout.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const tmp = layout[i]!;
+        layout[i] = layout[j]!;
+        layout[j] = tmp;
+    }
     return layout;
 }
 
 export default class ShellGameMinigame extends Minigame {
     readonly success: MinigameOutcomeBranch = {
         effect: () => {},
-        message: "You found the Queen! You win this round.",
+        message: "You found Rocko! You win this round.",
     };
 
     readonly failure: MinigameOutcomeBranch = {
         effect: (player, minigame) => {
-            minigame.damagePlayer(player, JESTER_DAMAGE_BASE);
+            minigame.damagePlayer(player, WRONG_PICK_DAMAGE_BASE);
         },
         message: "", // set in resolvePick so it can include act-scaled damage
     };
@@ -26,24 +31,32 @@ export default class ShellGameMinigame extends Minigame {
     constructor(act: number) {
         super({
             act,
-            name: "Shell Game",
+            name: "Rocko's Shell Game",
             description:
-                "A shady operator flips three cards — one Queen, two Jesters — shuffles them, and dares you to pick.",
+                "Rocko the wallaby lays out three cards — himself, Heffer the steer, and Filburt the turtle — shuffles them, and dares you to find him.",
             options: [],
         });
     }
 
-    jesterDamage(): number {
-        return this.damageForAct(JESTER_DAMAGE_BASE);
+    wrongPickDamage(): number {
+        return this.damageForAct(WRONG_PICK_DAMAGE_BASE);
     }
 
     resolvePick(slotIndex: number, layout: readonly ShellCardKind[]): MinigameOutcomeBranch {
-        if (layout[slotIndex] === "queen") {
+        const picked = layout[slotIndex];
+        if (picked === "rocko") {
             return this.success;
+        }
+        const damage = this.wrongPickDamage();
+        if (picked === "heffer") {
+            return {
+                effect: this.failure.effect,
+                message: `Heffer moos! You take ${damage} damage.`,
+            };
         }
         return {
             effect: this.failure.effect,
-            message: `A Jester cackles! You take ${this.jesterDamage()} damage.`,
+            message: `Filburt ducks into his shell! You take ${damage} damage.`,
         };
     }
 }

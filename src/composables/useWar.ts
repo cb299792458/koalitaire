@@ -9,7 +9,12 @@ import {
     drawFromPileTop,
     warDamageOnLoss,
 } from "../game/war";
-import WarMinigame, { WAR_EMPTY_DECK_DAMAGE_BASE } from "../models/minigames/WarMinigame";
+import WarMinigame, {
+    CASSOWAR_NAME,
+    PLAYER_CASSOWARY_LABEL,
+    RIVAL_CASSOWARY_LABEL,
+    WAR_EMPTY_DECK_DAMAGE_BASE,
+} from "../models/minigames/WarMinigame";
 import type Player from "../models/Player";
 import { publishMinigameResult } from "./minigameResult";
 
@@ -119,8 +124,8 @@ function applySkirmishWin(session: WarSession, tied = false): void {
     session.wins += 1;
     session.phase = "skirmish-result";
     session.roundMessage = tied
-        ? `Tie — you win the battle! (${session.wins}/${session.winsRequired})`
-        : `You win the battle! (${session.wins}/${session.winsRequired})`;
+        ? `Stalemate — your cassowary wins the clash! (${session.wins}/${session.winsRequired})`
+        : `Your cassowary wins the clash! (${session.wins}/${session.winsRequired})`;
     setInteractionFlags(session);
     const player = activePlayer;
     if (player && checkCampaignEnd(session, player)) return;
@@ -142,8 +147,8 @@ function applySkirmishLoss(
     session.phase = "skirmish-result";
     session.roundMessage =
         damage > 0
-            ? `You lose the battle and take ${damage} damage.`
-            : "You lose the battle.";
+            ? `The rival cassowary wins the clash — you take ${damage} damage.`
+            : "The rival cassowary wins the clash.";
     setInteractionFlags(session);
     if (checkCampaignEnd(session, player)) return;
     scheduleAfterSkirmishResult(session);
@@ -152,9 +157,9 @@ function applySkirmishLoss(
 function completeMinigameSuccess(): void {
     const session = sessionRef.value!;
     session.phase = "complete";
-    session.roundMessage = "Three victories! You leave the battlefield.";
+    session.roundMessage = "Three clashes won! Your cassowary struts away.";
     session.canFlip = false;
-    publishMinigameResult("You won three battles at War and march on.");
+    publishMinigameResult("Your cassowary wins the cassowar and you march on.");
 }
 
 function completeMinigameDefeat(message: string): void {
@@ -175,14 +180,14 @@ function handlePlayerDeckEmpty(session: WarSession, player: Player): void {
             : 0;
     completeMinigameDefeat(
         player.health > 0
-            ? `Your deck ran dry. You take ${damage} damage and retreat.`
-            : "Your deck ran dry and you fall on the field."
+            ? `Your cassowary's deck ran dry. You take ${damage} damage and retreat.`
+            : "Your cassowary's deck ran dry and you fall on the field."
     );
 }
 
 function checkCampaignEnd(session: WarSession, player: Player): boolean {
     if (player.health <= 0) {
-        completeMinigameDefeat("You fall before reaching three victories.");
+        completeMinigameDefeat("You fall before winning the cassowar.");
         return true;
     }
     if (session.wins >= session.winsRequired) {
@@ -196,7 +201,7 @@ function beginSkirmish(session: WarSession): void {
     clearBattleCards(session);
     skirmishPot = [];
     session.phase = "battle-ready";
-    session.roundMessage = "Flip the top card of your deck.";
+    session.roundMessage = "Kick over your top card.";
     setInteractionFlags(session);
 }
 
@@ -226,7 +231,7 @@ function revealOpponentCard(session: WarSession, token: number): void {
     opponentCard.revealed = true;
     playDealAnimation(opponentCard);
     session.phase = "comparing";
-    session.roundMessage = "Compare the cards…";
+    session.roundMessage = "Compare the kicks…";
 
     scheduleAnimation(() => resolveComparison(session, token), COMPARE_DELAY_MS);
 }
@@ -250,7 +255,7 @@ function flipOpponentCard(session: WarSession, token: number): void {
 
     skirmishPot.push(opponentCard);
     session.opponentCard = opponentCard;
-    session.roundMessage = "Opponent flips…";
+    session.roundMessage = "The rival cassowary kicks…";
 
     scheduleAnimation(() => revealOpponentCard(session, token), OPPONENT_CARD_REVEAL_MS);
 }
@@ -279,7 +284,7 @@ function flipPlayerCard(): void {
     playDealAnimation(playerCard);
     session.canFlip = false;
     session.phase = "flipping-opponent";
-    session.roundMessage = "Opponent flips…";
+    session.roundMessage = "The rival cassowary kicks…";
 
     scheduleAnimation(() => flipOpponentCard(session, token), OPPONENT_FLIP_DELAY_MS);
 }
@@ -289,7 +294,7 @@ function beginWarPlay(): void {
     if (!session || session.phase !== "intro") return;
     session.phase = "battle-ready";
     session.canFlip = true;
-    session.roundMessage = "Both decks are shuffled. Flip your top card when ready.";
+    session.roundMessage = "Both cassowaries are ready. Flip when you are.";
 }
 
 export function useWar(): {
@@ -319,7 +324,7 @@ export function useWar(): {
                 playerCard: null,
                 opponentCard: null,
                 roundMessage:
-                    "Your shuffled deck faces a random foe deck. Win three battles to leave.",
+                    `A ${CASSOWAR_NAME} — ${PLAYER_CASSOWARY_LABEL} versus ${RIVAL_CASSOWARY_LABEL}. Win three clashes to leave.`,
                 canFlip: false,
             };
         },

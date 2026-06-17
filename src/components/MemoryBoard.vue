@@ -3,7 +3,11 @@ import { computed } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { useMemory } from "../composables/useMemory";
 import { useMinigame } from "../composables/useMinigame";
-import { isMemoryMinigame } from "../models/minigames/MemoryMinigame";
+import {
+    ELEPHANT_NAME,
+    ELEPHANT_TITLE,
+    isMemoryMinigame,
+} from "../models/minigames/MemoryMinigame";
 
 const { session, beginPlay, pickCard } = useMemory();
 
@@ -24,30 +28,34 @@ const pairsRemaining = computed(() => {
 
 <template>
     <div v-if="session && memoryMinigame" class="memory-tableau">
-        <div v-if="isIntro" class="minigame-intro">
-            <p class="minigame-intro__lead">
-                Eight pairs from your combat deck lie face down. Flip two at a time to find
-                matches.
+        <div class="memory-tableau__host" role="region" :aria-label="`${ELEPHANT_NAME} ${ELEPHANT_TITLE}`">
+            <span class="memory-tableau__host-icon" aria-hidden="true">🐘</span>
+            <p class="memory-tableau__host-label">{{ ELEPHANT_NAME }}</p>
+            <p class="memory-tableau__host-subtitle">{{ ELEPHANT_TITLE }}</p>
+            <p v-if="isIntro" class="memory-tableau__host-line">
+                His combat cards are scattered face down — he cannot see them. Flip two at a
+                time and tell him when they match so he can sort them into pairs.
             </p>
-            <ul class="minigame-intro__rules">
-                <li>Clear the board to win</li>
-                <li>Each miss deals <strong>1×act damage</strong></li>
+            <ul v-if="isIntro" class="memory-tableau__rules">
+                <li>Sort all <strong>eight pairs</strong> to win</li>
+                <li>Each wrong pair makes him trumpet — you take <strong>1×act damage</strong></li>
             </ul>
-            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
+            <button
+                v-if="isIntro"
+                type="button"
+                class="memory-tableau__start primary-action-button"
+                @click="beginPlay()"
+            >
                 Start
             </button>
+            <p v-else class="memory-tableau__host-line memory-tableau__host-line--status">
+                {{ session.roundMessage }}
+            </p>
         </div>
 
-        <template v-else>
+        <template v-if="!isIntro">
         <p class="memory-tableau__meta">
-            Pairs left: {{ pairsRemaining }}
-        </p>
-
-        <p
-            class="memory-tableau__status"
-            :class="{ 'memory-tableau__status--result': session.phase !== 'playing' }"
-        >
-            {{ session.roundMessage }}
+            Pairs left to sort: {{ pairsRemaining }}
         </p>
 
         <div class="memory-tableau__grid">
@@ -102,17 +110,82 @@ const pairsRemaining = computed(() => {
     padding: 8px 12px;
 }
 
-.memory-tableau__meta,
-.memory-tableau__status {
+.memory-tableau__host {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    max-width: 520px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(57, 78, 89, 0.25);
+    border-radius: 10px;
+}
+
+.memory-tableau__host-icon {
+    font-size: 2.25rem;
+    line-height: 1;
+}
+
+.memory-tableau__host-label {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #222;
+}
+
+.memory-tableau__host-subtitle {
+    margin: -4px 0 0;
+    font-family: var(--font-game-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555;
+}
+
+.memory-tableau__host-line {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    text-align: center;
+    color: #333;
+}
+
+.memory-tableau__host-line--status {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.memory-tableau__rules {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-family: var(--font-game-mono);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #333;
+    text-align: left;
+}
+
+.memory-tableau__rules li {
+    margin-bottom: 6px;
+}
+
+.memory-tableau__start {
+    margin-top: 4px;
+    padding: 12px 32px;
+    font-size: 1.1rem;
+}
+
+.memory-tableau__meta {
     margin: 0;
     font-family: var(--font-game-mono);
     font-size: 1rem;
     text-align: center;
     color: #333;
-}
-
-.memory-tableau__status--result {
-    font-weight: 700;
 }
 
 .memory-tableau__grid {

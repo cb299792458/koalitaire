@@ -7,6 +7,8 @@ import {
 } from "../game/memory";
 import { revealWithDealAnimation } from "../game/minigameCardAnimation";
 import MemoryMinigame, {
+    ELEPHANT_NAME,
+    ELEPHANT_TITLE,
     MEMORY_MISMATCH_DAMAGE_BASE,
 } from "../models/minigames/MemoryMinigame";
 import type Player from "../models/Player";
@@ -68,10 +70,10 @@ function setPickable(session: MemorySession, canPick: boolean): void {
 function completeMinigameSuccess(): void {
     const session = sessionRef.value!;
     session.phase = "complete";
-    session.roundMessage = "All pairs matched! You leave the trial victorious.";
+    session.roundMessage = `All sorted! ${ELEPHANT_NAME} trumpets his thanks.`;
     session.canPick = false;
     session.firstPickId = null;
-    publishMinigameResult("You matched every pair and complete the memory trial.");
+    publishMinigameResult(`You helped ${ELEPHANT_NAME} sort every pair of cards.`);
 }
 
 function completeMinigameDefeat(message: string): void {
@@ -85,7 +87,7 @@ function completeMinigameDefeat(message: string): void {
 
 function checkPlayerAlive(player: Player): boolean {
     if (player.health <= 0) {
-        completeMinigameDefeat("You fall before clearing the board.");
+        completeMinigameDefeat("You fall before Burton's cards are sorted.");
         return false;
     }
     return true;
@@ -115,8 +117,8 @@ function finishMismatch(
         const damage = minigame.damagePlayer(player, MEMORY_MISMATCH_DAMAGE_BASE);
         session.roundMessage =
             damage > 0
-                ? `No match — you take ${damage} damage.`
-                : "No match.";
+                ? `Not a pair — ${ELEPHANT_NAME} trumpets in frustration. You take ${damage} damage.`
+                : `Not a pair — ${ELEPHANT_NAME} sighs.`;
 
         scheduleAnimation(() => {
             if (!isAnimationActive(token)) return;
@@ -124,7 +126,7 @@ function finishMismatch(
             second.card.revealed = false;
             session.firstPickId = null;
             session.phase = "playing";
-            session.roundMessage = "Find another pair.";
+            session.roundMessage = "Help him find another match.";
             if (!checkPlayerAlive(player)) return;
             setPickable(session, true);
         }, MISMATCH_SHOW_MS);
@@ -140,8 +142,8 @@ function finishMatch(
     const pairsLeftBefore = memorySlotsRemaining(session.slots) / 2;
     session.roundMessage =
         pairsLeftBefore === 1
-            ? "Match — last pair!"
-            : `Match! ${pairsLeftBefore - 1} pairs left.`;
+            ? `A pair sorted — one left for ${ELEPHANT_NAME}!`
+            : `A pair sorted! ${pairsLeftBefore - 1} pairs left.`;
 
     scheduleAnimation(() => {
         if (!isAnimationActive(token)) return;
@@ -187,7 +189,7 @@ function pickCard(slotId: number): void {
     if (session.firstPickId === null) {
         revealWithDealAnimation(slot.card);
         session.firstPickId = slotId;
-        session.roundMessage = "Pick a second card.";
+        session.roundMessage = "Which card goes with that one?";
         return;
     }
 
@@ -206,7 +208,7 @@ function beginMemoryPlay(): void {
     if (!session || session.phase !== "intro") return;
     session.phase = "playing";
     session.canPick = true;
-    session.roundMessage = "All cards are face down. Pick two to find a pair.";
+    session.roundMessage = `${ELEPHANT_NAME} listens — flip two cards to find a matching pair.`;
 }
 
 export function useMemory(): {
@@ -228,7 +230,7 @@ export function useMemory(): {
                 phase: "intro",
                 firstPickId: null,
                 roundMessage:
-                    "Eight pairs from your combat deck lie face down. Match them all to win.",
+                    `${ELEPHANT_NAME}, ${ELEPHANT_TITLE}, needs help sorting his cards — they are all face down.`,
                 canPick: false,
             };
         },

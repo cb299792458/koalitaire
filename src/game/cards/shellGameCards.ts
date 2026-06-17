@@ -3,20 +3,34 @@ import { SpellCard, type SpellCardParams } from "../../models/Card";
 import { Suit } from "../../models/Suit";
 import type { ShellCardKind } from "../../models/minigames/ShellGameMinigame";
 
-const shellQueenParams: SpellCardParams = {
+const shellRockoParams: SpellCardParams = {
     rank: 12,
-    suit: Suit.Metal,
-    name: "Queen",
-    description: "Pick the Queen to win. No other effect.",
+    suit: Suit.Koala,
+    name: "Rocko",
+    description: "A wallaby. Pick Rocko to win.",
     effect: (_combat: Combat) => {},
 };
 
-const shellJesterParams: SpellCardParams = {
+const shellHefferParams: SpellCardParams = {
     rank: 11,
-    suit: Suit.Koala,
-    name: "Jester",
-    description: "The Jester deals 10 damage per act.",
+    suit: Suit.Earth,
+    name: "Heffer",
+    description: "A steer. Wrong pick — 10 damage per act.",
     effect: (_combat: Combat) => {},
+};
+
+const shellFilburtParams: SpellCardParams = {
+    rank: 10,
+    suit: Suit.Water,
+    name: "Filburt",
+    description: "A turtle. Wrong pick — 10 damage per act.",
+    effect: (_combat: Combat) => {},
+};
+
+const SHELL_CARD_PARAMS: Record<ShellCardKind, SpellCardParams> = {
+    rocko: shellRockoParams,
+    heffer: shellHefferParams,
+    filburt: shellFilburtParams,
 };
 
 function spellCardFromParams(params: SpellCardParams): SpellCard {
@@ -34,7 +48,7 @@ function spellCardFromParams(params: SpellCardParams): SpellCard {
 }
 
 export function createShellSpellCard(kind: ShellCardKind): SpellCard {
-    const card = spellCardFromParams(kind === "queen" ? shellQueenParams : shellJesterParams);
+    const card = spellCardFromParams(SHELL_CARD_PARAMS[kind]);
     card.revealed = false;
     return card;
 }

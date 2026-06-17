@@ -4,7 +4,11 @@ import SingleCard from "./Cards/SingleCard.vue";
 import { handTotal } from "../game/blackjack";
 import { useBlackjack } from "../composables/useBlackjack";
 import { useMinigame } from "../composables/useMinigame";
-import { isBlackjackMinigame } from "../models/minigames/BlackjackMinigame";
+import {
+    isBlackjackMinigame,
+    RABBATTOIR_NAME,
+    RABBATTOIR_TITLE,
+} from "../models/minigames/BlackjackMinigame";
 
 const { session, beginPlay } = useBlackjack();
 
@@ -20,7 +24,7 @@ const playerTotal = computed(() =>
     session.value ? handTotal(session.value.playerHand) : 0
 );
 
-const dealerTotal = computed(() => {
+const rabbattoirTotal = computed(() => {
     if (!session.value) return 0;
     if (session.value.dealerHoleHidden && session.value.dealerHand.length > 0) {
         return handTotal([session.value.dealerHand[0]!]);
@@ -28,7 +32,7 @@ const dealerTotal = computed(() => {
     return handTotal(session.value.dealerHand);
 });
 
-function showDealerCard(index: number): boolean {
+function showRabbattoirCard(index: number): boolean {
     if (!session.value) return false;
     if (!session.value.dealerHoleHidden) return true;
     return index === 0;
@@ -37,35 +41,47 @@ function showDealerCard(index: number): boolean {
 
 <template>
     <div v-if="session && blackjackMinigame" class="blackjack-tableau">
-        <div v-if="isIntro" class="minigame-intro">
-            <p class="minigame-intro__lead">
-                Play blackjack with your combat deck against the dealer. Beat the dealer’s
-                total without going over 21.
+        <div class="blackjack-tableau__host" role="region" :aria-label="`${RABBATTOIR_NAME} ${RABBATTOIR_TITLE}`">
+            <span class="blackjack-tableau__host-icon" aria-hidden="true">🐇</span>
+            <p class="blackjack-tableau__host-label">{{ RABBATTOIR_NAME }}</p>
+            <p class="blackjack-tableau__host-subtitle">{{ RABBATTOIR_TITLE }}</p>
+            <p v-if="isIntro" class="blackjack-tableau__host-line">
+                Exiled from the warren — when the rabbit population grows too large, it is his
+                grim duty to cull it. He plays to <strong>21</strong>; anything over loses.
+                Beat him once with your combat deck to walk away.
             </p>
-            <ul class="minigame-intro__rules">
-                <li>Get as close to <strong>21</strong> as you can — going over is a <strong>bust</strong> and you lose the hand</li>
+            <ul v-if="isIntro" class="blackjack-tableau__rules">
+                <li>Get as close to <strong>21</strong> as you can — over that and you lose the hand</li>
                 <li><strong>Hit</strong> to draw another card or <strong>stay</strong> to hold your total</li>
-                <li>Win <strong>one hand</strong> to leave the table; <strong>ties go to you</strong></li>
+                <li>Win <strong>one hand</strong> to leave; <strong>ties go to you</strong></li>
                 <li>Each loss deals <strong>3×act damage</strong></li>
             </ul>
-            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
+            <button
+                v-if="isIntro"
+                type="button"
+                class="blackjack-tableau__start primary-action-button"
+                @click="beginPlay()"
+            >
                 Start
             </button>
+            <p v-else class="blackjack-tableau__host-line blackjack-tableau__host-line--status">
+                {{ session.roundMessage }}
+            </p>
         </div>
 
-        <template v-else>
+        <template v-if="!isIntro">
         <p class="blackjack-tableau__meta">
-            Wins: {{ session.wins }} / {{ session.winsRequired }}
+            Hands won: {{ session.wins }} / {{ session.winsRequired }}
             <span v-if="session.phase === 'player'" class="blackjack-tableau__total">
                 · Your total: {{ playerTotal }}
             </span>
             <span v-else-if="session.phase === 'dealer' || !session.dealerHoleHidden" class="blackjack-tableau__total">
-                · Dealer: {{ dealerTotal }}
+                · {{ RABBATTOIR_NAME }}: {{ rabbattoirTotal }}
             </span>
         </p>
 
         <div class="blackjack-tableau__hand blackjack-tableau__hand--dealer">
-            <p class="blackjack-tableau__hand-label">Dealer</p>
+            <p class="blackjack-tableau__hand-label">{{ RABBATTOIR_NAME }}</p>
             <div class="blackjack-tableau__cards">
                 <SingleCard
                     v-for="(card, index) in session.dealerHand"
@@ -78,14 +94,14 @@ function showDealerCard(index: number): boolean {
                                 (index === 1 && !session.dealerHoleHidden)),
                     }"
                     :card="card"
-                    :display-as-revealed="showDealerCard(index)"
+                    :display-as-revealed="showRabbattoirCard(index)"
                 />
             </div>
         </div>
 
         <p
-            class="blackjack-tableau__status"
-            :class="{ 'blackjack-tableau__status--result': session.phase === 'round-result' }"
+            v-if="session.phase === 'round-result'"
+            class="blackjack-tableau__status blackjack-tableau__status--result"
         >
             {{ session.roundMessage }}
         </p>
@@ -118,11 +134,82 @@ function showDealerCard(index: number): boolean {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 12px;
     width: 100%;
     margin-top: 0;
-    padding-top: 0;
+    padding: 8px 12px 0;
     min-height: 0;
+}
+
+.blackjack-tableau__host {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    max-width: 540px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(57, 78, 89, 0.25);
+    border-radius: 10px;
+}
+
+.blackjack-tableau__host-icon {
+    font-size: 2.25rem;
+    line-height: 1;
+    filter: grayscale(0.85);
+}
+
+.blackjack-tableau__host-label {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #222;
+}
+
+.blackjack-tableau__host-subtitle {
+    margin: -4px 0 0;
+    font-family: var(--font-game-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #555;
+}
+
+.blackjack-tableau__host-line {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    text-align: center;
+    color: #333;
+}
+
+.blackjack-tableau__host-line--status {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.blackjack-tableau__rules {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-family: var(--font-game-mono);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #333;
+    text-align: left;
+}
+
+.blackjack-tableau__rules li {
+    margin-bottom: 6px;
+}
+
+.blackjack-tableau__start {
+    margin-top: 4px;
+    padding: 12px 32px;
+    font-size: 1.1rem;
 }
 
 .blackjack-tableau__meta,

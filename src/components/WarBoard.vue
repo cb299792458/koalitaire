@@ -3,7 +3,12 @@ import { computed } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { useWar } from "../composables/useWar";
 import { useMinigame } from "../composables/useMinigame";
-import { isWarMinigame } from "../models/minigames/WarMinigame";
+import {
+    CASSOWAR_NAME,
+    PLAYER_CASSOWARY_LABEL,
+    RIVAL_CASSOWARY_LABEL,
+    isWarMinigame,
+} from "../models/minigames/WarMinigame";
 import type Card from "../models/Card";
 
 const { session, beginPlay, flipPlayerCard } = useWar();
@@ -37,29 +42,47 @@ function deckStackStyle(layer: number): Record<string, string> {
 
 <template>
     <div v-if="session && warMinigame" class="war-tableau">
-        <div v-if="isIntro" class="minigame-intro">
-            <p class="minigame-intro__lead">
-                Your shuffled combat deck faces a random opposing deck. Flip your top card;
-                higher rank wins the battle. Ties go to you.
+        <div class="war-tableau__host" role="region" :aria-label="CASSOWAR_NAME">
+            <div class="war-tableau__host-icons" aria-hidden="true">
+                <span class="war-tableau__host-icon">🪶</span>
+                <span class="war-tableau__host-vs">vs</span>
+                <span class="war-tableau__host-icon">🪶</span>
+            </div>
+            <p class="war-tableau__host-label">{{ CASSOWAR_NAME }}</p>
+            <p v-if="isIntro" class="war-tableau__host-line">
+                Two cassowaries face off — {{ PLAYER_CASSOWARY_LABEL.toLowerCase() }} against
+                {{ RIVAL_CASSOWARY_LABEL.toLowerCase() }}. Each flips a card from its deck;
+                higher rank wins the clash. Ties go to you.
             </p>
-            <ul class="minigame-intro__rules">
-                <li>Win <strong>three battles</strong> to leave</li>
+            <ul v-if="isIntro" class="war-tableau__rules">
+                <li>Win <strong>three clashes</strong> to leave</li>
                 <li>Each loss deals <strong>rank-difference × act</strong> damage</li>
                 <li>Run out of cards — <strong>10×act damage</strong></li>
             </ul>
-            <button type="button" class="minigame-intro__start primary-action-button" @click="beginPlay()">
+            <button
+                v-if="isIntro"
+                type="button"
+                class="war-tableau__start primary-action-button"
+                @click="beginPlay()"
+            >
                 Start
             </button>
+            <p
+                v-else-if="session.phase === 'skirmish-result' || session.phase === 'complete'"
+                class="war-tableau__host-line war-tableau__host-line--status"
+            >
+                {{ session.roundMessage }}
+            </p>
         </div>
 
-        <template v-else>
+        <template v-if="!isIntro">
         <p class="war-tableau__meta">
-            Victories: {{ session.wins }} / {{ session.winsRequired }}
+            Clashes won: {{ session.wins }} / {{ session.winsRequired }}
         </p>
 
         <div class="war-tableau__arena">
             <div class="war-tableau__side war-tableau__side--foe">
-                <p class="war-tableau__label">Foe deck</p>
+                <p class="war-tableau__label">{{ RIVAL_CASSOWARY_LABEL }}</p>
                 <div class="war-tableau__deck">
                     <div
                         v-for="layer in 3"
@@ -78,7 +101,7 @@ function deckStackStyle(layer: number): Record<string, string> {
 
             <div class="war-tableau__center">
                 <div class="war-tableau__played war-tableau__played--foe">
-                    <p class="war-tableau__played-label">Foe plays</p>
+                    <p class="war-tableau__played-label">Rival plays</p>
                     <div class="war-tableau__played-cards">
                         <Transition name="minigame-deal" mode="out-in">
                             <div
@@ -96,8 +119,8 @@ function deckStackStyle(layer: number): Record<string, string> {
                 </div>
 
                 <p
+                    v-if="session.phase !== 'skirmish-result' && session.phase !== 'complete'"
                     class="war-tableau__status"
-                    :class="{ 'war-tableau__status--result': session.phase === 'skirmish-result' }"
                 >
                     {{ session.roundMessage }}
                 </p>
@@ -122,7 +145,7 @@ function deckStackStyle(layer: number): Record<string, string> {
             </div>
 
             <div class="war-tableau__side war-tableau__side--player">
-                <p class="war-tableau__label">Your deck</p>
+                <p class="war-tableau__label">{{ PLAYER_CASSOWARY_LABEL }}</p>
                 <div class="war-tableau__deck">
                     <div
                         v-for="layer in 3"
@@ -144,7 +167,7 @@ function deckStackStyle(layer: number): Record<string, string> {
             <button
                 v-if="session.canFlip"
                 type="button"
-                class="war-tableau__action"
+                class="war-tableau__action primary-action-button"
                 @click="flipPlayerCard()"
             >
                 Flip top card
@@ -165,6 +188,82 @@ function deckStackStyle(layer: number): Record<string, string> {
     width: 100%;
     min-height: 0;
     padding: 8px 12px;
+}
+
+.war-tableau__host {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    max-width: 540px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(57, 78, 89, 0.25);
+    border-radius: 10px;
+}
+
+.war-tableau__host-icons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.war-tableau__host-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.war-tableau__host-vs {
+    font-family: var(--font-game-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #666;
+}
+
+.war-tableau__host-label {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #222;
+}
+
+.war-tableau__host-line {
+    margin: 0;
+    font-family: var(--font-game-mono);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    text-align: center;
+    color: #333;
+}
+
+.war-tableau__host-line--status {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.war-tableau__rules {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-family: var(--font-game-mono);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #333;
+    text-align: left;
+}
+
+.war-tableau__rules li {
+    margin-bottom: 6px;
+}
+
+.war-tableau__start {
+    margin-top: 4px;
+    padding: 12px 32px;
+    font-size: 1.1rem;
 }
 
 .war-tableau__meta,
@@ -248,11 +347,6 @@ function deckStackStyle(layer: number): Record<string, string> {
     margin: 0;
 }
 
-.war-tableau__status--result {
-    font-size: 1.05rem;
-    font-weight: 700;
-}
-
 .war-tableau__actions {
     display: flex;
     justify-content: center;
@@ -261,16 +355,6 @@ function deckStackStyle(layer: number): Record<string, string> {
 
 .war-tableau__action {
     padding: 12px 22px;
-    font-family: var(--font-game-mono);
     font-size: 1rem;
-    font-weight: 600;
-    border-radius: 6px;
-    border: 1px solid #888;
-    background: #f0f0f0;
-    cursor: pointer;
-}
-
-.war-tableau__action:hover {
-    background: #e4e4e4;
 }
 </style>

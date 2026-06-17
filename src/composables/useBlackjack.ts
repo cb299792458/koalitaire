@@ -13,6 +13,8 @@ import { buildShuffledCombatDeck } from "../game/minigameDeck";
 import { revealWithDealAnimation } from "../game/minigameCardAnimation";
 import BlackjackMinigame, {
     BLACKJACK_LOSS_DAMAGE_BASE,
+    RABBATTOIR_NAME,
+    RABBATTOIR_TITLE,
 } from "../models/minigames/BlackjackMinigame";
 import type Player from "../models/Player";
 import { publishMinigameResult } from "./minigameResult";
@@ -143,7 +145,7 @@ function startRound(session: BlackjackSession): void {
     updatePlayerControls(session);
 
     if (isBust(session.playerHand)) {
-        void concludeHandWithReveal(session, "dealer-win", "Bust! You lose this hand.");
+        void concludeHandWithReveal(session, "dealer-win", "Over 21 — Rabbattoir culls you from this hand.");
     }
 }
 
@@ -169,7 +171,7 @@ async function pauseForDealerReveal(session: BlackjackSession, token: number): P
     session.phase = "dealer";
     session.canHit = false;
     session.canStay = false;
-    session.roundMessage = "Dealer reveals…";
+    session.roundMessage = `${RABBATTOIR_NAME} reveals…`;
     await sleep(DEALER_HOLE_REVEAL_MS);
     if (!isAnimationActive(token) || sessionRef.value !== session) return false;
     revealDealerHoleCard(session);
@@ -187,21 +189,21 @@ async function runDealerTurn(session: BlackjackSession): Promise<void> {
     if (!revealed) return;
 
     while (dealerShouldHit(session.dealerHand)) {
-        session.roundMessage = `Dealer hits… (${handTotal(session.dealerHand)})`;
+        session.roundMessage = `${RABBATTOIR_NAME} draws… (${handTotal(session.dealerHand)})`;
         await sleep(DEALER_HIT_STEP_MS);
         if (!isAnimationActive(token) || sessionRef.value !== session) return;
 
         drawDealerCard(session);
         if (isBust(session.dealerHand)) {
-            session.roundMessage = `Dealer busts at ${handTotal(session.dealerHand)}!`;
+            session.roundMessage = `${RABBATTOIR_NAME} overshoots 21 at ${handTotal(session.dealerHand)}!`;
             await sleep(DEALER_BEFORE_RESULT_MS);
             if (!isAnimationActive(token) || sessionRef.value !== session) return;
-            finishRound(session, "player-win", "Dealer busts! You win this hand.");
+            finishRound(session, "player-win", `${RABBATTOIR_NAME} busts! You win this hand.`);
             return;
         }
     }
 
-    session.roundMessage = `Dealer stays at ${handTotal(session.dealerHand)}.`;
+    session.roundMessage = `${RABBATTOIR_NAME} holds at ${handTotal(session.dealerHand)}.`;
     await sleep(DEALER_BEFORE_RESULT_MS);
     if (!isAnimationActive(token) || sessionRef.value !== session) return;
 
@@ -209,7 +211,7 @@ async function runDealerTurn(session: BlackjackSession): Promise<void> {
     if (outcome === "player-win") {
         finishRound(session, "player-win", "You win this hand!");
     } else if (outcome === "dealer-win") {
-        finishRound(session, "dealer-win", "Dealer wins this hand.");
+        finishRound(session, "dealer-win", `${RABBATTOIR_NAME} wins this cull.`);
     } else {
         finishRound(session, "player-win", "Tie — you win this hand.");
     }
@@ -257,9 +259,9 @@ function completeMinigame(): void {
         phase: "complete",
         canHit: false,
         canStay: false,
-        roundMessage: "You won the hand! The table is yours.",
+        roundMessage: "You survived Rabbattoir's cull!",
     };
-    publishMinigameResult("You won at blackjack and leave the table victorious.");
+    publishMinigameResult("You beat Rabbattoir at 21 and slip away from the cull.");
 }
 
 function scheduleNextRound(session: BlackjackSession, minigame: BlackjackMinigame): void {
@@ -332,7 +334,7 @@ export function useBlackjack(): {
                 discard: [],
                 dealerHoleHidden: true,
                 roundMessage:
-                    "Blackjack with your combat deck. Win one hand to leave; ties go to you.",
+                    `Face ${RABBATTOIR_NAME}, ${RABBATTOIR_TITLE}. Win one hand to leave; ties go to you.`,
                 canHit: false,
                 canStay: false,
             };
@@ -355,7 +357,7 @@ export function useBlackjack(): {
             if (isBust(session.playerHand)) {
                 session.canHit = false;
                 session.canStay = false;
-                void concludeHandWithReveal(session, "dealer-win", "Bust! You lose this hand.");
+                void concludeHandWithReveal(session, "dealer-win", "Over 21 — Rabbattoir culls you from this hand.");
                 return;
             }
 
