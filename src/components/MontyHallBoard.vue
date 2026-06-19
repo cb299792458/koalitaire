@@ -3,9 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { createMontyHallSpellCard } from "../game/cards/montyHallCards";
 import { useMinigame } from "../composables/useMinigame";
-import {
+import MontyHallMinigame, {
     createMontyLayout,
-    isMontyHallMinigame,
     pickDoorToReveal,
     switchDoorIndex,
     type MontyCardKind,
@@ -41,7 +40,7 @@ const timeouts: ReturnType<typeof setTimeout>[] = [];
 
 const montyMinigame = computed(() => {
     const mg = currentMinigame.value;
-    return mg && isMontyHallMinigame(mg) ? mg : null;
+    return mg instanceof MontyHallMinigame ? mg : null;
 });
 
 const trackWidthPx = computed(() => {

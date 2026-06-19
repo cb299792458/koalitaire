@@ -18,9 +18,3 @@ export default class HigherOrLowerMinigame extends Minigame {
     }
 
 }
-
-export function isHigherOrLowerMinigame(
-    minigame: Minigame
-): minigame is HigherOrLowerMinigame {
-    return minigame instanceof HigherOrLowerMinigame;
-}

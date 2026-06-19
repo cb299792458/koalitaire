@@ -3,10 +3,9 @@ import { computed } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { useMemory } from "../composables/useMemory";
 import { useMinigame } from "../composables/useMinigame";
-import {
+import MemoryMinigame, {
     ELEPHANT_NAME,
     ELEPHANT_TITLE,
-    isMemoryMinigame,
 } from "../models/minigames/MemoryMinigame";
 
 const { session, beginPlay, pickCard } = useMemory();
@@ -16,7 +15,7 @@ const { currentMinigame } = useMinigame();
 
 const memoryMinigame = computed(() => {
     const mg = currentMinigame.value;
-    return mg && isMemoryMinigame(mg) ? mg : null;
+    return mg instanceof MemoryMinigame ? mg : null;
 });
 
 const pairsRemaining = computed(() => {

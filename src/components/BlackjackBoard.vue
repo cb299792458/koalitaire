@@ -4,8 +4,7 @@ import SingleCard from "./Cards/SingleCard.vue";
 import { handTotal } from "../game/blackjack";
 import { useBlackjack } from "../composables/useBlackjack";
 import { useMinigame } from "../composables/useMinigame";
-import {
-    isBlackjackMinigame,
+import BlackjackMinigame, {
     RABBATTOIR_NAME,
     RABBATTOIR_TITLE,
 } from "../models/minigames/BlackjackMinigame";
@@ -17,7 +16,7 @@ const { currentMinigame } = useMinigame();
 
 const blackjackMinigame = computed(() => {
     const mg = currentMinigame.value;
-    return mg && isBlackjackMinigame(mg) ? mg : null;
+    return mg instanceof BlackjackMinigame ? mg : null;
 });
 
 const playerTotal = computed(() =>

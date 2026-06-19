@@ -72,7 +72,3 @@ export default class MontyHallMinigame extends Minigame {
         };
     }
 }
-
-export function isMontyHallMinigame(minigame: Minigame): minigame is MontyHallMinigame {
-    return minigame instanceof MontyHallMinigame;
-}

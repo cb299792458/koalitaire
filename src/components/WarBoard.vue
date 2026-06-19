@@ -3,11 +3,10 @@ import { computed } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { useWar } from "../composables/useWar";
 import { useMinigame } from "../composables/useMinigame";
-import {
+import WarMinigame, {
     CASSOWAR_NAME,
     PLAYER_CASSOWARY_LABEL,
     RIVAL_CASSOWARY_LABEL,
-    isWarMinigame,
 } from "../models/minigames/WarMinigame";
 import type Card from "../models/Card";
 
@@ -18,7 +17,7 @@ const { currentMinigame } = useMinigame();
 
 const warMinigame = computed(() => {
     const mg = currentMinigame.value;
-    return mg && isWarMinigame(mg) ? mg : null;
+    return mg instanceof WarMinigame ? mg : null;
 });
 
 const playerDeckTop = computed((): Card | null => {

@@ -26,7 +26,7 @@
         minigameHasCustomBoard,
         resolveMinigameBoard,
     } from '../composables/minigameBoards'
-    import { isBlackjackMinigame } from '../models/minigames'
+    import BlackjackMinigame from '../models/minigames/BlackjackMinigame'
     import GameLayout from './GameLayout.vue'
     import CompostCelebrationOverlay from './CompostCelebrationOverlay.vue'
     import TableauDealOverlay from './TableauDealOverlay.vue'
@@ -395,7 +395,7 @@ The old throne has fallen, and all the animals now chart a future together.
     })
     const isBlackjackMinigameActive = computed(() => {
         const mg = minigameState.currentMinigame.value
-        return isInMinigame.value && mg != null && isBlackjackMinigame(mg)
+        return isInMinigame.value && mg instanceof BlackjackMinigame
     })
     const blackjackSession = computed(() => blackjackState.session.value)
     const isProcessing = computed(

@@ -3,7 +3,7 @@ import { computed } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { useHigherOrLower } from "../composables/useHigherOrLower";
 import { useMinigame } from "../composables/useMinigame";
-import { isHigherOrLowerMinigame } from "../models/minigames/HigherOrLowerMinigame";
+import HigherOrLowerMinigame from "../models/minigames/HigherOrLowerMinigame";
 
 const { session, beginPlay, guessHigher, guessLower } = useHigherOrLower();
 
@@ -12,7 +12,7 @@ const { currentMinigame } = useMinigame();
 
 const holMinigame = computed(() => {
     const mg = currentMinigame.value;
-    return mg && isHigherOrLowerMinigame(mg) ? mg : null;
+    return mg instanceof HigherOrLowerMinigame ? mg : null;
 });
 </script>
 

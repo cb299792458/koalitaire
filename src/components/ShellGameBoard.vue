@@ -3,9 +3,8 @@ import { computed, onBeforeUnmount, ref, watch } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { useMinigame } from "../composables/useMinigame";
 import { createShellSpellCard } from "../game/cards/shellGameCards";
-import {
+import ShellGameMinigame, {
     createShuffledShellLayout,
-    isShellGameMinigame,
     type ShellCardKind,
 } from "../models/minigames/ShellGameMinigame";
 import type { SpellCard } from "../models/Card";
@@ -39,7 +38,7 @@ const timeouts: ReturnType<typeof setTimeout>[] = [];
 
 const shellMinigame = computed(() => {
     const mg = currentMinigame.value;
-    return mg && isShellGameMinigame(mg) ? mg : null;
+    return mg instanceof ShellGameMinigame ? mg : null;
 });
 
 const trackWidthPx = computed(() => {

@@ -21,7 +21,3 @@ export default class MemoryMinigame extends Minigame {
         return this.damageForAct(MEMORY_MISMATCH_DAMAGE_BASE);
     }
 }
-
-export function isMemoryMinigame(minigame: Minigame): minigame is MemoryMinigame {
-    return minigame instanceof MemoryMinigame;
-}

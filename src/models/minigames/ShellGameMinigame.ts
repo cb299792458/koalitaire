@@ -60,7 +60,3 @@ export default class ShellGameMinigame extends Minigame {
         };
     }
 }
-
-export function isShellGameMinigame(minigame: Minigame): minigame is ShellGameMinigame {
-    return minigame instanceof ShellGameMinigame;
-}

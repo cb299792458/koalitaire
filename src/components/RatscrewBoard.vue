@@ -3,8 +3,7 @@ import { computed } from "vue";
 import SingleCard from "./Cards/SingleCard.vue";
 import { useRatscrew } from "../composables/useRatscrew";
 import { useMinigame } from "../composables/useMinigame";
-import {
-    isRatscrewMinigame,
+import RatscrewMinigame, {
     RATSCREW_FALSE_SLAP_DAMAGE_BASE,
     RATSCREW_CREW_LABEL,
     RATSCREW_MISS_DAMAGE_BASE,
@@ -20,7 +19,7 @@ const { currentMinigame } = useMinigame();
 
 const ratscrewMinigame = computed(() => {
     const mg = currentMinigame.value;
-    return mg && isRatscrewMinigame(mg) ? mg : null;
+    return mg instanceof RatscrewMinigame ? mg : null;
 });
 
 const isIntro = computed(() => session.value?.phase === "intro");

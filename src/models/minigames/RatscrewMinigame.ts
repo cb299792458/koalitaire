@@ -18,7 +18,3 @@ export default class RatscrewMinigame extends Minigame {
     }
 
 }
-
-export function isRatscrewMinigame(minigame: Minigame): minigame is RatscrewMinigame {
-    return minigame instanceof RatscrewMinigame;
-}

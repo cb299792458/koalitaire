@@ -8,13 +8,6 @@ import RatscrewMinigame from "./RatscrewMinigame";
 import WarMinigame from "./WarMinigame";
 
 export type { MinigameConstructor } from "../Minigame";
-export { isBlackjackMinigame } from "./BlackjackMinigame";
-export { isHigherOrLowerMinigame } from "./HigherOrLowerMinigame";
-export { isRatscrewMinigame } from "./RatscrewMinigame";
-export { isMemoryMinigame } from "./MemoryMinigame";
-export { isWarMinigame } from "./WarMinigame";
-export { isMontyHallMinigame } from "./MontyHallMinigame";
-export { isShellGameMinigame } from "./ShellGameMinigame";
 
 export const MINIGAME_CONSTRUCTORS: MinigameConstructor[] = [
     ShellGameMinigame,

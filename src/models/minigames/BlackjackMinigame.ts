@@ -21,7 +21,3 @@ export default class BlackjackMinigame extends Minigame {
     }
 
 }
-
-export function isBlackjackMinigame(minigame: Minigame): minigame is BlackjackMinigame {
-    return minigame instanceof BlackjackMinigame;
-}
