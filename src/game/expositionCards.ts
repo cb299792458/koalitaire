@@ -7,6 +7,7 @@ export interface ExpositionCard {
 export const GAME_START_EXPOSITION_CARDS: ExpositionCard[] = [
     {
         title: 'Once Upon a Time...',
+        imageSrc: '/story/Intro_1.jpg',
         body:
             'In the world of Straya, the five nations lived in conflict, trapped in a violent deadlock.\n\n' +
             'The Sugar Gliders, dwellers of the treetops, associated with the element of wood.\n' +
@@ -18,6 +19,7 @@ export const GAME_START_EXPOSITION_CARDS: ExpositionCard[] = [
     },
     {
         title: '...there was a Koala.',
+        imageSrc: '/story/Intro_2.jpg',
         body:
             'As they were about to make their final stand in their capital city of Koala Lumpur, a brilliant Koala rose to power.\n\n' +
             'His name was Ku the Engineer, though he was no great inventor, nor fighter, nor military strategist; he was a master of diplomacy and negotiation.\n' +

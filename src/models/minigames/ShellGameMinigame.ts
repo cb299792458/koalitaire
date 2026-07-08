@@ -2,6 +2,20 @@ import Minigame, { type MinigameOutcomeBranch } from "../Minigame";
 
 export type ShellCardKind = "rocko" | "heffer" | "filburt";
 
+/** Face art under `public/events/` for each shell-game card. */
+export const SHELL_CARD_ARTWORK: Record<ShellCardKind, string> = {
+    rocko: "/events/Wallaby_Yes.jpg",
+    heffer: "/events/Steer_No.jpg",
+    filburt: "/events/Turtle_No.jpg",
+};
+
+/** Same paths keyed by spell display name (for {@link cardArtworkFallbackUrls}). */
+export const SHELL_CARD_ARTWORK_BY_NAME: Record<string, string> = {
+    Rocko: SHELL_CARD_ARTWORK.rocko,
+    Heffer: SHELL_CARD_ARTWORK.heffer,
+    Filburt: SHELL_CARD_ARTWORK.filburt,
+};
+
 const WRONG_PICK_DAMAGE_BASE = 10;
 
 export function createShuffledShellLayout(): ShellCardKind[] {

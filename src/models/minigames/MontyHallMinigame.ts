@@ -2,6 +2,16 @@ import Minigame, { type MinigameOutcomeBranch } from "../Minigame";
 
 export type MontyCardKind = "winner" | "loser";
 
+/** Face art under `public/events/` for Monty Hall cards (loser art TBD). */
+export const MONTY_CARD_ARTWORK: Partial<Record<MontyCardKind, string>> = {
+    winner: "/events/Wallaby_Yes.jpg",
+};
+
+/** Same paths keyed by spell display name (for {@link cardArtworkFallbackUrls}). */
+export const MONTY_CARD_ARTWORK_BY_NAME: Record<string, string> = {
+    Prize: MONTY_CARD_ARTWORK.winner!,
+};
+
 const LOSER_DAMAGE_BASE = 10;
 
 export function createMontyLayout(): MontyCardKind[] {
