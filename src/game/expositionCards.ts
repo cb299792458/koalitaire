@@ -29,6 +29,7 @@ export const GAME_START_EXPOSITION_CARDS: ExpositionCard[] = [
     },
     {
         title: 'The Story So Far...',
+        imageSrc: '/story/Intro_3.jpg',
         body:
             'You are Koa XIII, the 13th generation descendant of Ku. You\'ve been raised your whole life to succeed your father, as the next Koala King. ' +
             'However, your tyrannical father was too busy enacting his will upon the kingdom and its vassal states, and you were raised by Bearistotle, your personal tutor. ' +
@@ -39,6 +40,7 @@ export const GAME_START_EXPOSITION_CARDS: ExpositionCard[] = [
     },
     {
         title: 'Slay the Sire',
+        imageSrc: '/story/Intro_4.jpg',
         body: 
             'It\'s now up to you to follow through with your plan alone, so that your teacher\'s sacrifice was not in vain. ' + 
             'You must travel to as many of the Five Nations as possible, and recruit their leaders to your cause.\n\n' +
